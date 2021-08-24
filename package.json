@@ -1,7 +1,7 @@
 {
   "displayName": "Homebridge Rainbird",
   "name": "homebridge-rainbird",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "The [Homebridge](https://homebridge.io) Honeywell Home plugin allows you to access your [Honeywell Home](https://honeywellhome.com) device(s) from HomeKit.",
   "author": "donavanbecker",
   "license": "Apache-2.0",
