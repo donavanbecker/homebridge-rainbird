@@ -14,30 +14,17 @@
         "default": "RainBird",
         "required": true
       },
-      "credentials": {
-        "type": "object",
-        "properties": {
-          "consumerKey": {
-            "title": "Consumer Key",
-            "type": "string",
-            "required": true
-          },
-          "consumerSecret": {
-            "title": "Consumer Secret",
-            "type": "string"
-          },
-          "refreshToken": {
-            "title": "Refresh Token",
-            "type": "string",
-            "required": true
-          },
-          "notice": {
-            "title": "Notice",
-            "type": "string",
-            "required": true,
-            "default": "Keep your tokens a secret!"
-          }
-        }
+      "ipaddress": {
+        "type": "string",
+        "title": "IP Address",
+        "format": "ipv4",
+        "required": true
+      },
+      "password": {
+        "type": "string",
+        "title": "Password",
+        "format": "ipv4",
+        "required": true
       },
       "options": {
         "type": "object",
@@ -197,22 +184,8 @@
     }
   },
   "layout": [
-    {
-      "type": "fieldset",
-      "title": "Honeywell Home Account Info",
-      "expandable": true,
-      "expanded": false,
-      "items": [
-        {
-          "type": "help",
-          "helpvalue": "<h5></h5><em class='primary-text'>This is for Manual Setup Only.</em>"
-        },
-        "name",
-        "credentials.consumerKey",
-        "credentials.consumerSecret",
-        "credentials.refreshToken"
-      ]
-    },
+    "ipaddress",
+    "password",
     {
       "type": "fieldset",
       "title": "Advanced Settings",
@@ -264,65 +237,6 @@
                 }
               ]
             }
-          ]
-        },
-        {
-          "type": "fieldset",
-          "title": "Thermostat Options",
-          "expandable": true,
-          "expanded": false,
-          "items": [
-            "options.thermostat.thermostatSetpointStatus",
-            {
-              "type": "help",
-              "helpvalue": "<h5>Hide Thermostat Fan Service</h5><em class='primary-text'>Allows you to hide your Thermostat's Fan.</em>"
-            },
-            "options.thermostat.hide_fan",
-            "options.thermostat.hide_humidity",
-            {
-              "type": "fieldset",
-              "title": "Room Sensor Options",
-              "expandable": true,
-              "expanded": false,
-              "items": [
-                {
-                  "type": "help",
-                  "helpvalue": "<h5>Hide Room Sensor Services</h5><em class='primary-text'>Allows you to hide your tempeture sensor, occupancy sensor, or humidity sensor of your Room Sensor(s).</em>"
-                },
-                "options.roomsensor.hide_temperature",
-                "options.roomsensor.hide_occupancy",
-                "options.roomsensor.hide_humidity",
-                {
-                  "type": "fieldset",
-                  "title": "Room Priority Options",
-                  "expandable": true,
-                  "expanded": false,
-                  "items": [
-                    {
-                      "type": "help",
-                      "helpvalue": "<em class='primary-text'>Allows you to set your Priority to your Room Sensor(s).</em>"
-                    },
-                    "options.roompriority.thermostat",
-                    "options.roompriority.priorityType"
-                  ]
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "type": "fieldset",
-          "title": "Leak Sensor Options",
-          "expandable": true,
-          "expanded": false,
-          "items": [
-            {
-              "type": "help",
-              "helpvalue": "<h5>Hide Leak Sensor Services</h5><em class='primary-text'>Allows you to hide your Leak Sensor's tempeture sensor, leak sensor, or humidity sensor.</em>"
-            },
-            "options.leaksensor.hide_temperature",
-            "options.leaksensor.hide_leak",
-            "options.leaksensor.hide_humidity"
           ]
         },
         {
