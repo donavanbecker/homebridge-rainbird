@@ -26,7 +26,7 @@ export class Valve {
   TemperatureDisplayUnits!: CharacteristicValue;
   //Fan Characteristics
   Active!: CharacteristicValue;
-  TargetFanState!: CharacteristicValue;
+  InUse!: CharacteristicValue;
   //Modes
   honeywellMode!: Array<string>;
   fanMode;
@@ -66,7 +66,7 @@ export class Valve {
 
     // default placeholders
     this.Active = this.platform.Characteristic.Active.INACTIVE;
-    this.TargetFanState = this.platform.Characteristic.TargetFanState.MANUAL;
+    this.InUse = this.platform.Characteristic.InUse.IN_USE;
 
     // this is subject we use to track when we need to POST changes to the Honeywell API for Room Changes - T9 Only
     this.doRoomUpdate = new Subject();
@@ -80,7 +80,7 @@ export class Valve {
     // set accessory information
     accessory
       .getService(this.platform.Service.AccessoryInformation)!
-      .setCharacteristic(this.platform.Characteristic.Manufacturer, 'Honeywell')
+      .setCharacteristic(this.platform.Characteristic.Manufacturer, 'RainBird')
       .setCharacteristic(this.platform.Characteristic.Model, device.deviceModel)
       .setCharacteristic(this.platform.Characteristic.SerialNumber, device.deviceID)
       .setCharacteristic(this.platform.Characteristic.FirmwareRevision, accessory.context.firmwareRevision)
@@ -98,83 +98,7 @@ export class Valve {
     //Initial Device Parse
     this.parseStatus();
 
-    // Set Min and Max
-    if (device.changeableValues.heatCoolMode === 'Heat') {
-      this.platform.log.debug('Thermostat %s -', this.accessory.displayName, 'Device is in "Heat" mode');
-      this.service
-        .getCharacteristic(this.platform.Characteristic.TargetTemperature)
-        .setProps({
-          minValue: this.device.minHeatSetpoint,
-          maxValue: this.device.maxHeatSetpoint,
-          minStep: 0.1,
-        })
-        .onGet(() => {
-          return this.TargetTemperature!;
-        });
-    } else {
-      this.platform.log.debug('Thermostat %s -', this.accessory.displayName, 'Device is in "Cool" mode');
-      this.service
-        .getCharacteristic(this.platform.Characteristic.TargetTemperature)
-        .setProps({
-          minValue: this.device.minCoolSetpoint,
-          maxValue: this.device.maxCoolSetpoint,
-          minStep: 0.1,
-        })
-        .onGet(() => {
-          return this.TargetTemperature!;
-        });
-    }
-
-    // The value property of TargetHeaterCoolerState must be one of the following:
-    //AUTO = 3; HEAT = 1; COOL = 2; OFF = 0;
-    // Set control bindings
-    this.service
-      .getCharacteristic(this.platform.Characteristic.TargetHeatingCoolingState)
-      .setProps({
-        validValues: [1],
-      })
-      .onSet(this.setTargetHeatingCoolingState.bind(this));
-
-    this.service.setCharacteristic(this.platform.Characteristic.CurrentHeatingCoolingState, this.CurrentHeatingCoolingState);
-
-    this.service.getCharacteristic(this.platform.Characteristic.HeatingThresholdTemperature).onSet(this.setHeatingThresholdTemperature.bind(this));
-
-    this.service.getCharacteristic(this.platform.Characteristic.CoolingThresholdTemperature).onSet(this.setCoolingThresholdTemperature.bind(this));
-
-    this.service.getCharacteristic(this.platform.Characteristic.TargetTemperature).onSet(this.setTargetTemperature.bind(this));
-
-    this.service
-      .getCharacteristic(this.platform.Characteristic.TemperatureDisplayUnits)
-      .onSet(this.setTemperatureDisplayUnits.bind(this));
-
-    // Humidity Sensor Service
-    if (this.platform.config.options?.thermostat?.hide_humidity) {
-      if (this.platform.debugMode) {
-        this.platform.log.error('Removing service');
-      }
-      this.humidityService = this.accessory.getService(this.platform.Service.HumiditySensor);
-      accessory.removeService(this.humidityService!);
-    } else if (!this.humidityService && device.indoorHumidity) {
-      if (this.platform.debugMode) {
-        this.platform.log.warn('Adding service');
-      }
-      (this.humidityService =
-        this.accessory.getService(this.platform.Service.HumiditySensor) ||
-        this.accessory.addService(this.platform.Service.HumiditySensor)), '%s %s HumiditySensor', device.name, device.deviceClass;
-
-      this.humidityService
-        .getCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity)
-        .setProps({
-          minStep: 0.1,
-        })
-        .onGet(() => {
-          return this.CurrentRelativeHumidity!;
-        });
-    } else {
-      if (this.platform.debugMode) {
-        this.platform.log.warn('HumiditySensor not added.');
-      }
-    }
+    this.service.setCharacteristic(this.platform.Characteristic.ValveType, this.platform.Characteristic.ValveType.IRRIGATION);
 
     // Retrieve initial values and updateHomekit
     this.updateHomeKitCharacteristics();
@@ -254,34 +178,6 @@ export class Valve {
       'Device is Currently: ',
       this.CurrentHeatingCoolingState,
     );
-
-    // Set the TargetTemperature value based on the current mode
-    if (this.TargetHeatingCoolingState === this.platform.Characteristic.TargetHeatingCoolingState.HEAT) {
-      if (this.device.changeableValues.heatSetpoint > 0) {
-        this.TargetTemperature = this.device.changeableValues.heatSetpoint;
-      }
-    } else {
-      if (this.device.changeableValues.coolSetpoint > 0) {
-        this.TargetTemperature = this.device.changeableValues.coolSetpoint;
-      }
-    }
-
-    // Set the Target Fan State
-    if (this.device.settings?.fan && !this.platform.config.options?.thermostat?.hide_fan) {
-      if (this.fanMode) {
-        this.platform.log.debug('Thermostat %s Fan -', this.accessory.displayName, JSON.stringify(this.fanMode));
-        if (this.fanMode.mode === 'Auto') {
-          this.TargetFanState = this.platform.Characteristic.TargetFanState.AUTO;
-          this.Active = this.platform.Characteristic.Active.INACTIVE;
-        } else if (this.fanMode.mode === 'On') {
-          this.TargetFanState = this.platform.Characteristic.TargetFanState.MANUAL;
-          this.Active = this.platform.Characteristic.Active.ACTIVE;
-        } else if (this.fanMode.mode === 'Circulate') {
-          this.TargetFanState = this.platform.Characteristic.TargetFanState.MANUAL;
-          this.Active = this.platform.Characteristic.Active.INACTIVE;
-        }
-      }
-    }
   }
 
   /**
@@ -332,7 +228,7 @@ export class Valve {
         this.platform.log.debug(this.device.deviceModel);
         break;
       default:
-        payload.thermostatSetpointStatus = this.platform.config.options?.thermostat?.thermostatSetpointStatus;
+        payload.thermostatSetpointStatus = true;
         this.platform.log.debug('Send thermostatSetpointStatus');
         this.platform.log.debug(this.device.deviceModel);
     }
@@ -380,7 +276,7 @@ export class Valve {
           'unit:',
           payload.unit,
           'thermostatSetpointStatus:',
-          this.platform.config.options?.thermostat?.thermostatSetpointStatus,
+          payload.thermostatSetpointStatus,
         );
         break;
       default:
@@ -412,7 +308,7 @@ export class Valve {
           'heatSetpoint:',
           payload.heatSetpoint,
           'thermostatSetpointStatus:',
-          this.platform.config.options?.thermostat?.thermostatSetpointStatus,
+          payload.thermostatSetpointStatus,
         );
     }
 
@@ -427,78 +323,17 @@ export class Valve {
    * Updates the status for each of the HomeKit Characteristics
    */
   updateHomeKitCharacteristics() {
-    if (this.TemperatureDisplayUnits !== undefined) {
-      this.service.updateCharacteristic(
-        this.platform.Characteristic.TemperatureDisplayUnits,
-        this.TemperatureDisplayUnits,
-      );
+    if (this.Active !== undefined) {
+      this.service.updateCharacteristic(this.platform.Characteristic.Active, this.Active);
     }
-    if (this.CurrentTemperature !== undefined) {
-      this.service.updateCharacteristic(this.platform.Characteristic.CurrentTemperature, this.CurrentTemperature);
-    }
-    if (
-      this.device.indoorHumidity &&
-      !this.platform.config.options?.thermostat?.hide_humidity &&
-      this.CurrentRelativeHumidity !== undefined
-    ) {
-      this.humidityService!.updateCharacteristic(
-        this.platform.Characteristic.CurrentRelativeHumidity,
-        this.CurrentRelativeHumidity!,
-      );
-    }
-    if (this.TargetTemperature !== undefined) {
-      this.service.updateCharacteristic(this.platform.Characteristic.TargetTemperature, this.TargetTemperature);
-    }
-    if (this.HeatingThresholdTemperature !== undefined) {
-      this.service.updateCharacteristic(
-        this.platform.Characteristic.HeatingThresholdTemperature,
-        this.HeatingThresholdTemperature,
-      );
-    }
-    if (this.CoolingThresholdTemperature !== undefined) {
-      this.service.updateCharacteristic(
-        this.platform.Characteristic.CoolingThresholdTemperature,
-        this.CoolingThresholdTemperature,
-      );
-    }
-    if (this.TargetHeatingCoolingState !== undefined) {
-      this.service.updateCharacteristic(
-        this.platform.Characteristic.TargetHeatingCoolingState,
-        this.TargetHeatingCoolingState,
-      );
-    }
-    if (this.CurrentHeatingCoolingState !== undefined) {
-      this.service.updateCharacteristic(
-        this.platform.Characteristic.CurrentHeatingCoolingState,
-        this.CurrentHeatingCoolingState,
-      );
-    }
-    if (this.device.settings?.fan && !this.platform.config.options?.thermostat?.hide_fan) {
-      if (this.TargetFanState !== undefined) {
-        this.fanService?.updateCharacteristic(this.platform.Characteristic.TargetFanState, this.TargetFanState);
-      }
-      if (this.Active !== undefined) {
-        this.fanService?.updateCharacteristic(this.platform.Characteristic.Active, this.Active);
-      }
+    if (this.InUse !== undefined) {
+      this.service.updateCharacteristic(this.platform.Characteristic.InUse, this.InUse);
     }
   }
 
   public apiError(e: any) {
-    this.service.updateCharacteristic(this.platform.Characteristic.TemperatureDisplayUnits, e);
-    this.service.updateCharacteristic(this.platform.Characteristic.CurrentTemperature, e);
-    if (this.device.indoorHumidity && !this.platform.config.options?.thermostat?.hide_humidity) {
-      this.humidityService!.updateCharacteristic(this.platform.Characteristic.CurrentRelativeHumidity, e);
-    }
-    this.service.updateCharacteristic(this.platform.Characteristic.TargetTemperature, e);
-    this.service.updateCharacteristic(this.platform.Characteristic.HeatingThresholdTemperature, e);
-    this.service.updateCharacteristic(this.platform.Characteristic.CoolingThresholdTemperature, e);
-    this.service.updateCharacteristic(this.platform.Characteristic.TargetHeatingCoolingState, e);
-    this.service.updateCharacteristic(this.platform.Characteristic.CurrentHeatingCoolingState, e);
-    if (this.device.settings?.fan && !this.platform.config.options?.thermostat?.hide_fan) {
-      this.fanService?.updateCharacteristic(this.platform.Characteristic.TargetFanState, e);
-      this.fanService?.updateCharacteristic(this.platform.Characteristic.Active, e);
-    }
-    //throw new this.platform.api.hap.HapStatusError(HAPStatus.OPERATION_TIMED_OUT);
+    this.service.updateCharacteristic(this.platform.Characteristic.Active, e);
+    this.service.updateCharacteristic(this.platform.Characteristic.InUse, e);
   }
 
   private setTargetHeatingCoolingState(value: CharacteristicValue) {
@@ -513,12 +348,6 @@ export class Valve {
       this.TargetTemperature = this.device.changeableValues.coolSetpoint;
     }
     this.service.updateCharacteristic(this.platform.Characteristic.TargetTemperature, this.TargetTemperature);
-    if (this.platform.config.options?.roompriority?.thermostat && this.device.deviceModel === 'T9-T10') {
-      this.doRoomUpdate.next();
-    }
-    if (this.TargetHeatingCoolingState !== this.modes[this.device.changeableValues.mode]) {
-      this.doValveUpdate.next();
-    }
   }
 
   private setHeatingThresholdTemperature(value: CharacteristicValue) {

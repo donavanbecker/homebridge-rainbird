@@ -19,7 +19,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
   // this is used to track restored cached accessories
   public readonly accessories: PlatformAccessory[] = [];
 
-  rainbird = new RainBirdClass('_your_ip_address_', '_your_password_');
+  rainbird = new RainBirdClass();
   version = require('../package.json').version // eslint-disable-line @typescript-eslint/no-var-requires
 
   public sensorData = [];
@@ -93,30 +93,6 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
     // Hide Devices by DeviceID
     this.config.options.hide_device = this.config.options.hide_device || [];
 
-    // Thermostat Config Options
-    this.config.options.thermostat = this.config.options.thermostat || {};
-    this.config.options.thermostat.hide_fan;
-    this.config.options.thermostat.thermostatSetpointStatus = this.config.options.thermostat.thermostatSetpointStatus || 'PermanentHold';
-
-    // Leak Sensor Config Options
-    this.config.options.leaksensor = this.config.options.leaksensor || {};
-    this.config.options.leaksensor.hide_humidity;
-    this.config.options.leaksensor.hide_temperature;
-    this.config.options.leaksensor.hide_leak;
-
-    // Room Sensor Config Options
-    this.config.options.roomsensor = this.config.options.roomsensor || {};
-    this.config.options.roomsensor.hide_temperature;
-    this.config.options.roomsensor.hide_occupancy;
-    this.config.options.roomsensor.hide_humidity;
-
-
-    // Room Priority Config Options
-    this.config.options.roompriority = this.config.options.roompriority || {};
-    this.config.options.roompriority.thermostat;
-    this.config.options.roompriority.priorityType = this.config.options.roompriority.priorityType || 'PickARoom';
-
-
     if (this.config.options!.refreshRate! < 120) {
       throw new Error('Refresh Rate must be above 120 (2 minutes).');
     }
@@ -128,24 +104,25 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
     if (!this.config.options.refreshRate && !this.config.disablePlugin) {
       // default 900 seconds (15 minutes)
       this.config.options!.refreshRate! = 900;
-      this.log.warn('Using Default Refresh Rate.');
+      if (this.debugMode) {
+        this.log.warn('Using Default Refresh Rate.');
+      }
     }
 
     if (!this.config.options.pushRate && !this.config.disablePlugin) {
       // default 100 milliseconds
       this.config.options!.pushRate! = 0.1;
-      this.log.warn('Using Default Push Rate.');
+      if (this.debugMode) {
+        this.log.warn('Using Default Push Rate.');
+      }
 
     }
 
-    if (!this.config.credentials) {
-      throw new Error('Missing Credentials');
+    if (!this.config.password) {
+      throw new Error('Missing Password');
     }
-    if (!this.config.credentials.consumerKey) {
-      throw new Error('Missing consumerKey');
-    }
-    if (!this.config.credentials.refreshToken) {
-      throw new Error('Missing refreshToken');
+    if (!this.config.ipaddress) {
+      throw new Error('Missing IP Address');
     }
   }
 
@@ -158,7 +135,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
 
     this.log.info(JSON.stringify(device));
     switch (device.deviceClass) {
-      case 'Thermostat':
+      case 'Valve':
         if (this.config.devicediscovery) {
           this.log.info(
             'Discovered %s %s - %s',
@@ -166,7 +143,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
             device.deviceModel,
           );
         }
-        await this.createThermostat(device);
+        await this.createValve(device);
         break;
       default:
         this.log.info(
@@ -176,7 +153,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
     }
   }
 
-  private async createThermostat(device) {
+  private async createValve(device) {
     const uuid = this.api.hap.uuid.generate(`${device.name}-${device.deviceID}-${device.deviceModel}`);
 
     // see if an accessory with the same uuid has already been registered and restored from
@@ -187,7 +164,6 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
       // the accessory already exists
       if (
         !this.config.options?.hide_device.includes(device.deviceID) &&
-        device.isAlive &&
         !this.config.disablePlugin
       ) {
         this.log.info(
@@ -211,14 +187,13 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
       }
     } else if (
       !this.config.options?.hide_device.includes(device.deviceID) &&
-      device.isAlive &&
       !this.config.disablePlugin
     ) {
       // the accessory does not yet exist, so we need to create it
       this.log.info(
         'Adding new accessory:',
         device.name,
-        'Thermostat',
+        'Valve',
         device.deviceModel,
         device.deviceType,
         'DeviceID:',
