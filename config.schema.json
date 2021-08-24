@@ -15,15 +15,14 @@
         "required": true
       },
       "ipaddress": {
-        "type": "string",
         "title": "IP Address",
+        "type": "string",
         "format": "ipv4",
         "required": true
       },
       "password": {
-        "type": "string",
         "title": "Password",
-        "format": "ipv4",
+        "type": "string",
         "required": true
       },
       "options": {
