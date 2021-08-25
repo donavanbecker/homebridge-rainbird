@@ -56,14 +56,14 @@ export class IrrigationSystem {
       .setCharacteristic(this.platform.Characteristic.FirmwareRevision, accessory.context.firmwareRevision)
       .getCharacteristic(this.platform.Characteristic.FirmwareRevision).updateValue(accessory.context.firmwareRevision);
 
-    //Thermostat Service
+    //Irrigation Service
     (this.service =
       this.accessory.getService(this.platform.Service.IrrigationSystem) ||
       this.accessory.addService(this.platform.Service.IrrigationSystem)), accessory.displayName;
 
     //Service Name
     this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.displayName);
-    //Required Characteristics" see https://developers.homebridge.io/#/service/Thermostat
+    //Required Characteristics" see https://developers.homebridge.io/#/service/Irrigation
 
     //Initial Device Parse
     this.parseStatus();
@@ -74,11 +74,12 @@ export class IrrigationSystem {
 
     //getAvailableZones
     //Returns the number of zones/stations for the controller. For ESP-RZXe this is always 3F000000 where 3F is binary 111111. Each bit is 1 zone.
-    device.getAvailableZones();
-
+    this.platform.log.debug(JSON.stringify(device.getAvailableZones()));
+    this.platform.log.warn(JSON.stringify(device.getActiveZones()));
+    const getActiveZones = device.getActiveZones();
     //getActiveZones
     //Returns the decimal number of the currently active zone, or 0 when no zones are active.
-    for (const valve of device.getActiveZones()) {
+    for (const valve of getActiveZones.activeZones) {
       if (valve !== 0){
         this.platform.log.debug('Setting Up %s ', valve.devName, JSON.stringify(valve));
         (this.valveService = this.accessory.getService(valve.devName)
@@ -125,7 +126,7 @@ export class IrrigationSystem {
           await this.pushChanges();
         } catch (e) {
           this.platform.log.error(JSON.stringify(e.message));
-          this.platform.log.debug('Thermostat %s -', this.accessory.displayName, JSON.stringify(e));
+          this.platform.log.debug('Irrigation %s -', this.accessory.displayName, JSON.stringify(e));
           this.apiError(e);
         }
         this.valveUpdateInProgress = false;
@@ -137,7 +138,7 @@ export class IrrigationSystem {
    */
   parseStatus() {
     this.platform.log.debug(
-      'Thermostat %s Heat -',
+      'Irrigation %s -',
       this.accessory.displayName,
       'Device is Currently: ',
       this.device,
@@ -162,7 +163,7 @@ export class IrrigationSystem {
       //Returns if the controller is active or irrigation is switched off I think (boolean)
       this.irrigationState = this.device.getIrrigationState();
       this.platform.log.debug(
-        'Thermostat %s -',
+        'Irrigation %s -',
         this.accessory.displayName,
         'Fetched update for',
         this.device.name,
@@ -173,10 +174,10 @@ export class IrrigationSystem {
       this.updateHomeKitCharacteristics();
     } catch (e) {
       this.platform.log.error(
-        'Thermostat - Failed to update status of',
+        'Irrigation - Failed to update status of',
         this.device.name,
         JSON.stringify(e.message),
-        this.platform.log.debug('Thermostat %s -', this.accessory.displayName, JSON.stringify(e)),
+        this.platform.log.debug('Irrigation %s -', this.accessory.displayName, JSON.stringify(e)),
       );
       this.apiError(e);
     }
@@ -238,13 +239,13 @@ export class IrrigationSystem {
   }
 
   private OnSet(value: CharacteristicValue) {
-    this.platform.log.debug('Thermostat %s -', this.accessory.displayName, 'Set HeatingThresholdTemperature:', value);
+    this.platform.log.debug('Irrigation %s -', this.accessory.displayName, 'Set HeatingThresholdTemperature:', value);
     this.On = value;
     this.doValveUpdate.next();
   }
 
   private ActiveSet(value: CharacteristicValue) {
-    this.platform.log.debug('Thermostat %s -', this.accessory.displayName, 'Set CoolingThresholdTemperature:', value);
+    this.platform.log.debug('Irrigation %s -', this.accessory.displayName, 'Set CoolingThresholdTemperature:', value);
     this.Active = value;
     this.doValveUpdate.next();
   }

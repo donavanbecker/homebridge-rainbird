@@ -179,13 +179,16 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
 
         // if you need to update the accessory.context then you should run `api.updatePlatformAccessories`. eg.:
         existingAccessory.context.device = device;
-        existingAccessory.context.deviceID = device.getSerialNumber();
-        existingAccessory.context.model = device.getModelAndVersion();
+        const getSerialNumber = device.getSerialNumber();
+        existingAccessory.context.deviceID = getSerialNumber.serialNumber;
+        const getModelAndVersion = device.getModelAndVersion();
+        existingAccessory.context.model = getModelAndVersion.modelID;
+        existingAccessory.context.FirmwareRevision = getModelAndVersion.protocolRevisionMajor;
         this.api.updatePlatformAccessories([existingAccessory]);
         // create the accessory handler for the restored accessory
         // this is imported from `platformAccessory.ts`
         new IrrigationSystem(this, existingAccessory, device);
-        this.log.debug(`Thermostat UDID: ${device.name}-${device.deviceID}-${device.deviceModel}`);
+        this.log.debug(`Irrigation UDID: ${device.name}-${device.deviceID}-${device.deviceModel}`);
       } else {
         this.unregisterPlatformAccessories(existingAccessory);
       }
@@ -210,12 +213,15 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
       // store a copy of the device object in the `accessory.context`
       // the `context` property can be used to store any data about the accessory you may need
       accessory.context.device = device;
-      accessory.context.deviceID = device.deviceID;
-      accessory.context.model = device.deviceModel;
+      const getSerialNumber = device.getSerialNumber();
+      accessory.context.deviceID = getSerialNumber.serialNumber;
+      const getModelAndVersion = device.getModelAndVersion();
+      accessory.context.model = getModelAndVersion.modelID;
+      accessory.context.FirmwareRevision = getModelAndVersion.protocolRevisionMajor;
       // create the accessory handler for the newly create accessory
       // this is imported from `platformAccessory.ts`
       new IrrigationSystem(this, accessory, device);
-      this.log.debug(`Thermostat UDID: ${device.name}-${device.deviceID}-${device.deviceModel}`);
+      this.log.debug(`Irrigation UDID: ${device.name}-${device.deviceID}-${device.deviceModel}`);
 
       // link the accessory to your platform
       this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
@@ -225,7 +231,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
         this.log.error(
           'Unable to Register new device:',
           device.name,
-          'Thermostat',
+          'Irrigation',
           device.deviceModel,
           device.deviceType,
           'DeviceID:',
