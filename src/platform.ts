@@ -5,7 +5,7 @@ import {
   PLUGIN_NAME,
   HoneywellPlatformConfig,
 } from './settings';
-import { Valve } from './devices/valve';
+import { IrrigationSystem } from './devices/irrigationsystem';
 
 /**
  * HomebridgePlatform
@@ -25,6 +25,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
   public sensorData = [];
   private refreshInterval;
   debugMode!: boolean;
+  rainbirdDebugMode!: boolean;
 
   constructor(public readonly log: Logger, public readonly config: HoneywellPlatformConfig, public readonly api: API) {
     this.log.debug('Finished initializing platform:', this.config.name);
@@ -131,26 +132,29 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
    * Accessories are registered by either their DeviceClass, DeviceModel, or DeviceID
    */
   private async discoverDevices() {
-    const device = new RainBirdClass(this.config.ipaddress, this.config.password);
+    if (this.debugMode || this.config.options!.rbDebug) {
+      this.rainbirdDebugMode = true;
+    } else {
+      this.rainbirdDebugMode = false;
+    }
+
+    const rainbird = new RainBirdClass(this.config.ipaddress, this.config.password, this.rainbirdDebugMode);
+    const device = rainbird;
+
+    //setDebug
+    //Enables verbose console logging
+    rainbird.setDebug(this.rainbirdDebugMode);
+
+    //getModelAndVersion
+    //Returns the Rainbird mode and firmware version
+    this.log.info(JSON.stringify(rainbird.getModelAndVersion()));
+
+    //getSerialNumber
+    //Returns the controller's serial number. For ESP-RZXe this is always 0000000000000000
+    this.log.info(JSON.stringify(rainbird.getSerialNumber()));
 
     this.log.info(JSON.stringify(device));
-    switch (device.deviceClass) {
-      case 'Valve':
-        if (this.config.devicediscovery) {
-          this.log.info(
-            'Discovered %s %s - %s',
-            device.deviceType,
-            device.deviceModel,
-          );
-        }
-        await this.createValve(device);
-        break;
-      default:
-        this.log.info(
-          'Unsupported Device found, enable `"devicediscovery": true`',
-          'Please open Feature Request Here: https://git.io/JURLY',
-        );
-    }
+    await this.createValve(device);
   }
 
   private async createValve(device) {
@@ -180,7 +184,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
         this.api.updatePlatformAccessories([existingAccessory]);
         // create the accessory handler for the restored accessory
         // this is imported from `platformAccessory.ts`
-        new Valve(this, existingAccessory, device);
+        new IrrigationSystem(this, existingAccessory, device);
         this.log.debug(`Thermostat UDID: ${device.name}-${device.deviceID}-${device.deviceModel}`);
       } else {
         this.unregisterPlatformAccessories(existingAccessory);
@@ -210,7 +214,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
       accessory.context.model = device.deviceModel;
       // create the accessory handler for the newly create accessory
       // this is imported from `platformAccessory.ts`
-      new Valve(this, accessory, device);
+      new IrrigationSystem(this, accessory, device);
       this.log.debug(`Thermostat UDID: ${device.name}-${device.deviceID}-${device.deviceModel}`);
 
       // link the accessory to your platform

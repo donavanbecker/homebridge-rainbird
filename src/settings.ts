@@ -21,6 +21,7 @@ export type options = {
   refreshRate?: number;
   pushRate?: number;
   hide_device: string[];
+  rbDebug?: boolean;
 };
 
 export interface AxiosRequestConfig {
