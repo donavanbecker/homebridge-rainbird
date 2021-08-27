@@ -1,7 +1,7 @@
 {
   "displayName": "Homebridge Rainbird",
   "name": "homebridge-rainbird",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "The [Homebridge](https://homebridge.io) Honeywell Home plugin allows you to access your [Honeywell Home](https://honeywellhome.com) device(s) from HomeKit.",
   "author": "donavanbecker",
   "license": "Apache-2.0",
@@ -42,7 +42,7 @@
     "@homebridge/plugin-ui-utils": "^0.0.19"
   },
   "devDependencies": {
-    "@types/node": "^16.7.1",
+    "@types/node": "^16.7.2",
     "@typescript-eslint/eslint-plugin": "^4.29.3",
     "@typescript-eslint/parser": "^4.29.3",
     "eslint": "^7.32.0",
@@ -50,7 +50,7 @@
     "nodemon": "^2.0.12",
     "rimraf": "^3.0.2",
     "ts-node": "^10.2.1",
-    "typescript": "^4.3.5",
+    "typescript": "^4.4.2",
     "npm-check-updates": "^11.8.3"
   }
 }

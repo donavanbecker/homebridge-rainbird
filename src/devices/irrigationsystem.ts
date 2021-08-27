@@ -21,7 +21,9 @@ export class IrrigationSystem {
   ValveType!: CharacteristicValue;
 
   //Others
-  irrigationState: any;
+  getIrrigationState: any;
+  getRainSensorState: any;
+  getRainDelay: any;
   setActive: any;
   programNr: any;
   minutes: any;
@@ -124,7 +126,7 @@ export class IrrigationSystem {
       .subscribe(async () => {
         try {
           await this.pushChanges();
-        } catch (e) {
+        } catch (e: any) {
           this.platform.log.error(JSON.stringify(e.message));
           this.platform.log.debug('Irrigation %s -', this.accessory.displayName, JSON.stringify(e));
           this.apiError(e);
@@ -152,27 +154,25 @@ export class IrrigationSystem {
     try {
     //getRainSensorState
     //Returns the state of the rain sensor (true or false)
-      this.device.getRainSensorState();
-
+      this.getRainSensorState = this.device.getRainSensorState();
 
       //getRainDelay
       //Returns the watering delay in days.
-      this.device.getRainDelay();
+      this.getRainDelay = this.device.getRainDelay();
 
       //getIrrigationState
       //Returns if the controller is active or irrigation is switched off I think (boolean)
-      this.irrigationState = this.device.getIrrigationState();
+      this.getIrrigationState = this.device.getIrrigationState();
       this.platform.log.debug(
-        'Irrigation %s -',
+        'Irrigation %s - Fetched Update for Irrigation State: %s, Rain Delay: %s, Rain Sensor State: %',
         this.accessory.displayName,
-        'Fetched update for',
-        this.device.name,
-        'from Honeywell API:',
-        JSON.stringify(this.device.changeableValues),
+        this.getIrrigationState,
+        this.getRainDelay,
+        this.getRainSensorState,
       );
       this.parseStatus();
       this.updateHomeKitCharacteristics();
-    } catch (e) {
+    } catch (e: any) {
       this.platform.log.error(
         'Irrigation - Failed to update status of',
         this.device.name,

@@ -44,7 +44,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
     try {
       this.verifyConfig();
       this.log.debug('Config OK');
-    } catch (e) {
+    } catch (e: any) {
       this.log.error(JSON.stringify(e.message));
       this.log.debug(JSON.stringify(e));
       return;
@@ -60,7 +60,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
       log.debug('Executed didFinishLaunching callback');
       try {
         this.discoverDevices();
-      } catch (e) {
+      } catch (e: any) {
         this.log.error('Failed to Discover Devices,', JSON.stringify(e.message));
         this.log.debug(JSON.stringify(e));
       }
@@ -148,10 +148,12 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
     //getModelAndVersion
     //Returns the Rainbird mode and firmware version
     this.log.info(JSON.stringify(rainbird.getModelAndVersion()));
+    device.getModelAndVersion = JSON.parse(rainbird.getModelAndVersion());
 
     //getSerialNumber
     //Returns the controller's serial number. For ESP-RZXe this is always 0000000000000000
     this.log.info(JSON.stringify(rainbird.getSerialNumber()));
+    device.getSerialNumber = JSON.parse(rainbird.getSerialNumber());
 
     this.log.info(JSON.stringify(device));
     await this.createValve(device);
@@ -179,11 +181,11 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
 
         // if you need to update the accessory.context then you should run `api.updatePlatformAccessories`. eg.:
         existingAccessory.context.device = device;
-        const getSerialNumber = device.getSerialNumber();
-        existingAccessory.context.deviceID = getSerialNumber.serialNumber;
-        const getModelAndVersion = device.getModelAndVersion();
-        existingAccessory.context.model = getModelAndVersion.modelID;
-        existingAccessory.context.FirmwareRevision = getModelAndVersion.protocolRevisionMajor;
+        //const getSerialNumber = device.getSerialNumber();
+        existingAccessory.context.deviceID = device.getSerialNumber.serialNumber;
+        //const getModelAndVersion = device.getModelAndVersion();
+        existingAccessory.context.model = device.getModelAndVersion.modelID;
+        existingAccessory.context.FirmwareRevision = device.getModelAndVersion.protocolRevisionMajor;
         this.api.updatePlatformAccessories([existingAccessory]);
         // create the accessory handler for the restored accessory
         // this is imported from `platformAccessory.ts`
