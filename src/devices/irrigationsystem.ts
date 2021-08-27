@@ -79,14 +79,15 @@ export class IrrigationSystem {
     this.platform.log.debug(JSON.stringify(device.getAvailableZones()));
     this.platform.log.warn(JSON.stringify(device.getActiveZones()));
     const getActiveZones = device.getActiveZones();
+    //const ActiveZones = JSON.parse(device.getActiveZones());
     //getActiveZones
     //Returns the decimal number of the currently active zone, or 0 when no zones are active.
-    for (const valve of getActiveZones.activeZones) {
-      if (valve !== 0){
-        this.platform.log.debug('Setting Up %s ', valve.devName, JSON.stringify(valve));
-        (this.valveService = this.accessory.getService(valve.devName)
-            || this.accessory.addService(this.platform.Service.Valve, valve.devName, valve.devName)), accessory.displayName;
-        this.valveService.setCharacteristic(this.platform.Characteristic.Name, `${valve.devName} ${valve.deviceType}`);
+    for (const activeZones of getActiveZones) {
+      if (activeZones !== 0){
+        this.platform.log.debug('Setting Up %s ', activeZones.devName, JSON.stringify(activeZones));
+        (this.valveService = this.accessory.getService(activeZones.devName)
+            || this.accessory.addService(this.platform.Service.Valve, activeZones.devName, activeZones.devName)), accessory.displayName;
+        this.valveService.setCharacteristic(this.platform.Characteristic.Name, `${activeZones.devName} ${activeZones.deviceType}`);
 
         this.valveService.setCharacteristic(this.platform.Characteristic.ValveType, this.platform.Characteristic.ValveType.IRRIGATION);
 
