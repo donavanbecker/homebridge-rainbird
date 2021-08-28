@@ -1,11 +1,18 @@
 import { API, DynamicPlatformPlugin, Logger, PlatformAccessory, Service, Characteristic } from 'homebridge';
-import RainBirdClass from 'node-rainbird';
+import { RainBirdClient } from './RainBirdClient/RainBirdClient';
 import {
   PLATFORM_NAME,
   PLUGIN_NAME,
   HoneywellPlatformConfig,
 } from './settings';
-import { IrrigationSystem } from './devices/irrigationsystem';
+// import { IrrigationSystem } from './devices/irrigationsystem';
+
+type Device = {
+  model: string,
+  version: string,
+  serialNumber: string,
+  zones: number[]
+}
 
 /**
  * HomebridgePlatform
@@ -19,13 +26,12 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
   // this is used to track restored cached accessories
   public readonly accessories: PlatformAccessory[] = [];
 
-  rainbird = new RainBirdClass();
   version = require('../package.json').version // eslint-disable-line @typescript-eslint/no-var-requires
 
   public sensorData = [];
   private refreshInterval;
   debugMode!: boolean;
-  rainbirdDebugMode!: boolean;
+  private rainbird?: RainBirdClient;
 
   constructor(public readonly log: Logger, public readonly config: HoneywellPlatformConfig, public readonly api: API) {
     this.log.debug('Finished initializing platform:', this.config.name);
@@ -51,6 +57,8 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
     }
 
     this.debugMode = process.argv.includes('-D') || process.argv.includes('--debug');
+
+    this.rainbird = new RainBirdClient(this.config.ipaddress!, this.config.password!, this.log);
 
     // When this event is fired it means Homebridge has restored all cached accessories from disk.
     // Dynamic Platform plugins should only register new accessories after this event was fired,
@@ -131,35 +139,220 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
    * This method is used to discover the your location and devices.
    * Accessories are registered by either their DeviceClass, DeviceModel, or DeviceID
    */
-  private async discoverDevices() {
-    if (this.debugMode || this.config.options!.rbDebug) {
-      this.rainbirdDebugMode = true;
-    } else {
-      this.rainbirdDebugMode = false;
-    }
+  private async discoverDevices(): Promise<void> {
 
-    const rainbird = new RainBirdClass(this.config.ipaddress, this.config.password, this.rainbirdDebugMode);
-    const device = rainbird;
+    // Get device details
+    const respModelAndVersion = await this.rainbird!.getModelAndVersion();
+    const respSerialNumber = await this.rainbird!.getSerialNumber();
+    const respZones = await this.rainbird!.getAvailableZones();
 
-    //setDebug
-    //Enables verbose console logging
-    rainbird.setDebug(this.rainbirdDebugMode);
+    const device: Device = {
+      model: respModelAndVersion.modelNumber,
+      version: respModelAndVersion.version,
+      serialNumber: respSerialNumber.serialNumber,
+      zones: respZones.zones,
+    };
 
-    //getModelAndVersion
-    //Returns the Rainbird mode and firmware version
-    this.log.info(JSON.stringify(rainbird.getModelAndVersion()));
-    device.getModelAndVersion = JSON.parse(rainbird.getModelAndVersion());
+    // Display device details
+    this.log.info(`Model: ${device.model} [Version: ${device.version}]`);
+    this.log.info(`Serial Number: ${device.serialNumber}`);
+    this.log.info(`Zones: ${device.zones}`);
 
-    //getSerialNumber
-    //Returns the controller's serial number. For ESP-RZXe this is always 0000000000000000
-    this.log.info(JSON.stringify(rainbird.getSerialNumber()));
-    device.getSerialNumber = JSON.parse(rainbird.getSerialNumber());
-
-    this.log.info(JSON.stringify(device));
-    await this.createValve(device);
+    //await this.createValve(device);
+    await this.createIrrigationSystem(device);
   }
 
-  private async createValve(device) {
+  private async createIrrigationSystem(device: Device): Promise<void> {
+    const uuid = this.api.hap.uuid.generate(`${device.model}-${device.serialNumber}`);
+    const existingAccessory = this.accessories.find((accessory) => accessory.UUID === uuid);
+
+    if (existingAccessory) {
+      this.log.info('Configuring existing accessory for', device.model);
+
+      // Irrigation System
+      existingAccessory.context.timeEnding = [];
+      this.api.updatePlatformAccessories([existingAccessory]);
+      this.configureIrrigationService(existingAccessory.getService(this.Service.IrrigationSystem)!);
+
+      // Valves for zones
+      for(const service of existingAccessory.services) {
+        if (this.Service.Valve.UUID === service.UUID) {
+          this.configureValveService(existingAccessory, service);
+        }
+      }
+    } else {
+      this.log.info('Creating and configuring accessories for', device.model);
+
+      // Irrigation System
+      const irrigationAccessory = new this.api.platformAccessory(device.model, uuid);
+      irrigationAccessory.context.timeEnding = [];
+      const irrigationSystemService = this.createIrrigationService(irrigationAccessory, device);
+      this.configureIrrigationService(irrigationSystemService);
+
+      // Valves for zones
+      for(const zone of device.zones) {
+        const valveService = this.createValveService(irrigationAccessory, zone);
+        irrigationSystemService.addLinkedService(valveService);
+        this.configureValveService(irrigationAccessory, valveService);
+      }
+
+      // Register
+      this.log.debug('Registering platform accessory');
+      this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [irrigationAccessory]);
+      this.accessories.push(irrigationAccessory);
+    }
+  }
+
+  private createIrrigationService(irrigationAccesssory: PlatformAccessory, device: Device): Service {
+    this.log.debug('Create Irrigation service');
+
+    irrigationAccesssory.getService(this.Service.AccessoryInformation)!
+      .setCharacteristic(this.Characteristic.Name, device.model)
+      .setCharacteristic(this.Characteristic.Manufacturer, 'RainBird')
+      .setCharacteristic(this.Characteristic.SerialNumber, device.serialNumber)
+      .setCharacteristic(this.Characteristic.Model, device.model)
+      .setCharacteristic(this.Characteristic.FirmwareRevision, device.version);
+
+    const irrigationSystemService = irrigationAccesssory.addService(this.Service.IrrigationSystem, device.model)
+      .setCharacteristic(this.Characteristic.Name, device.model)
+      .setCharacteristic(this.Characteristic.Active, this.Characteristic.Active.ACTIVE)
+      .setCharacteristic(this.Characteristic.InUse, this.Characteristic.InUse.NOT_IN_USE)
+      .setCharacteristic(this.Characteristic.ProgramMode, this.Characteristic.ProgramMode.NO_PROGRAM_SCHEDULED)
+      .setCharacteristic(this.Characteristic.RemainingDuration, 0)
+      .setCharacteristic(this.Characteristic.StatusFault, this.Characteristic.StatusFault.NO_FAULT);
+
+    return irrigationSystemService;
+  }
+
+  private configureIrrigationService(irrigationSystemService: Service): void {
+    this.log.debug('Configure Irrigation service');
+
+    irrigationSystemService
+      .getCharacteristic(this.Characteristic.Active)
+      .onGet(() => {
+        return irrigationSystemService.getCharacteristic(this.Characteristic.Active).value;
+      })
+      .onSet((value) => {
+        irrigationSystemService.getCharacteristic(this.Characteristic.Active).updateValue(value);
+      });
+
+    irrigationSystemService
+      .getCharacteristic(this.Characteristic.ProgramMode)
+      .onGet(() => {
+        return irrigationSystemService.getCharacteristic(this.Characteristic.ProgramMode).value;
+      });
+
+    irrigationSystemService
+      .getCharacteristic(this.Characteristic.InUse)
+      .onGet(() => {
+        return irrigationSystemService.getCharacteristic(this.Characteristic.InUse).value;
+      });
+
+    irrigationSystemService
+      .getCharacteristic(this.Characteristic.StatusFault)
+      .onGet(() => {
+        return irrigationSystemService.getCharacteristic(this.Characteristic.StatusFault).value;
+      });
+
+    irrigationSystemService
+      .getCharacteristic(this.Characteristic.RemainingDuration)
+      .onGet(() => {
+        return irrigationSystemService.getCharacteristic(this.Characteristic.RemainingDuration).value;
+      });
+  }
+
+  private createValveService(irrigationAccessory: PlatformAccessory, zone: number): Service {
+    this.log.debug('Create Valve service for zone', zone);
+
+    const zoneName = `Zone ${zone}`;
+    const valveService = irrigationAccessory.addService(this.Service.Valve, zoneName, zone);
+    valveService
+      .setCharacteristic(this.Characteristic.Name, zoneName)
+      .setCharacteristic(this.Characteristic.Active, this.Characteristic.Active.INACTIVE)
+      .setCharacteristic(this.Characteristic.InUse, this.Characteristic.InUse.NOT_IN_USE)
+      .setCharacteristic(this.Characteristic.ValveType, this.Characteristic.ValveType.IRRIGATION)
+      .setCharacteristic(this.Characteristic.SetDuration, 300)
+      .setCharacteristic(this.Characteristic.RemainingDuration, 0)
+      .setCharacteristic(this.Characteristic.IsConfigured, this.Characteristic.IsConfigured.CONFIGURED)
+      .setCharacteristic(this.Characteristic.ServiceLabelIndex, zone)
+      .setCharacteristic(this.Characteristic.StatusFault, this.Characteristic.StatusFault.NO_FAULT);
+
+    return valveService;
+  }
+
+  configureValveService(irrigationAccessory: PlatformAccessory, valveService: Service) {
+    const zone = valveService.getCharacteristic(this.Characteristic.ServiceLabelIndex).value as number;
+    this.log.debug('Configure Valve service for zone', zone);
+
+    valveService
+      .getCharacteristic(this.Characteristic.Active)
+      .onGet(() => {
+        return valveService.getCharacteristic(this.Characteristic.Active).value;
+      })
+      .onSet(async (value) => {
+        // Prepare message for API
+        const duration = valveService.getCharacteristic(this.Characteristic.SetDuration).value as number / 60;
+
+        this.log.info(`Zone: ${zone}, Duration: ${duration}, Active: ${value}`);
+
+        if (value === this.Characteristic.Active.ACTIVE) {
+          await this.rainbird!.runZone(zone, duration);
+        } else {
+          await this.rainbird!.stopIrrigation();
+        }
+      });
+
+    valveService
+      .getCharacteristic(this.Characteristic.InUse)
+      .onGet(() => {
+        return valveService.getCharacteristic(this.Characteristic.InUse).value;
+      });
+
+    valveService
+      .getCharacteristic(this.Characteristic.IsConfigured)
+      .onGet(() => {
+        return valveService.getCharacteristic(this.Characteristic.IsConfigured).value;
+      })
+      .onSet((value) => {
+        valveService.getCharacteristic(this.Characteristic.IsConfigured).updateValue(value);
+      });
+
+    valveService
+      .getCharacteristic(this.Characteristic.StatusFault)
+      .onGet(() => {
+        return valveService.getCharacteristic(this.Characteristic.StatusFault).value;
+      });
+
+    valveService
+      .getCharacteristic(this.Characteristic.ValveType)
+      .onGet(() => {
+        return valveService.getCharacteristic(this.Characteristic.ValveType).value;
+      });
+
+    valveService
+      .getCharacteristic(this.Characteristic.SetDuration)
+      .onGet(() => {
+        return valveService.getCharacteristic(this.Characteristic.SetDuration).value;
+      })
+      .onSet((value) => {
+        valveService.getCharacteristic(this.Characteristic.SetDuration).updateValue(value);
+      });
+
+    valveService
+      .getCharacteristic(this.Characteristic.RemainingDuration)
+      .onGet(() => {
+        let timeRemaining = Math.max(Math.round((irrigationAccessory.context.timeEnding[zone] - Date.now()) / 1000), 0);
+        if (isNaN(timeRemaining)) {
+          timeRemaining = 0;
+        }
+        return timeRemaining;
+      });
+
+    irrigationAccessory.context.timeEnding[zone] = 0;
+  }
+
+  /*
+  private async createValve(device: Device) {
     const uuid = this.api.hap.uuid.generate(`${device.name}-${device.deviceID}-${device.deviceModel}`);
 
     // see if an accessory with the same uuid has already been registered and restored from
@@ -249,5 +442,5 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
     this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [existingAccessory]);
     this.log.warn('Removing existing accessory from cache:', existingAccessory.displayName);
   }
-
+  */
 }
