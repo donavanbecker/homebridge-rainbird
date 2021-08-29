@@ -7,13 +7,6 @@ import {
 } from './settings';
 // import { IrrigationSystem } from './devices/irrigationsystem';
 
-type Device = {
-  model: string,
-  version: string,
-  serialNumber: string,
-  zones: number[]
-}
-
 /**
  * HomebridgePlatform
  * This class is the main constructor for your plugin, this is where you should
@@ -141,36 +134,26 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
    */
   private async discoverDevices(): Promise<void> {
 
-    // Get device details
-    const respModelAndVersion = await this.rainbird!.getModelAndVersion();
-    const respSerialNumber = await this.rainbird!.getSerialNumber();
-    const respZones = await this.rainbird!.getAvailableZones();
-
-    const device: Device = {
-      model: respModelAndVersion.modelNumber,
-      version: respModelAndVersion.version,
-      serialNumber: respSerialNumber.serialNumber,
-      zones: respZones.zones,
-    };
+    // Initiliase device details
+    await this.rainbird!.init();
+    this.rainbird!.on('status', this.updateValues.bind(this));
 
     // Display device details
-    this.log.info(`Model: ${device.model} [Version: ${device.version}]`);
-    this.log.info(`Serial Number: ${device.serialNumber}`);
-    this.log.info(`Zones: ${device.zones}`);
+    this.log.info(`Model: ${this.rainbird!.model} [Version: ${this.rainbird!.version}]`);
+    this.log.info(`Serial Number: ${this.rainbird!.serialNumber}`);
+    this.log.info(`Zones: ${this.rainbird!.zones}`);
 
-    //await this.createValve(device);
-    await this.createIrrigationSystem(device);
+    await this.createIrrigationSystem();
   }
 
-  private async createIrrigationSystem(device: Device): Promise<void> {
-    const uuid = this.api.hap.uuid.generate(`${device.model}-${device.serialNumber}`);
+  private async createIrrigationSystem(): Promise<void> {
+    const uuid = this.api.hap.uuid.generate(`${this.rainbird!.model}-${this.rainbird!.serialNumber}`);
     const existingAccessory = this.accessories.find((accessory) => accessory.UUID === uuid);
 
     if (existingAccessory) {
-      this.log.info('Configuring existing accessory for', device.model);
+      this.log.info('Configuring existing accessory for', this.rainbird!.model);
 
       // Irrigation System
-      existingAccessory.context.timeEnding = [];
       this.api.updatePlatformAccessories([existingAccessory]);
       this.configureIrrigationService(existingAccessory.getService(this.Service.IrrigationSystem)!);
 
@@ -181,16 +164,16 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
         }
       }
     } else {
-      this.log.info('Creating and configuring accessories for', device.model);
+      this.log.info('Creating and configuring accessories for', this.rainbird!.model);
 
       // Irrigation System
-      const irrigationAccessory = new this.api.platformAccessory(device.model, uuid);
-      irrigationAccessory.context.timeEnding = [];
-      const irrigationSystemService = this.createIrrigationService(irrigationAccessory, device);
+      const irrigationAccessory = new this.api.platformAccessory(this.rainbird!.model, uuid);
+      //irrigationAccessory.context.timeEnding = [];
+      const irrigationSystemService = this.createIrrigationService(irrigationAccessory);
       this.configureIrrigationService(irrigationSystemService);
 
       // Valves for zones
-      for(const zone of device.zones) {
+      for(const zone of this.rainbird!.zones) {
         const valveService = this.createValveService(irrigationAccessory, zone);
         irrigationSystemService.addLinkedService(valveService);
         this.configureValveService(irrigationAccessory, valveService);
@@ -203,18 +186,18 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
     }
   }
 
-  private createIrrigationService(irrigationAccesssory: PlatformAccessory, device: Device): Service {
+  private createIrrigationService(irrigationAccesssory: PlatformAccessory): Service {
     this.log.debug('Create Irrigation service');
 
     irrigationAccesssory.getService(this.Service.AccessoryInformation)!
-      .setCharacteristic(this.Characteristic.Name, device.model)
+      .setCharacteristic(this.Characteristic.Name, this.rainbird!.model)
       .setCharacteristic(this.Characteristic.Manufacturer, 'RainBird')
-      .setCharacteristic(this.Characteristic.SerialNumber, device.serialNumber)
-      .setCharacteristic(this.Characteristic.Model, device.model)
-      .setCharacteristic(this.Characteristic.FirmwareRevision, device.version);
+      .setCharacteristic(this.Characteristic.SerialNumber, this.rainbird!.serialNumber)
+      .setCharacteristic(this.Characteristic.Model, this.rainbird!.model)
+      .setCharacteristic(this.Characteristic.FirmwareRevision, this.rainbird!.version);
 
-    const irrigationSystemService = irrigationAccesssory.addService(this.Service.IrrigationSystem, device.model)
-      .setCharacteristic(this.Characteristic.Name, device.model)
+    const irrigationSystemService = irrigationAccesssory.addService(this.Service.IrrigationSystem, this.rainbird!.model)
+      .setCharacteristic(this.Characteristic.Name, this.rainbird!.model)
       .setCharacteristic(this.Characteristic.Active, this.Characteristic.Active.ACTIVE)
       .setCharacteristic(this.Characteristic.InUse, this.Characteristic.InUse.NOT_IN_USE)
       .setCharacteristic(this.Characteristic.ProgramMode, this.Characteristic.ProgramMode.NO_PROGRAM_SCHEDULED)
@@ -230,7 +213,9 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
     irrigationSystemService
       .getCharacteristic(this.Characteristic.Active)
       .onGet(() => {
-        return irrigationSystemService.getCharacteristic(this.Characteristic.Active).value;
+        return this.rainbird!.isActive()
+          ? this.Characteristic.Active.ACTIVE
+          : this.Characteristic.Active.INACTIVE;
       })
       .onSet((value) => {
         irrigationSystemService.getCharacteristic(this.Characteristic.Active).updateValue(value);
@@ -245,7 +230,9 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
     irrigationSystemService
       .getCharacteristic(this.Characteristic.InUse)
       .onGet(() => {
-        return irrigationSystemService.getCharacteristic(this.Characteristic.InUse).value;
+        return this.rainbird!.isInUse()
+          ? this.Characteristic.InUse.IN_USE
+          : this.Characteristic.InUse.NOT_IN_USE;
       });
 
     irrigationSystemService
@@ -257,7 +244,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
     irrigationSystemService
       .getCharacteristic(this.Characteristic.RemainingDuration)
       .onGet(() => {
-        return irrigationSystemService.getCharacteristic(this.Characteristic.RemainingDuration).value;
+        return this.rainbird!.durationRemaining();
       });
   }
 
@@ -287,25 +274,24 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
     valveService
       .getCharacteristic(this.Characteristic.Active)
       .onGet(() => {
-        return valveService.getCharacteristic(this.Characteristic.Active).value;
+        return this.rainbird!.isActive(zone)
+          ? this.Characteristic.Active.ACTIVE
+          : this.Characteristic.Active.INACTIVE;
       })
       .onSet(async (value) => {
-        // Prepare message for API
-        const duration = valveService.getCharacteristic(this.Characteristic.SetDuration).value as number / 60;
-
-        this.log.info(`Zone: ${zone}, Duration: ${duration}, Active: ${value}`);
-
         if (value === this.Characteristic.Active.ACTIVE) {
-          await this.rainbird!.runZone(zone, duration);
+          this.rainbird!.activateZone(zone);
         } else {
-          await this.rainbird!.stopIrrigation();
+          await this.rainbird!.deactivateZone(zone);
         }
       });
 
     valveService
       .getCharacteristic(this.Characteristic.InUse)
       .onGet(() => {
-        return valveService.getCharacteristic(this.Characteristic.InUse).value;
+        return this.rainbird!.isInUse(zone)
+          ? this.Characteristic.InUse.IN_USE
+          : this.Characteristic.InUse.NOT_IN_USE;
       });
 
     valveService
@@ -332,23 +318,48 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
     valveService
       .getCharacteristic(this.Characteristic.SetDuration)
       .onGet(() => {
-        return valveService.getCharacteristic(this.Characteristic.SetDuration).value;
+        return this.rainbird!.duration(zone);
       })
       .onSet((value) => {
-        valveService.getCharacteristic(this.Characteristic.SetDuration).updateValue(value);
+        this.rainbird!.setDuration(zone, value as number);
       });
 
     valveService
       .getCharacteristic(this.Characteristic.RemainingDuration)
       .onGet(() => {
-        let timeRemaining = Math.max(Math.round((irrigationAccessory.context.timeEnding[zone] - Date.now()) / 1000), 0);
-        if (isNaN(timeRemaining)) {
-          timeRemaining = 0;
-        }
-        return timeRemaining;
+        return this.rainbird!.durationRemaining(zone);
       });
+  }
 
-    irrigationAccessory.context.timeEnding[zone] = 0;
+  private updateValues(): void {
+    this.log.debug('Updating values');
+
+    for (const accessory of this.accessories) {
+      for (const service of accessory.services) {
+        if (service instanceof this.Service.IrrigationSystem) {
+          service
+            .getCharacteristic(this.Characteristic.Active)
+            .updateValue(this.rainbird!.isActive() ? this.Characteristic.Active.ACTIVE : this.Characteristic.Active.INACTIVE);
+          service
+            .getCharacteristic(this.Characteristic.InUse)
+            .updateValue(this.rainbird!.isInUse() ? this.Characteristic.InUse.IN_USE : this.Characteristic.InUse.NOT_IN_USE);
+          service
+            .getCharacteristic(this.Characteristic.RemainingDuration)
+            .updateValue(this.rainbird!.durationRemaining());
+        } else if (service instanceof this.Service.Valve) {
+          const zone = service.getCharacteristic(this.Characteristic.ServiceLabelIndex).value as number;
+          service
+            .getCharacteristic(this.Characteristic.Active)
+            .updateValue(this.rainbird!.isActive(zone) ? this.Characteristic.Active.ACTIVE : this.Characteristic.Active.INACTIVE);
+          service
+            .getCharacteristic(this.Characteristic.InUse)
+            .updateValue(this.rainbird!.isInUse(zone) ? this.Characteristic.InUse.IN_USE : this.Characteristic.InUse.NOT_IN_USE);
+          service
+            .getCharacteristic(this.Characteristic.RemainingDuration)
+            .updateValue(this.rainbird!.durationRemaining(zone));
+        }
+      }
+    }
   }
 
   /*

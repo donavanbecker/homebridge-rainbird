@@ -16,6 +16,8 @@ export class ModelAndVersionResponse extends Response {
 
   get modelNumber(): string {
     switch (this._modelNumber) {
+      case 0x0003:
+        return 'ESP-RZXe';
       case 0x010A:
         return 'ESP-TM2';
       default:
