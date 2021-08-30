@@ -41,7 +41,6 @@
     "aes-js": "^3.1.2",
     "node-fetch": "^2.6.1",
     "queue": "^6.0.2",
-    "rxjs": "^7.3.0",
     "text-encoder": "0.0.4"
   },
   "devDependencies": {

@@ -99,8 +99,8 @@ export class Irrigation {
       if (this.platform.debugMode) {
         this.platform.log.warn('Adding service');
       }
-      this.valveService = this.accessory.getService(`${rainbird.model} Zone: ${zone}`) ||
-      this.accessory.addService(this.platform.Service.Valve, `${rainbird.model} Zone: ${zone}`);
+      this.valveService = this.accessory.getService(rainbird.model) ||
+      this.accessory.addService(this.platform.Service.Valve, rainbird.model, zone);
 
       const zoneName = `Zone ${zone}`;
       this.valveService
