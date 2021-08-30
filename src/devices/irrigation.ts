@@ -99,10 +99,10 @@ export class Irrigation {
       if (this.platform.debugMode) {
         this.platform.log.warn('Adding service');
       }
-      this.valveService = this.accessory.getService(rainbird.model) ||
-      this.accessory.addService(this.platform.Service.Valve, rainbird.model, zone);
-
       const zoneName = `Zone ${zone}`;
+      this.platform.log.debug('Create Valve service for zone', zone);
+      this.valveService = this.accessory.getService(zoneName) ||
+      this.accessory.addService(this.platform.Service.Valve, zoneName, zone);
       this.valveService
         .setCharacteristic(this.platform.Characteristic.Name, zoneName)
         .setCharacteristic(this.platform.Characteristic.Active, this.platform.Characteristic.Active.INACTIVE)
