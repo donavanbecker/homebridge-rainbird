@@ -41,6 +41,8 @@ export class IrrigationSystem {
     public device: DevicesConfig,
     public rainbird: RainBirdClient,
   ) {
+    this.ValveRemainingDuration = 0;
+    this.ValveSetDuration = 0;
     // Initiliase device details
     rainbird!.on('status', this.refreshStatus);
 
@@ -99,7 +101,7 @@ export class IrrigationSystem {
 
     this.service.getCharacteristic(this.platform.Characteristic.RemainingDuration)
       .onGet(() => {
-        return this.RemainingDuration;
+        return Number(this.RemainingDuration);
       });
 
     // Valves for zones
@@ -161,14 +163,14 @@ export class IrrigationSystem {
       this.valveService
         .getCharacteristic(this.platform.Characteristic.SetDuration)
         .onGet(() => {
-          return this.ValveSetDuration;
+          return Number(this.ValveSetDuration);
         })
         .onSet(this.setValveSetDuration.bind(this));
 
       this.valveService
         .getCharacteristic(this.platform.Characteristic.RemainingDuration)
         .onGet(() => {
-          return this.ValveRemainingDuration;
+          return Number(this.ValveRemainingDuration);
         });
 
       //Initial Device Parse
@@ -218,9 +220,7 @@ export class IrrigationSystem {
       this.InUse = this.platform.Characteristic.InUse.NOT_IN_USE;
     }
     // Irrigation Remaining Duration
-    if (this.RemainingDuration !== undefined) {
-      this.RemainingDuration = this.rainbird!.durationRemaining();
-    }
+    this.RemainingDuration = this.rainbird!.durationRemaining();
     // Valve Active
     if (this.rainbird!.isActive(this.valveZone)) {
       this.ValveActive = this.platform.Characteristic.Active.ACTIVE;
@@ -234,13 +234,9 @@ export class IrrigationSystem {
       this.ValveInUse = this.platform.Characteristic.InUse.NOT_IN_USE;
     }
     // Valve SetDuration
-    if (this.ValveSetDuration !== undefined) {
-      this.ValveSetDuration = this.rainbird!.duration(this.valveZone);
-    }
+    this.ValveSetDuration = this.rainbird!.duration(this.valveZone);
     // Valve RemainingDuration
-    if (this.ValveRemainingDuration !== undefined) {
-      this.ValveRemainingDuration = this.rainbird!.durationRemaining(this.valveZone);
-    }
+    this.ValveRemainingDuration = this.rainbird!.durationRemaining(this.valveZone);
   }
 
   /**
