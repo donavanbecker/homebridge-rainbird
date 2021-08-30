@@ -10,7 +10,7 @@ export const PLATFORM_NAME = 'RainBird';
 export const PLUGIN_NAME = 'homebridge-rainbird';
 
 //Config
-export interface HoneywellPlatformConfig extends PlatformConfig {
+export interface RainbirdPlatformConfig extends PlatformConfig {
   devices?: Array<DevicesConfig>;
   disablePlugin?: boolean;
   options?: options | Record<string, never>;

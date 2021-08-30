@@ -1,5 +1,5 @@
-# Add 'branding' to any file changes within 'honeywell' folder
-branding: honeywell/*
+# Add 'branding' to any file changes within 'rainbird' folder
+branding: rainbird/*
 
 # Add 'enhancement' label to any change to index.js file
 enhancement:

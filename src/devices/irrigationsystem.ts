@@ -8,13 +8,9 @@ import { DevicesConfig } from '../settings';
  * An instance of this class is created for each accessory your platform registers
  * Each accessory may expose multiple services of different service types.
  */
-export class Irrigation {
+export class IrrigationSystem {
   private service!: Service;
   valveService!: Service;
-
-  //Irrigation Updates
-  valveUpdateInProgress!: boolean;
-  doValveUpdate;//: Subject<any>;
 
   constructor(
     private readonly platform: RainbirdPlatform,
@@ -23,10 +19,9 @@ export class Irrigation {
     public rainbird: RainBirdClient,
   ) {
     // Initiliase device details
-    //rainbird!.init();
     rainbird!.on('status', this.updateValues.bind(this, rainbird));
 
-    // set accessory information
+    // Set accessory information
     accessory
       .getService(this.platform.Service.AccessoryInformation)!
       .setCharacteristic(this.platform.Characteristic.Manufacturer, 'RainBird')
@@ -35,33 +30,25 @@ export class Irrigation {
       .setCharacteristic(this.platform.Characteristic.FirmwareRevision, accessory.context.FirmwareRevision || rainbird!.version)
       .getCharacteristic(this.platform.Characteristic.FirmwareRevision).updateValue(accessory.context.FirmwareRevision);
 
-    // Display device details
-    //this.platform.log.info(`Model: ${rainbird!.model} [Version: ${rainbird!.version}]`);
-    //this.platform.log.info(`Serial Number: ${rainbird!.serialNumber}`);
-    //this.platform.log.info(`Zones: ${rainbird!.zones}`);
-
-
-    //Irrigation Service
-    this.platform.log.debug('Configure Irrigation service');
+    // Irrigation Service
+    this.platform.log.debug('Configure Irrigation Service');
     (this.service =
       this.accessory.getService(this.platform.Service.IrrigationSystem) ||
       this.accessory.addService(this.platform.Service.IrrigationSystem)), accessory.displayName;
 
-    //Service Name
+    // Service Name
     this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.displayName);
-    //Required Characteristics" see https://developers.homebridge.io/#/service/Irrigation
+    // Required Characteristics" see https://developers.homebridge.io/#/service/IrrigationSystem
 
-    //Add Irrigation Service's Characteristics
-    //this.service = accessory.addService(this.platform.Service.IrrigationSystem, rainbird!.model)
+    // Add Irrigation Service's Characteristics
     this.service
-      //.setCharacteristic(this.platform.Characteristic.Name, rainbird!.model)
       .setCharacteristic(this.platform.Characteristic.Active, this.platform.Characteristic.Active.ACTIVE)
       .setCharacteristic(this.platform.Characteristic.InUse, this.platform.Characteristic.InUse.NOT_IN_USE)
       .setCharacteristic(this.platform.Characteristic.ProgramMode, this.platform.Characteristic.ProgramMode.NO_PROGRAM_SCHEDULED)
       .setCharacteristic(this.platform.Characteristic.RemainingDuration, 0)
       .setCharacteristic(this.platform.Characteristic.StatusFault, this.platform.Characteristic.StatusFault.NO_FAULT);
 
-    // create handlers for required characteristics
+    // Create handlers for required characteristics
     this.service.getCharacteristic(this.platform.Characteristic.Active)
       .onGet(() => {
         return rainbird!.isActive()

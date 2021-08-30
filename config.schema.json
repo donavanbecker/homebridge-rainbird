@@ -22,7 +22,7 @@
           "properties": {
             "ipaddress": {
               "title": "IP Address",
-              "description": "The device's IP address. It is recommended to set a static IP for the device.",
+              "description": "The device's Static IP address. Recommended to set this device's IP with a Static IP.",
               "type": "string",
               "format": "ipv4",
               "placeholder": "192.168.1.1",

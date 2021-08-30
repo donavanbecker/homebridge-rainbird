@@ -3,10 +3,10 @@ import { RainBirdClient } from './RainBirdClient/RainBirdClient';
 import {
   PLATFORM_NAME,
   PLUGIN_NAME,
-  HoneywellPlatformConfig,
+  RainbirdPlatformConfig,
   DevicesConfig,
 } from './settings';
-import { Irrigation } from './devices/irrigation';
+import { IrrigationSystem } from './devices/irrigationsystem';
 
 /**
  * HomebridgePlatform
@@ -26,7 +26,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
   debugMode!: boolean;
   rainbirdDebugMode!: boolean;
 
-  constructor(public readonly log: Logger, public readonly config: HoneywellPlatformConfig, public readonly api: API) {
+  constructor(public readonly log: Logger, public readonly config: RainbirdPlatformConfig, public readonly api: API) {
     this.log.debug('Finished initializing platform:', this.config.name);
     // only load if configured
     if (!this.config) {
@@ -131,18 +131,21 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
     for (const device of this.config.devices!) {
       const rainbird = new RainBirdClient(device.ipaddress!, device.password!, this.log);
       await rainbird!.init();
-      //rainbird!.on('status', this.updateValues.bind(this, rainbird));
 
       // Display device details
-      this.log.info(`Model: ${rainbird!.model} [Version: ${rainbird!.version}]`);
-      this.log.info(`Serial Number: ${rainbird!.serialNumber}`);
-      this.log.info(`Zones: ${rainbird!.zones}`);
-      await this.createIrrigation(device, rainbird);
+      this.log.info(
+        'Model: %s, [Version: %s, Serial Number: %s, Zones: %s]',
+        rainbird!.model,
+        rainbird!.version,
+        rainbird!.serialNumber,
+        rainbird!.zones,
+      );
+      await this.createIrrigationSystem(device, rainbird);
     }
   }
 
-  private async createIrrigation(device: DevicesConfig, rainbird:RainBirdClient) {
-    const uuid = this.api.hap.uuid.generate(`${rainbird!.model}-${rainbird!.serialNumber}`);
+  private async createIrrigationSystem(device: DevicesConfig, rainbird: RainBirdClient) {
+    const uuid = this.api.hap.uuid.generate(`${device.ipaddress}-${rainbird!.model}-${rainbird!.serialNumber}`);
     // see if an accessory with the same uuid has already been registered and restored from
     // the cached devices we stored in the `configureAccessory` method above
     const existingAccessory = this.accessories.find((accessory) => accessory.UUID === uuid);
@@ -163,8 +166,10 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
         this.api.updatePlatformAccessories([existingAccessory]);
         // create the accessory handler for the restored accessory
         // this is imported from `platformAccessory.ts`
-        new Irrigation(this, existingAccessory, device, rainbird);
-        this.log.debug(`Irrigation UDID: ${rainbird!.model}-${rainbird!.serialNumber}`);
+        new IrrigationSystem(this, existingAccessory, device, rainbird);
+        if (this.debugMode) {
+          this.log.warn(`Irrigation System UDID: ${device.ipaddress}-${rainbird!.model}-${rainbird!.serialNumber}`);
+        }
 
       } else {
         this.unregisterPlatformAccessories(existingAccessory);
@@ -187,8 +192,10 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
       accessory.context.FirmwareRevision = rainbird!.version;
       // create the accessory handler for the newly create accessory
       // this is imported from `platformAccessory.ts`
-      new Irrigation(this, accessory, device, rainbird);
-      this.log.debug(`Irrigation UDID: ${rainbird!.model}-${rainbird!.serialNumber}`);
+      new IrrigationSystem(this, accessory, device, rainbird);
+      if (this.debugMode) {
+        this.log.warn(`Irrigation System UDID: ${device.ipaddress}-${rainbird!.model}-${rainbird!.serialNumber}`);
+      }
 
       // link the accessory to your platform
       this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
@@ -205,36 +212,5 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
     // remove platform accessories when no longer present
     this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [existingAccessory]);
     this.log.warn('Removing existing accessory from cache:', existingAccessory.displayName);
-  }
-
-  public updateValues(rainbird: RainBirdClient): void {
-    this.log.debug('Updating values');
-
-    for (const accessory of this.accessories) {
-      for (const service of accessory.services) {
-        if (service instanceof this.Service.IrrigationSystem) {
-          service
-            .getCharacteristic(this.Characteristic.Active)
-            .updateValue(rainbird!.isActive() ? this.Characteristic.Active.ACTIVE : this.Characteristic.Active.INACTIVE);
-          service
-            .getCharacteristic(this.Characteristic.InUse)
-            .updateValue(rainbird!.isInUse() ? this.Characteristic.InUse.IN_USE : this.Characteristic.InUse.NOT_IN_USE);
-          service
-            .getCharacteristic(this.Characteristic.RemainingDuration)
-            .updateValue(rainbird!.durationRemaining());
-        } else if (service instanceof this.Service.Valve) {
-          const zone = service.getCharacteristic(this.Characteristic.ServiceLabelIndex).value as number;
-          service
-            .getCharacteristic(this.Characteristic.Active)
-            .updateValue(rainbird!.isActive(zone) ? this.Characteristic.Active.ACTIVE : this.Characteristic.Active.INACTIVE);
-          service
-            .getCharacteristic(this.Characteristic.InUse)
-            .updateValue(rainbird!.isInUse(zone) ? this.Characteristic.InUse.IN_USE : this.Characteristic.InUse.NOT_IN_USE);
-          service
-            .getCharacteristic(this.Characteristic.RemainingDuration)
-            .updateValue(rainbird!.durationRemaining(zone));
-        }
-      }
-    }
   }
 }
