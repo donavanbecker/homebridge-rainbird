@@ -114,6 +114,7 @@ export class Irrigation {
         .setCharacteristic(this.platform.Characteristic.ServiceLabelIndex, zone)
         .setCharacteristic(this.platform.Characteristic.StatusFault, this.platform.Characteristic.StatusFault.NO_FAULT);
 
+      this.service.addLinkedService(this.valveService);
       const valveZone = this.valveService.getCharacteristic(this.platform.Characteristic.ServiceLabelIndex).value as number;
       this.platform.log.debug('Configure Valve service for zone', valveZone);
 
