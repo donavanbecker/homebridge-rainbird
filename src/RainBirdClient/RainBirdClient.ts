@@ -20,7 +20,7 @@ import { RunZoneRequest } from './requests/RunZoneRequest';
 import { StopIrrigationRequest } from './requests/StopIrrigationRequest';
 import { ControllerStateResponse } from './responses/ControllerStateResponse';
 
-type Zones = Record<number, {active: boolean, duration: number, startTime?: Date}>;
+type Zones = Record<number, { active: boolean, duration: number, startTime?: Date }>;
 
 export class RainBirdClient extends events.EventEmitter {
 
@@ -55,7 +55,7 @@ export class RainBirdClient extends events.EventEmitter {
     this._model = respModelAndVersion.modelNumber;
     this._version = respModelAndVersion.version;
     this._serialNumber = respSerialNumber.serialNumber;
-    for(const zone of respZones.zones) {
+    for (const zone of respZones.zones) {
       this._zones[zone] = {
         active: false,
         duration: 300,
@@ -102,7 +102,7 @@ export class RainBirdClient extends events.EventEmitter {
   durationRemaining(zone?: number): number {
     if (zone === undefined) {
       let remaining = 0;
-      for(const zone of this.zones) {
+      for (const zone of this.zones) {
         remaining += this.calcDurationRemaining(zone);
       }
       return remaining;
@@ -227,7 +227,7 @@ export class RainBirdClient extends events.EventEmitter {
       const response = this.getResponse(encryptedResponse);
 
       return response;
-    } catch(error) {
+    } catch (error) {
       this.log.error(`Send Request Failed: ${error}`);
       throw error;
     }

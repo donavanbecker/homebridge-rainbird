@@ -100,8 +100,8 @@ export class Irrigation {
         this.platform.log.warn('Adding service');
       }
       (this.valveService =
-          this.accessory.getService(this.platform.Service.Valve) ||
-          this.accessory.addService(this.platform.Service.Valve)), '%s\'s Zone: %s ', rainbird.model, zone;
+        this.accessory.getService(this.platform.Service.Valve) ||
+        this.accessory.addService(this.platform.Service.Valve)), '%s\'s Zone: %s ', rainbird.model, zone;
 
       const zoneName = `Zone ${zone}`;
       this.valveService
@@ -127,7 +127,7 @@ export class Irrigation {
         })
         .onSet(async (value) => {
           if (value === this.platform.Characteristic.Active.ACTIVE) {
-              this.rainbird!.activateZone(valveZone);
+            this.rainbird!.activateZone(valveZone);
           } else {
             await this.rainbird!.deactivateZone(valveZone);
           }
@@ -168,7 +168,7 @@ export class Irrigation {
           return this.rainbird!.duration(valveZone);
         })
         .onSet((value) => {
-            this.rainbird!.setDuration(valveZone, value as number);
+          this.rainbird!.setDuration(valveZone, value as number);
         });
 
       this.valveService

@@ -9,7 +9,7 @@ export class AvailableZonesResponse extends Response {
 
     this._page = response[1];
     let zones = response.readUInt32LE(2);
-    for(let i = 0; i < 32; i++) {
+    for (let i = 0; i < 32; i++) {
       if ((zones & 1) === 1) {
         this._zones.push(i + 1);
         zones = zones >>> 1;

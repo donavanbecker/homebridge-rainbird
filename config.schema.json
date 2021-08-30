@@ -39,74 +39,6 @@
           }
         }
       },
-      "options": {
-        "type": "object",
-        "properties": {
-          "refreshRate": {
-            "title": "Refresh Rate",
-            "type": "number",
-            "minimum": 120,
-            "placeholder": 900,
-            "description": "Indicates the number of seconds between polls of the Honeywell Home service."
-          },
-          "pushRate": {
-            "title": "Push Rate",
-            "type": "number",
-            "placeholder": 1,
-            "description": "Indicates the number of seconds between pushes to Honewell Home API."
-          },
-          "hide_device": {
-            "title": "Hide Device",
-            "type": "array",
-            "items": {
-              "type": "string"
-            }
-          },
-          "thermostat": {
-            "title": "Thermostat",
-            "type": "object",
-            "properties": {
-              "hide_fan": {
-                "title": "Hide Thermostat Fan",
-                "type": "boolean",
-                "requried": false
-              },
-              "hide_humidity": {
-                "title": "Hide Humidity Service",
-                "type": "boolean",
-                "required": false
-              },
-              "thermostatSetpointStatus": {
-                "title": "Thermostat Setpoint Status",
-                "type": "string",
-                "description": "For \"LCC-\" devices only. \"PermanentHold\" will hold the setpoint until user requests another change. \"NoHold\" will return to schedule. \"TemporaryHold\" will hold the set temperature until \"nextPeriodTime\".",
-                "required": true,
-                "default": "PermanentHold",
-                "oneOf": [
-                  {
-                    "title": "No Hold",
-                    "enum": [
-                      "NoHold"
-                    ]
-                  },
-                  {
-                    "title": "Permanent Hold",
-                    "enum": [
-                      "PermanentHold"
-                    ]
-                  },
-                  {
-                    "title": "Temporary Hold",
-                    "enum": [
-                      "TemporaryHold"
-                    ]
-                  }
-                ]
-              }
-            }
-          }
-        }
-      },
       "disablePlugin": {
         "title": "Disable Plugin",
         "type": "boolean"
@@ -139,22 +71,6 @@
       "expandable": true,
       "expanded": false,
       "items": [
-        {
-          "type": "help",
-          "helpvalue": "<h5>Refresh Rate</h5><em class='primary-text'>Refresh Rate indicates the number of seconds between polls of the Honeywell Home service.</em>"
-        },
-        {
-          "key": "options.refreshRate",
-          "notitle": true
-        },
-        {
-          "type": "help",
-          "helpvalue": "<h5>Push Rate</h5><em class='primary-text'>Push Rate indicates the number of seconds between pushes to Honeywell Home API.</em>"
-        },
-        {
-          "key": "options.pushRate",
-          "notitle": true
-        },
         {
           "key": "disablePlugin",
           "title": "Disable Plugin",
