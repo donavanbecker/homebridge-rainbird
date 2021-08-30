@@ -130,10 +130,13 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
 
       // Display device details
       this.log.info(
-        'Model: %s, [Version: %s, Serial Number: %s, Zones: %s]',
+        'Model: %s, [Version: %s, Serial Number: %s]',
         rainbird!.model,
         rainbird!.version,
         rainbird!.serialNumber,
+      );
+      this.log.info(
+        'Zones: %s',
         rainbird!.zones,
       );
       await this.createIrrigationSystem(device, rainbird);

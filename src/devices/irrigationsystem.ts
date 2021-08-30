@@ -48,7 +48,6 @@ export class IrrigationSystem {
     this.doIrrigationSystemUpdate = new Subject();
     this.irrigationSystemUpdateInProgress = false;
 
-
     // Set accessory information
     accessory
       .getService(this.platform.Service.AccessoryInformation)!
