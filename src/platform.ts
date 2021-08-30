@@ -98,17 +98,13 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
 
     this.config.options = this.config.options || {};
 
-    if (this.config.options!.refreshRate! < 120) {
-      throw new Error('Refresh Rate must be above 120 (2 minutes).');
-    }
-
     if (this.config.disablePlugin) {
       this.log.error('Plugin is disabled.');
     }
 
     if (!this.config.options.refreshRate && !this.config.disablePlugin) {
-      // default 900 seconds (15 minutes)
-      this.config.options!.refreshRate! = 900;
+      // default 300 seconds (5 minutes)
+      this.config.options!.refreshRate! = 300;
       if (this.debugMode) {
         this.log.warn('Using Default Refresh Rate.');
       }

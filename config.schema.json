@@ -39,6 +39,24 @@
           }
         }
       },
+      "options": {
+        "type": "object",
+        "properties": {
+          "refreshRate": {
+            "title": "Refresh Rate",
+            "type": "number",
+            "minimum": 120,
+            "placeholder": 900,
+            "description": "Indicates the number of seconds between refreshes of the Rainbird Client."
+          },
+          "pushRate": {
+            "title": "Push Rate",
+            "type": "number",
+            "placeholder": 1,
+            "description": "Indicates the number of seconds between pushes to Rainbird Client."
+          }
+        }
+      },
       "disablePlugin": {
         "title": "Disable Plugin",
         "type": "boolean"
@@ -71,6 +89,22 @@
       "expandable": true,
       "expanded": false,
       "items": [
+        {
+          "type": "help",
+          "helpvalue": "<h5>Refresh Rate</h5><em class='primary-text'>Refresh Rate indicates the number of seconds between refreshes of the RainbirdClient.</em>"
+        },
+        {
+          "key": "options.refreshRate",
+          "notitle": true
+        },
+        {
+          "type": "help",
+          "helpvalue": "<h5>Push Rate</h5><em class='primary-text'>Push Rate indicates the number of seconds between pushes to Rainbird Client.</em>"
+        },
+        {
+          "key": "options.pushRate",
+          "notitle": true
+        },
         {
           "key": "disablePlugin",
           "title": "Disable Plugin",

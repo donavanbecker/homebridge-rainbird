@@ -203,7 +203,7 @@ export class IrrigationSystem {
   }
 
   /**
-   * Parse the device status from the honeywell api
+   * Parse the device status from the RainbirdClient
    */
   parseStatus() {
     // Irrigation Active
@@ -240,7 +240,7 @@ export class IrrigationSystem {
   }
 
   /**
-   * Asks the Honeywell Home API for the latest device information
+   * Asks the RainbirdClient for the latest device information
    */
   async refreshStatus() {
     try {
@@ -286,7 +286,7 @@ export class IrrigationSystem {
   }
 
   /**
-   * Pushes the requested changes to the Honeywell API
+   * Pushes the requested changes to the RainbirdClient
    */
   async pushChanges() {
     this.rainbird!.setDuration(this.valveZone, Number(this.ValveSetDuration));
