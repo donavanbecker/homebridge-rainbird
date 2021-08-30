@@ -68,9 +68,6 @@ export class IrrigationSystem {
     this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.displayName);
     // Required Characteristics" see https://developers.homebridge.io/#/service/IrrigationSystem
 
-    //Initial Device Parse
-    this.parseStatus();
-
     // Add Irrigation Service's Characteristics
     this.service
       .setCharacteristic(this.platform.Characteristic.Active, this.platform.Characteristic.Active.ACTIVE)
@@ -174,6 +171,9 @@ export class IrrigationSystem {
         .onGet(() => {
           return this.ValveRemainingDuration;
         });
+
+      //Initial Device Parse
+      this.parseStatus();
     }
 
     // Start an update interval
@@ -219,8 +219,9 @@ export class IrrigationSystem {
       this.InUse = this.platform.Characteristic.InUse.NOT_IN_USE;
     }
     // Irrigation Remaining Duration
-    this.RemainingDuration = this.rainbird!.durationRemaining();
-
+    if (this.RemainingDuration !== undefined) {
+      this.RemainingDuration = this.rainbird!.durationRemaining();
+    }
     // Valve Active
     if (this.rainbird!.isActive(this.valveZone)) {
       this.ValveActive = this.platform.Characteristic.Active.ACTIVE;
@@ -234,9 +235,13 @@ export class IrrigationSystem {
       this.ValveInUse = this.platform.Characteristic.InUse.NOT_IN_USE;
     }
     // Valve SetDuration
-    this.ValveSetDuration = this.rainbird!.duration(this.valveZone);
+    if (this.ValveSetDuration !== undefined) {
+      this.ValveSetDuration = this.rainbird!.duration(this.valveZone);
+    }
     // Valve RemainingDuration
-    this.ValveRemainingDuration = this.rainbird!.durationRemaining(this.valveZone);
+    if (this.ValveRemainingDuration !== undefined) {
+      this.ValveRemainingDuration = this.rainbird!.durationRemaining(this.valveZone);
+    }
   }
 
   /**
@@ -311,6 +316,9 @@ export class IrrigationSystem {
    * Updates the status for each of the HomeKit Characteristics
    */
   updateHomeKitCharacteristics() {
+    if (this.Active !== undefined) {
+      this.service?.updateCharacteristic(this.platform.Characteristic.Active, this.Active);
+    }
     if (this.ValveActive !== undefined) {
       this.valveService?.updateCharacteristic(this.platform.Characteristic.Active, this.ValveActive);
     }
