@@ -193,7 +193,7 @@ export class IrrigationSystem {
       .subscribe(async () => {
         try {
           await this.pushChanges();
-        } catch (e) {
+        } catch (e: any) {
           this.platform.log.error(JSON.stringify(e.message));
           this.platform.log.debug('Irrigation System %s -', this.accessory.displayName, JSON.stringify(e));
           this.apiError(e);
@@ -274,7 +274,7 @@ export class IrrigationSystem {
       }
       this.parseStatus();
       this.updateHomeKitCharacteristics();
-    } catch (e) {
+    } catch (e: any) {
       this.platform.log.error(
         'Irrigation System - Failed to update status of',
         this.accessory.displayName,
