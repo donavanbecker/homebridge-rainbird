@@ -24,7 +24,7 @@ export class Irrigation {
   ) {
     // Initiliase device details
     rainbird!.init();
-    rainbird!.on('status', this.platform.updateValues.bind(this, rainbird));
+    rainbird!.on('status', this.updateValues.bind(this, rainbird));
 
     // set accessory information
     accessory
@@ -176,6 +176,37 @@ export class Irrigation {
         .onGet(() => {
           return this.rainbird!.durationRemaining(valveZone);
         });
+    }
+  }
+
+  public updateValues(rainbird: RainBirdClient): void {
+    this.platform.log.debug('Updating values');
+
+    for (const accessory of this.platform.accessories) {
+      for (const service of accessory.services) {
+        if (service instanceof this.platform.Service.IrrigationSystem) {
+          service
+            .getCharacteristic(this.platform.Characteristic.Active)
+            .updateValue(rainbird!.isActive() ? this.platform.Characteristic.Active.ACTIVE : this.platform.Characteristic.Active.INACTIVE);
+          service
+            .getCharacteristic(this.platform.Characteristic.InUse)
+            .updateValue(rainbird!.isInUse() ? this.platform.Characteristic.InUse.IN_USE : this.platform.Characteristic.InUse.NOT_IN_USE);
+          service
+            .getCharacteristic(this.platform.Characteristic.RemainingDuration)
+            .updateValue(rainbird!.durationRemaining());
+        } else if (service instanceof this.platform.Service.Valve) {
+          const zone = service.getCharacteristic(this.platform.Characteristic.ServiceLabelIndex).value as number;
+          service
+            .getCharacteristic(this.platform.Characteristic.Active)
+            .updateValue(rainbird!.isActive(zone) ? this.platform.Characteristic.Active.ACTIVE : this.platform.Characteristic.Active.INACTIVE);
+          service
+            .getCharacteristic(this.platform.Characteristic.InUse)
+            .updateValue(rainbird!.isInUse(zone) ? this.platform.Characteristic.InUse.IN_USE : this.platform.Characteristic.InUse.NOT_IN_USE);
+          service
+            .getCharacteristic(this.platform.Characteristic.RemainingDuration)
+            .updateValue(rainbird!.durationRemaining(zone));
+        }
+      }
     }
   }
 }
