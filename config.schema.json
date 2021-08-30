@@ -14,18 +14,29 @@
         "default": "RainBird",
         "required": true
       },
-      "ipaddress": {
-        "title": "IP Address",
-        "type": "string",
-        "format": "ipv4",
-        "required": true
-      },
-      "password": {
-        "title": "Password",
-        "type": "string",
-        "required": true,
-        "x-schema-form": {
-          "type": "password"
+      "devices": {
+        "type": "array",
+        "items": {
+          "title": "Devices",
+          "type": "object",
+          "properties": {
+            "ipaddress": {
+              "title": "IP Address",
+              "description": "The device's IP address. It is recommended to set a static IP for the device.",
+              "type": "string",
+              "format": "ipv4",
+              "placeholder": "192.168.1.1",
+              "required": true
+            },
+            "password": {
+              "title": "Password",
+              "type": "string",
+              "required": true,
+              "x-schema-form": {
+                "type": "password"
+              }
+            }
+          }
         }
       },
       "options": {
@@ -93,91 +104,8 @@
                 ]
               }
             }
-          },
-          "leaksensor": {
-            "title": "Leak Sensor",
-            "type": "object",
-            "properties": {
-              "hide_leak": {
-                "title": "Hide Leak Service",
-                "type": "boolean",
-                "required": false
-              },
-              "hide_temperature": {
-                "title": "Hide Temperature Service",
-                "type": "boolean",
-                "required": false
-              },
-              "hide_humidity": {
-                "title": "Hide Humidity Service",
-                "type": "boolean",
-                "required": false
-              }
-            }
-          },
-          "roomsensor": {
-            "title": "Room Sensor",
-            "type": "object",
-            "properties": {
-              "hide_temperature": {
-                "title": "Hide Temperature Service",
-                "type": "boolean",
-                "requried": false
-              },
-              "hide_humidity": {
-                "title": "Hide Humidity Service",
-                "type": "boolean",
-                "requried": false
-              },
-              "hide_occupancy": {
-                "title": "Hide Occupancy Service",
-                "type": "boolean",
-                "requried": false
-              }
-            }
-          },
-          "roompriority": {
-            "title": "Room Priority",
-            "type": "object",
-            "properties": {
-              "thermostat": {
-                "title": "Thermostat Room Priority",
-                "type": "boolean",
-                "requried": false
-              },
-              "priorityType": {
-                "title": "Priority Type",
-                "type": "string",
-                "required": true,
-                "default": "PickARoom",
-                "oneOf": [
-                  {
-                    "title": "Pick A Room",
-                    "enum": [
-                      "PickARoom"
-                    ]
-                  },
-                  {
-                    "title": "Whole House",
-                    "enum": [
-                      "WholeHouse"
-                    ]
-                  },
-                  {
-                    "title": "Follow Me",
-                    "enum": [
-                      "FollowMe"
-                    ]
-                  }
-                ]
-              }
-            }
           }
         }
-      },
-      "devicediscovery": {
-        "name": "Device Discovery",
-        "type": "boolean"
       },
       "disablePlugin": {
         "title": "Disable Plugin",
@@ -186,8 +114,25 @@
     }
   },
   "layout": [
-    "ipaddress",
-    "password",
+    {
+      "type": "fieldset",
+      "title": "Devices",
+      "expandable": true,
+      "expanded": true,
+      "items": [
+        {
+          "key": "devices",
+          "notitle": true,
+          "type": "array",
+          "orderable": false,
+          "buttonText": "Add Device",
+          "items": [
+            "devices[].ipaddress",
+            "devices[].password"
+          ]
+        }
+      ]
+    },
     {
       "type": "fieldset",
       "title": "Advanced Settings",
@@ -209,42 +154,6 @@
         {
           "key": "options.pushRate",
           "notitle": true
-        },
-        {
-          "type": "fieldset",
-          "title": "Hidden Devices",
-          "expandable": true,
-          "expanded": false,
-          "items": [
-            {
-              "type": "help",
-              "helpvalue": "<h5>Hide Device</h5><em class='primary-text'>Hide Device allows you to hide a device using it's deviceID.</em>"
-            },
-            {
-              "key": "options.hide_device",
-              "notitle": true,
-              "add": "Add Another Device",
-              "type": "array",
-              "items": [
-                {
-                  "type": "div",
-                  "displayFlex": true,
-                  "flex-direction": "row",
-                  "items": [
-                    {
-                      "key": "options.hide_device[]",
-                      "placeholder": "LLC-81F3UT59513F"
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "key": "devicediscovery",
-          "title": "Device Discovery",
-          "description": "Enables Device Info Logging."
         },
         {
           "key": "disablePlugin",

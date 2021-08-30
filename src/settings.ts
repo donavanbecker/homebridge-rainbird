@@ -11,20 +11,18 @@ export const PLUGIN_NAME = 'homebridge-rainbird';
 
 //Config
 export interface HoneywellPlatformConfig extends PlatformConfig {
-  ipaddress?: IPAddress;
-  password?: string;
+  devices?: Array<DevicesConfig>;
   disablePlugin?: boolean;
   options?: options | Record<string, never>;
 }
+
+export type DevicesConfig = {
+  ipaddress?: IPAddress;
+  password?: string;
+};
 
 export type options = {
   refreshRate?: number;
   pushRate?: number;
   hide_device: string[];
-  rbDebug?: boolean;
 };
-
-export interface AxiosRequestConfig {
-  params?: Record<string, unknown>;
-  headers?: any;
-}

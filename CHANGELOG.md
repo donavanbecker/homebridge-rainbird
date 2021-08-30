@@ -8,7 +8,7 @@ All notable changes to this project will be documented in this file. This projec
 
 - Offical Release of Homebridge RainBird Plugin.
 
-## [Version 0.1.0](https://github.com/donavanbecker/homebridge-rainbird/tag/v0.0.1) (2021-XX-XX)
+## [Version 0.1.0](https://github.com/donavanbecker/homebridge-rainbird/tag/v0.0.1) (2021-08-29)
 
 ### Changes
 
