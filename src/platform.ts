@@ -130,9 +130,8 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
   private async discoverDevices() {
     for (const device of this.config.devices!) {
       const rainbird = new RainBirdClient(device.ipaddress!, device.password!, this.log);
-      // Initiliase device details
       await rainbird!.init();
-      rainbird!.on('status', this.updateValues.bind(this, rainbird));
+      //rainbird!.on('status', this.updateValues.bind(this, rainbird));
 
       // Display device details
       this.log.info(`Model: ${rainbird!.model} [Version: ${rainbird!.version}]`);

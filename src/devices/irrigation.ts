@@ -23,7 +23,7 @@ export class Irrigation {
     public rainbird: RainBirdClient,
   ) {
     // Initiliase device details
-    rainbird!.init();
+    //rainbird!.init();
     rainbird!.on('status', this.updateValues.bind(this, rainbird));
 
     // set accessory information
@@ -36,9 +36,9 @@ export class Irrigation {
       .getCharacteristic(this.platform.Characteristic.FirmwareRevision).updateValue(accessory.context.FirmwareRevision);
 
     // Display device details
-    this.platform.log.info(`Model: ${rainbird!.model} [Version: ${rainbird!.version}]`);
-    this.platform.log.info(`Serial Number: ${rainbird!.serialNumber}`);
-    this.platform.log.info(`Zones: ${rainbird!.zones}`);
+    //this.platform.log.info(`Model: ${rainbird!.model} [Version: ${rainbird!.version}]`);
+    //this.platform.log.info(`Serial Number: ${rainbird!.serialNumber}`);
+    //this.platform.log.info(`Zones: ${rainbird!.zones}`);
 
 
     //Irrigation Service
@@ -52,8 +52,9 @@ export class Irrigation {
     //Required Characteristics" see https://developers.homebridge.io/#/service/Irrigation
 
     //Add Irrigation Service's Characteristics
-    accessory.addService(this.platform.Service.IrrigationSystem, rainbird!.model)
-      .setCharacteristic(this.platform.Characteristic.Name, rainbird!.model)
+    //this.service = accessory.addService(this.platform.Service.IrrigationSystem, rainbird!.model)
+    this.service
+      //.setCharacteristic(this.platform.Characteristic.Name, rainbird!.model)
       .setCharacteristic(this.platform.Characteristic.Active, this.platform.Characteristic.Active.ACTIVE)
       .setCharacteristic(this.platform.Characteristic.InUse, this.platform.Characteristic.InUse.NOT_IN_USE)
       .setCharacteristic(this.platform.Characteristic.ProgramMode, this.platform.Characteristic.ProgramMode.NO_PROGRAM_SCHEDULED)
