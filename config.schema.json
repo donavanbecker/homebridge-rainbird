@@ -54,6 +54,11 @@
             "type": "number",
             "placeholder": 1,
             "description": "Indicates the number of seconds between pushes to Rainbird Client."
+          },
+          "debug": {
+            "title": "Debug",
+            "type": "boolean",
+            "description": "Turn plugin's debug mode on."
           }
         }
       },
@@ -105,6 +110,7 @@
           "key": "options.pushRate",
           "notitle": true
         },
+        "options.debug",
         {
           "key": "disablePlugin",
           "title": "Disable Plugin",

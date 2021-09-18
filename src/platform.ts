@@ -27,7 +27,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
   rainbirdDebugMode!: boolean;
 
   constructor(public readonly log: Logger, public readonly config: RainbirdPlatformConfig, public readonly api: API) {
-    this.log.debug('Finished initializing platform:', this.config.name);
+    this.debug('Finished initializing platform:', this.config.name);
     // only load if configured
     if (!this.config) {
       return;
@@ -42,10 +42,10 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
     // verify the config
     try {
       this.verifyConfig();
-      this.log.debug('Config OK');
+      this.debug('Config OK');
     } catch (e: any) {
       this.log.error(JSON.stringify(e.message));
-      this.log.debug(JSON.stringify(e));
+      this.debug(JSON.stringify(e));
       return;
     }
 
@@ -60,7 +60,8 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
       try {
         await this.discoverDevices();
       } catch (e: any) {
-        this.log.error('Failed to Discover Devices:', JSON.stringify(e.message));
+        this.log.error('Failed to Discover Devices,', JSON.stringify(e.message));
+        this.debug(JSON.stringify(e));
       }
     });
   }
@@ -212,5 +213,17 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
     // remove platform accessories when no longer present
     this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [existingAccessory]);
     this.log.warn('Removing existing accessory from cache:', existingAccessory.displayName);
+  }
+
+  /**
+   * If debug level logging is turned on, log to log.info
+   * Otherwise send debug logs to log.debug
+   */
+  debug(...log: any[]) {
+    if (this.config.options?.debug) {
+      this.log.info('[DEBUG]', String(...log));
+    } else{
+      this.log.debug(String(...log));
+    }
   }
 }

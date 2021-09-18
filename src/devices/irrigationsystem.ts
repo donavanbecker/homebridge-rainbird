@@ -50,7 +50,7 @@ export class IrrigationSystem {
       .getCharacteristic(this.platform.Characteristic.FirmwareRevision).updateValue(accessory.context.FirmwareRevision);
 
     // Irrigation Service
-    this.platform.log.debug('Configure Irrigation Service');
+    this.platform.debug('Configure Irrigation Service');
     this.irrigation = {
       service: this.accessory.getService(this.platform.Service.IrrigationSystem) ??
         this.accessory.addService(this.platform.Service.IrrigationSystem),
@@ -99,7 +99,7 @@ export class IrrigationSystem {
 
     // Valves for zones
     for (const zone of rainbird!.zones) {
-      this.platform.log.debug('Create Valve service for zone', zone);
+      this.platform.debug('Create Valve service for zone', zone);
 
       const name = `Zone ${zone}`;
       this.valves.set(zone, {
@@ -126,7 +126,7 @@ export class IrrigationSystem {
       this.irrigation.service.addLinkedService(this.valves.get(zone)!.service);
 
       // Create handlers for required Valve characteristics
-      this.platform.log.debug('Configure Valve service for zone', zone);
+      this.platform.debug('Configure Valve service for zone', zone);
 
       this.valves.get(zone)!.service
         .getCharacteristic(this.platform.Characteristic.Active)
@@ -201,7 +201,7 @@ export class IrrigationSystem {
           await this.pushChanges(zone);
         } catch (e: any) {
           this.platform.log.error(e);
-          this.platform.log.debug('Irrigation System %s -', this.accessory.displayName, JSON.stringify(e));
+          this.platform.debug(`Irrigation System ${this.accessory.displayName} - ${JSON.stringify(e)}`);
         }
         this.irrigationSystemUpdateInProgress = false;
       });
@@ -275,34 +275,29 @@ export class IrrigationSystem {
       await this.rainbird!.deactivateZone(zone);
     }
 
-    this.platform.log.debug(
-      'Irrigation System %s pushChanges - [Valve: %s, Active: %s, SetDuration: %s]',
-      this.accessory.displayName,
-      zone,
-      this.valves.get(zone)!.active,
-      this.valves.get(zone)!.setDuration,
-    );
+    this.platform.debug(`Irrigation System ${this.accessory.displayName},
+     pushChanges: [Valve: ${zone}, Active: ${this.valves.get(zone)!.active}, SetDuration: ${this.valves.get(zone)!.setDuration}]`);
   }
 
   private setActive(value: CharacteristicValue) {
-    this.platform.log.debug('Irrigation System %s -', this.accessory.displayName, 'Set Active:', value);
+    this.platform.debug(`Irrigation System ${this.accessory.displayName}, Set Active: ${value}`);
     this.irrigation.active = value;
   }
 
   private setValveActive(zone: number, value: CharacteristicValue) {
-    this.platform.log.debug('Irrigation System %s -', this.accessory.displayName, 'Valve:', zone, 'Set Active:', value);
+    this.platform.debug(`Irrigation System ${this.accessory.displayName}, Valve: ${zone}, Set Active: ${value}`);
     this.valves.get(zone)!.active = value;
     this.doIrrigationSystemUpdate.next(zone);
   }
 
   private setValveIsConfigured(zone: number, value: CharacteristicValue) {
-    this.platform.log.debug('Irrigation System %s -', this.accessory.displayName, 'Valve:', zone, 'Set IsConfigured:', value);
+    this.platform.debug(`Irrigation System ${this.accessory.displayName}, Valve: ${zone}, Set IsConfigured: ${value}`);
     this.valves.get(zone)!.isConfigured = value;
     this.doIrrigationSystemUpdate.next(zone);
   }
 
   private setValveSetDuration(zone: number, value: CharacteristicValue) {
-    this.platform.log.debug('Irrigation System %s -', this.accessory.displayName, 'Valve:', zone, 'Set SetDuration:', value);
+    this.platform.debug(`Irrigation System ${this.accessory.displayName}, Valve: ${zone}, Set SetDuration: ${value}`);
     this.valves.get(zone)!.setDuration = value as number;
     this.doIrrigationSystemUpdate.next(zone);
   }
