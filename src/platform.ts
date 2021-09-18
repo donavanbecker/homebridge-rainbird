@@ -1,5 +1,5 @@
 import { API, DynamicPlatformPlugin, Logger, PlatformAccessory, Service, Characteristic } from 'homebridge';
-import { RainBirdClient } from './RainBirdClient/RainBirdClient';
+import { RainBirdService } from './RainBird/RainBirdService';
 import {
   PLATFORM_NAME,
   PLUGIN_NAME,
@@ -58,10 +58,9 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
     this.api.on('didFinishLaunching', async () => {
       log.debug('Executed didFinishLaunching callback');
       try {
-        this.discoverDevices();
+        await this.discoverDevices();
       } catch (e: any) {
-        this.log.error('Failed to Discover Devices,', JSON.stringify(e.message));
-        this.log.debug(JSON.stringify(e));
+        this.log.error('Failed to Discover Devices:', JSON.stringify(e.message));
       }
     });
   }
@@ -123,24 +122,29 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
   /**
    * This method is used to discover the your location and devices.
    */
-  private async discoverDevices() {
+  private async discoverDevices(): Promise<void> {
     for (const device of this.config.devices!) {
-      const rainbird = new RainBirdClient(device.ipaddress!, device.password!, this.log);
-      await rainbird!.init();
+      const rainbird = new RainBirdService({
+        address: device.ipaddress!,
+        password: device.password!,
+        refreshRate: this.config.options!.refreshRate,
+        log: this.log,
+      });
+      const metaData = await rainbird!.init();
 
       // Display device details
       this.log.info(
         'Model: %s, [Version: %s, Serial Number: %s, Zones: %s]',
-        rainbird!.model,
-        rainbird!.version,
-        rainbird!.serialNumber,
-        JSON.stringify(rainbird!.zones),
+        metaData.model,
+        metaData.version,
+        metaData.serialNumber,
+        JSON.stringify(metaData.zones),
       );
-      await this.createIrrigationSystem(device, rainbird);
+      this.createIrrigationSystem(device, rainbird);
     }
   }
 
-  private async createIrrigationSystem(device: DevicesConfig, rainbird: RainBirdClient) {
+  private createIrrigationSystem(device: DevicesConfig, rainbird: RainBirdService): void {
     const uuid = this.api.hap.uuid.generate(`${device.ipaddress}-${rainbird!.model}-${rainbird!.serialNumber}`);
     // see if an accessory with the same uuid has already been registered and restored from
     // the cached devices we stored in the `configureAccessory` method above

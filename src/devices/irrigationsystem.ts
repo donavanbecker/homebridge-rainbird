@@ -1,8 +1,8 @@
 import { Service, PlatformAccessory, CharacteristicValue } from 'homebridge';
 import { RainbirdPlatform } from '../platform';
-import { RainBirdClient } from '../RainBirdClient/RainBirdClient';
-import { interval, Subject } from 'rxjs';
-import { debounceTime, skipWhile, tap } from 'rxjs/operators';
+import { RainBirdService } from '../RainBird/RainBirdService';
+import { Subject, fromEvent } from 'rxjs';
+import { debounceTime, tap } from 'rxjs/operators';
 import { DevicesConfig } from '../settings';
 
 /**
@@ -34,14 +34,8 @@ export class IrrigationSystem {
     private readonly platform: RainbirdPlatform,
     private accessory: PlatformAccessory,
     public device: DevicesConfig,
-    public rainbird: RainBirdClient,
+    public rainbird: RainBirdService,
   ) {
-    // Initiliase device details
-    rainbird!.on('status', () => {
-      this.parseStatus();
-      this.updateHomeKitCharacteristics();
-    });
-
     // this is subject we use to track when we need to send changes to Rainbird Client
     this.doIrrigationSystemUpdate = new Subject();
     this.irrigationSystemUpdateInProgress = false;
@@ -76,6 +70,7 @@ export class IrrigationSystem {
     // Create handlers for required characteristics
     this.irrigation.service.getCharacteristic(this.platform.Characteristic.Active)
       .onGet(() => {
+        this.rainbird!.refreshStatus();
         return this.irrigation.active;
       })
       .onSet(this.setActive.bind(this));
@@ -87,6 +82,7 @@ export class IrrigationSystem {
 
     this.irrigation.service.getCharacteristic(this.platform.Characteristic.InUse)
       .onGet(() => {
+        this.rainbird!.refreshStatus();
         return this.irrigation.inUse;
       });
 
@@ -97,6 +93,7 @@ export class IrrigationSystem {
 
     this.irrigation.service.getCharacteristic(this.platform.Characteristic.RemainingDuration)
       .onGet(() => {
+        this.rainbird!.refreshStatus();
         return this.rainbird!.durationRemaining();
       });
 
@@ -134,6 +131,7 @@ export class IrrigationSystem {
       this.valves.get(zone)!.service
         .getCharacteristic(this.platform.Characteristic.Active)
         .onGet(() => {
+          this.rainbird!.refreshStatus();
           return this.valves.get(zone)!.active;
         })
         .onSet(this.setValveActive.bind(this, zone));
@@ -141,6 +139,7 @@ export class IrrigationSystem {
       this.valves.get(zone)!.service
         .getCharacteristic(this.platform.Characteristic.InUse)
         .onGet(() => {
+          this.rainbird!.refreshStatus();
           return this.valves.get(zone)!.inUse;
         });
 
@@ -173,20 +172,22 @@ export class IrrigationSystem {
       this.valves.get(zone)!.service
         .getCharacteristic(this.platform.Characteristic.RemainingDuration)
         .onGet(() => {
+          this.rainbird!.refreshStatus();
           return this.rainbird!.durationRemaining(zone);
         });
     }
 
-    //Initial Device Parse
+    // Initial Device Parse
     this.parseStatus();
+    this.updateHomeKitCharacteristics();
 
-    // Start an update interval
-    interval(this.platform.config.options!.refreshRate! * 1000)
-      .pipe(skipWhile(() => this.irrigationSystemUpdateInProgress))
-      .subscribe(() => {
+    // Device Parse when status event emitted
+    fromEvent(rainbird!, 'status').subscribe({
+      next: () => {
         this.parseStatus();
         this.updateHomeKitCharacteristics();
-      });
+      },
+    });
 
     this.doIrrigationSystemUpdate
       .pipe(
@@ -228,8 +229,6 @@ export class IrrigationSystem {
       valve.inUse = this.rainbird!.isInUse(zone)
         ? this.platform.Characteristic.InUse.IN_USE
         : this.platform.Characteristic.InUse.NOT_IN_USE;
-
-      valve.setDuration = this.rainbird!.duration(zone);
     }
   }
 
@@ -270,9 +269,8 @@ export class IrrigationSystem {
    * Pushes the requested changes to the RainbirdClient
    */
   async pushChanges(zone: number): Promise<void> {
-    this.rainbird!.setDuration(zone, Number(this.valves.get(zone)!.setDuration));
     if (this.valves.get(zone)!.active === this.platform.Characteristic.Active.ACTIVE) {
-      this.rainbird!.activateZone(zone);
+      this.rainbird!.activateZone(zone, this.valves.get(zone)!.setDuration);
     } else {
       await this.rainbird!.deactivateZone(zone);
     }
