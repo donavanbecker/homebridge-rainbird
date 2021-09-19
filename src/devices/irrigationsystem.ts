@@ -126,7 +126,7 @@ export class IrrigationSystem {
       this.irrigation.service.addLinkedService(this.valves.get(zone)!.service);
 
       // Create handlers for required Valve characteristics
-      this.platform.debug(`Configure Valve Service's Characteristics for ${name}`);
+      this.platform.debug(`Configure Characteristics for ${name}`);
 
       this.valves.get(zone)!.service
         .getCharacteristic(this.platform.Characteristic.Active)
