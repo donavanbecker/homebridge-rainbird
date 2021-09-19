@@ -219,6 +219,8 @@ export class IrrigationSystem {
     this.irrigation.inUse = this.rainbird!.isInUse()
       ? this.platform.Characteristic.InUse.IN_USE
       : this.platform.Characteristic.InUse.NOT_IN_USE;
+    this.platform.debug(`Irrigation System: ${this.accessory.displayName}
+    , Active: ${this.irrigation.active}, InUse: ${this.irrigation.inUse}`);
 
     // Valves
     for (const [zone, valve] of this.valves.entries()) {
@@ -229,6 +231,8 @@ export class IrrigationSystem {
       valve.inUse = this.rainbird!.isInUse(zone)
         ? this.platform.Characteristic.InUse.IN_USE
         : this.platform.Characteristic.InUse.NOT_IN_USE;
+      this.platform.debug(`Valve: ${valve} ${zone}
+      , Active: ${valve.active}, InUse: ${valve.inUse}`);
     }
   }
 
@@ -247,7 +251,7 @@ export class IrrigationSystem {
       this.rainbird!.durationRemaining());
 
     // Valves
-    for(const [zone, valve] of this.valves.entries()) {
+    for (const [zone, valve] of this.valves.entries()) {
       if (valve.active !== undefined) {
         valve.service.updateCharacteristic(this.platform.Characteristic.Active, valve.active);
       }
