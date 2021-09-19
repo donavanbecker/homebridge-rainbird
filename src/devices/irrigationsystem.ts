@@ -99,9 +99,9 @@ export class IrrigationSystem {
 
     // Valves for zones
     for (const zone of rainbird!.zones) {
-      this.platform.debug('Create Valve service for zone', zone);
 
       const name = `Zone ${zone}`;
+      this.platform.debug(`Create Valve service for zone ${zone} ${name}`);
       this.valves.set(zone, {
         service: this.accessory.getService(name) ??
           this.accessory.addService(this.platform.Service.Valve, name, zone),
@@ -126,7 +126,7 @@ export class IrrigationSystem {
       this.irrigation.service.addLinkedService(this.valves.get(zone)!.service);
 
       // Create handlers for required Valve characteristics
-      this.platform.debug('Configure Valve service for zone', zone);
+      this.platform.debug(`Configure Valve service for zone ${zone} ${name}`);
 
       this.valves.get(zone)!.service
         .getCharacteristic(this.platform.Characteristic.Active)
