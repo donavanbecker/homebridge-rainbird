@@ -40,7 +40,7 @@
   "dependencies": {
     "@homebridge/plugin-ui-utils": "^0.0.19",
     "aes-js": "^3.1.2",
-    "node-fetch": "^3.0.0",
+    "node-fetch": "^2.6.2",
     "queue": "^6.0.2",
     "rxjs": "^7.3.0",
     "text-encoder": "0.0.4"
@@ -49,6 +49,7 @@
     "@types/aes-js": "^3.1.1",
     "@types/better-queue": "^3.8.3",
     "@types/node": "^16.9.3",
+    "@types/node-fetch": "^3.0.3",
     "@typescript-eslint/eslint-plugin": "^4.31.1",
     "@typescript-eslint/parser": "^4.31.1",
     "eslint": "^7.32.0",
