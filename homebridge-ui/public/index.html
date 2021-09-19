@@ -51,7 +51,7 @@
             </tr>
             <tr>
                <th scope="row">Firmware Version</th>
-               <td id="firmwareRevision"></td>
+               <td id="FirmwareRevision"></td>
             </tr>
          </tbody>
       </table>
@@ -161,7 +161,7 @@
                document.getElementById('displayName').innerHTML = thisAcc.displayName
                document.getElementById('deviceID').innerHTML = context.deviceID
                document.getElementById('model').innerHTML = context.model
-               document.getElementById('firmwareRevision').innerHTML = context.firmwareRevision || 'N/A'
+               document.getElementById('FirmwareRevision').innerHTML = context.FirmwareRevision || 'N/A'
                document.getElementById('deviceTable').style.display = 'inline-table'
                homebridge.hideSpinner()
             }

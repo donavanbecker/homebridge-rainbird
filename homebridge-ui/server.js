@@ -1,8 +1,6 @@
-/* eslint-disable no-console */
+
 /* eslint-disable no-undef */
 /* eslint-disable @typescript-eslint/no-var-requires */
-/* jshint node: true,esversion: 9, -W014, -W033 */
-/* eslint-disable new-cap */
 'use strict';
 
 const { HomebridgePluginUiServer } = require('@homebridge/plugin-ui-utils');

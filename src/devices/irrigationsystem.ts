@@ -1,7 +1,9 @@
 import { Service, PlatformAccessory, CharacteristicValue } from 'homebridge';
 import { RainbirdPlatform } from '../platform';
-import { interval, Subject } from 'rxjs';
-import { debounceTime, skipWhile, tap } from 'rxjs/operators';
+import { RainBirdService } from '../RainBird/RainBirdService';
+import { Subject, fromEvent } from 'rxjs';
+import { debounceTime, tap } from 'rxjs/operators';
+import { DevicesConfig } from '../settings';
 
 /**
  * Platform Accessory
@@ -9,245 +11,298 @@ import { debounceTime, skipWhile, tap } from 'rxjs/operators';
  * Each accessory may expose multiple services of different service types.
  */
 export class IrrigationSystem {
-  private service!: Service;
-  private valveService!: Service;
 
-  //Irrigation Characteristics
-  Active!: CharacteristicValue;
-  InUse!: CharacteristicValue;
-  ProgramMode!: CharacteristicValue;
+  private irrigation!: {
+    service: Service,
+    active: CharacteristicValue;
+    inUse: CharacteristicValue;
+  }
 
-  //Valve Characteristics
-  ValveType!: CharacteristicValue;
+  private valves: Map<number, {
+    service: Service,
+    active: CharacteristicValue,
+    inUse: CharacteristicValue,
+    setDuration: number,
+    isConfigured: CharacteristicValue;
+  }> = new Map()
 
-  //Others
-  getIrrigationState: any;
-  getRainSensorState: any;
-  getRainDelay: any;
-  setActive: any;
-  programNr: any;
-  minutes: any;
-  zone: any;
-  days: any;
-  On: any;
-
-  //Irrigation Updates
-  valveUpdateInProgress!: boolean;
-  doValveUpdate;
-
+  // Irrigation System Updates
+  private irrigationSystemUpdateInProgress!: boolean;
+  private doIrrigationSystemUpdate: Subject<number>;
 
   constructor(
     private readonly platform: RainbirdPlatform,
     private accessory: PlatformAccessory,
-    public device,
+    public device: DevicesConfig,
+    public rainbird: RainBirdService,
   ) {
-    // default placeholders
-    this.Active = this.platform.Characteristic.Active.INACTIVE;
-    this.InUse = this.platform.Characteristic.InUse.IN_USE;
+    // this is subject we use to track when we need to send changes to Rainbird Client
+    this.doIrrigationSystemUpdate = new Subject();
+    this.irrigationSystemUpdateInProgress = false;
 
-    // this is subject we use to track when we need to POST changes to the Honeywell API
-    this.doValveUpdate = new Subject();
-    this.valveUpdateInProgress = false;
-
-    // set accessory information
+    // Set accessory information
     accessory
       .getService(this.platform.Service.AccessoryInformation)!
       .setCharacteristic(this.platform.Characteristic.Manufacturer, 'RainBird')
-      .setCharacteristic(this.platform.Characteristic.Model, device.deviceModel)
-      .setCharacteristic(this.platform.Characteristic.SerialNumber, device.deviceID)
-      .setCharacteristic(this.platform.Characteristic.FirmwareRevision, accessory.context.firmwareRevision)
-      .getCharacteristic(this.platform.Characteristic.FirmwareRevision).updateValue(accessory.context.firmwareRevision);
+      .setCharacteristic(this.platform.Characteristic.Model, accessory.context.model ?? rainbird!.model)
+      .setCharacteristic(this.platform.Characteristic.SerialNumber, accessory.context.deviceID ?? rainbird!.serialNumber)
+      .setCharacteristic(this.platform.Characteristic.FirmwareRevision, accessory.context.FirmwareRevision ?? rainbird!.version)
+      .getCharacteristic(this.platform.Characteristic.FirmwareRevision).updateValue(accessory.context.FirmwareRevision);
 
-    //Irrigation Service
-    (this.service =
-      this.accessory.getService(this.platform.Service.IrrigationSystem) ||
-      this.accessory.addService(this.platform.Service.IrrigationSystem)), accessory.displayName;
+    // Irrigation Service
+    this.platform.debug('Configure Irrigation Service');
+    this.irrigation = {
+      service: this.accessory.getService(this.platform.Service.IrrigationSystem) ??
+        this.accessory.addService(this.platform.Service.IrrigationSystem),
+      active: this.platform.Characteristic.Active.ACTIVE,
+      inUse: this.platform.Characteristic.InUse.NOT_IN_USE,
+    };
 
-    //Service Name
-    this.service.setCharacteristic(this.platform.Characteristic.Name, accessory.displayName);
-    //Required Characteristics" see https://developers.homebridge.io/#/service/Irrigation
+    // Add Irrigation Service's Characteristics
+    this.irrigation.service
+      .setCharacteristic(this.platform.Characteristic.Name, accessory.displayName)
+      .setCharacteristic(this.platform.Characteristic.Active, this.irrigation.active)
+      .setCharacteristic(this.platform.Characteristic.InUse, this.irrigation.inUse)
+      .setCharacteristic(this.platform.Characteristic.ProgramMode, this.platform.Characteristic.ProgramMode.NO_PROGRAM_SCHEDULED)
+      .setCharacteristic(this.platform.Characteristic.RemainingDuration, 0)
+      .setCharacteristic(this.platform.Characteristic.StatusFault, this.platform.Characteristic.StatusFault.NO_FAULT);
 
-    //Initial Device Parse
-    this.parseStatus();
+    // Create handlers for required characteristics
+    this.irrigation.service.getCharacteristic(this.platform.Characteristic.Active)
+      .onGet(() => {
+        this.rainbird!.refreshStatus();
+        return this.irrigation.active;
+      })
+      .onSet(this.setActive.bind(this));
 
-    // create handlers for required characteristics
-    this.service.getCharacteristic(this.platform.Characteristic.Active)
-      .onSet(this.ActiveSet.bind(this));
-
-    //getAvailableZones
-    //Returns the number of zones/stations for the controller. For ESP-RZXe this is always 3F000000 where 3F is binary 111111. Each bit is 1 zone.
-    this.platform.log.debug(JSON.stringify(device.getAvailableZones()));
-    this.platform.log.warn(JSON.stringify(device.getActiveZones()));
-    const getActiveZones = device.getActiveZones();
-    //const ActiveZones = JSON.parse(device.getActiveZones());
-    //getActiveZones
-    //Returns the decimal number of the currently active zone, or 0 when no zones are active.
-    for (const activeZones of getActiveZones) {
-      if (activeZones !== 0){
-        this.platform.log.debug('Setting Up %s ', activeZones.devName, JSON.stringify(activeZones));
-        (this.valveService = this.accessory.getService(activeZones.devName)
-            || this.accessory.addService(this.platform.Service.Valve, activeZones.devName, activeZones.devName)), accessory.displayName;
-        this.valveService.setCharacteristic(this.platform.Characteristic.Name, `${activeZones.devName} ${activeZones.deviceType}`);
-
-        this.valveService.setCharacteristic(this.platform.Characteristic.ValveType, this.platform.Characteristic.ValveType.IRRIGATION);
-
-        // each service must implement at-minimum the "required characteristics" for the given service type
-        // see https://developers.homebridge.io/#/service/Outlet
-        this.valveService
-          .getCharacteristic(this.platform.Characteristic.On)
-          .onSet(this.OnSet.bind(this));
-
-        this.valveService.setCharacteristic(this.platform.Characteristic.OutletInUse, true);
-      } else {
-        this.platform.log.warn('No Zones Found');
-      }
-    }
-
-
-
-    // Retrieve initial values and updateHomekit
-    this.updateHomeKitCharacteristics();
-
-    // Start an update interval
-    interval(this.platform.config.options!.refreshRate! * 1000)
-      .pipe(skipWhile(() => this.valveUpdateInProgress))
-      .subscribe(() => {
-        this.refreshStatus();
+    this.irrigation.service.getCharacteristic(this.platform.Characteristic.ProgramMode)
+      .onGet(() => {
+        return this.irrigation.service.getCharacteristic(this.platform.Characteristic.ProgramMode).value;
       });
 
-    // Watch for valve change events
-    // We put in a debounce of 100ms so we don't make duplicate calls
-    this.doValveUpdate
+    this.irrigation.service.getCharacteristic(this.platform.Characteristic.InUse)
+      .onGet(() => {
+        this.rainbird!.refreshStatus();
+        return this.irrigation.inUse;
+      });
+
+    this.irrigation.service.getCharacteristic(this.platform.Characteristic.StatusFault)
+      .onGet(() => {
+        return this.irrigation.service.getCharacteristic(this.platform.Characteristic.StatusFault).value;
+      });
+
+    this.irrigation.service.getCharacteristic(this.platform.Characteristic.RemainingDuration)
+      .onGet(() => {
+        this.rainbird!.refreshStatus();
+        return this.rainbird!.durationRemaining();
+      });
+
+    // Valves for zones
+    for (const zone of rainbird!.zones) {
+
+      const name = `Zone ${zone}`;
+      this.platform.debug(`Load Valve Service for ${name}`);
+      this.valves.set(zone, {
+        service: this.accessory.getService(name) ??
+          this.accessory.addService(this.platform.Service.Valve, name, zone),
+        active: this.platform.Characteristic.Active.INACTIVE as CharacteristicValue,
+        inUse: this.platform.Characteristic.InUse.NOT_IN_USE as CharacteristicValue,
+        setDuration: 300,
+        isConfigured: this.platform.Characteristic.IsConfigured.CONFIGURED,
+      });
+
+      // Add Valve Service's Characteristics
+      this.valves.get(zone)!.service
+        .setCharacteristic(this.platform.Characteristic.Name, name)
+        .setCharacteristic(this.platform.Characteristic.Active, this.valves.get(zone)!.active)
+        .setCharacteristic(this.platform.Characteristic.InUse, this.valves.get(zone)!.inUse)
+        .setCharacteristic(this.platform.Characteristic.ValveType, this.platform.Characteristic.ValveType.IRRIGATION)
+        .setCharacteristic(this.platform.Characteristic.SetDuration, this.valves.get(zone)!.setDuration)
+        .setCharacteristic(this.platform.Characteristic.RemainingDuration, 0)
+        .setCharacteristic(this.platform.Characteristic.IsConfigured, this.valves.get(zone)!.isConfigured)
+        .setCharacteristic(this.platform.Characteristic.ServiceLabelIndex, zone)
+        .setCharacteristic(this.platform.Characteristic.StatusFault, this.platform.Characteristic.StatusFault.NO_FAULT);
+
+      this.irrigation.service.addLinkedService(this.valves.get(zone)!.service);
+
+      // Create handlers for required Valve characteristics
+      this.platform.debug(`Configure Characteristics for ${name}`);
+
+      this.valves.get(zone)!.service
+        .getCharacteristic(this.platform.Characteristic.Active)
+        .onGet(() => {
+          this.rainbird!.refreshStatus();
+          return this.valves.get(zone)!.active;
+        })
+        .onSet(this.setValveActive.bind(this, zone));
+
+      this.valves.get(zone)!.service
+        .getCharacteristic(this.platform.Characteristic.InUse)
+        .onGet(() => {
+          this.rainbird!.refreshStatus();
+          return this.valves.get(zone)!.inUse;
+        });
+
+      this.valves.get(zone)!.service
+        .getCharacteristic(this.platform.Characteristic.IsConfigured)
+        .onGet(() => {
+          return this.valves.get(zone)!.service.getCharacteristic(this.platform.Characteristic.IsConfigured).value;
+        })
+        .onSet(this.setValveIsConfigured.bind(this, zone));
+
+      this.valves.get(zone)!.service
+        .getCharacteristic(this.platform.Characteristic.StatusFault)
+        .onGet(() => {
+          return this.valves.get(zone)!.service.getCharacteristic(this.platform.Characteristic.StatusFault).value;
+        });
+
+      this.valves.get(zone)!.service
+        .getCharacteristic(this.platform.Characteristic.ValveType)
+        .onGet(() => {
+          return this.valves.get(zone)!.service.getCharacteristic(this.platform.Characteristic.ValveType).value;
+        });
+
+      this.valves.get(zone)!.service
+        .getCharacteristic(this.platform.Characteristic.SetDuration)
+        .onGet(() => {
+          return Number(this.valves.get(zone)!.setDuration);
+        })
+        .onSet(this.setValveSetDuration.bind(this, zone));
+
+      this.valves.get(zone)!.service
+        .getCharacteristic(this.platform.Characteristic.RemainingDuration)
+        .onGet(() => {
+          this.rainbird!.refreshStatus();
+          return this.rainbird!.durationRemaining(zone);
+        });
+    }
+
+    // Initial Device Parse
+    this.parseStatus();
+    this.updateHomeKitCharacteristics();
+
+    // Device Parse when status event emitted
+    fromEvent(rainbird!, 'status').subscribe({
+      next: () => {
+        this.parseStatus();
+        this.updateHomeKitCharacteristics();
+      },
+    });
+
+    this.doIrrigationSystemUpdate
       .pipe(
         tap(() => {
-          this.valveUpdateInProgress = true;
+          this.irrigationSystemUpdateInProgress = true;
         }),
         debounceTime(this.platform.config.options!.pushRate! * 1000),
       )
-      .subscribe(async () => {
+      .subscribe(async (zone: number) => {
         try {
-          await this.pushChanges();
+          await this.pushChanges(zone);
         } catch (e: any) {
-          this.platform.log.error(JSON.stringify(e.message));
-          this.platform.log.debug('Irrigation %s -', this.accessory.displayName, JSON.stringify(e));
-          this.apiError(e);
+          this.platform.log.error(e);
+          this.platform.debug(`Irrigation System ${this.accessory.displayName} - ${JSON.stringify(e)}`);
         }
-        this.valveUpdateInProgress = false;
+        this.irrigationSystemUpdateInProgress = false;
       });
   }
 
   /**
-   * Parse the device status from the honeywell api
+   * Parse the device status from the RainbirdClient
    */
   parseStatus() {
-    this.platform.log.debug(
-      'Irrigation %s -',
-      this.accessory.displayName,
-      'Device is Currently: ',
-      this.device,
-    );
-  }
+    // Irrigation System
+    this.irrigation.active = this.rainbird!.isActive()
+      ? this.platform.Characteristic.Active.ACTIVE
+      : this.platform.Characteristic.Active.INACTIVE;
 
-  /**
-   * Asks the Honeywell Home API for the latest device information
-   */
-  async refreshStatus() {
-    try {
-    //getRainSensorState
-    //Returns the state of the rain sensor (true or false)
-      this.getRainSensorState = this.device.getRainSensorState();
+    this.irrigation.inUse = this.rainbird!.isInUse()
+      ? this.platform.Characteristic.InUse.IN_USE
+      : this.platform.Characteristic.InUse.NOT_IN_USE;
+    this.platform.debug(`Irrigation System: ${this.accessory.displayName}
+    , Active: ${this.irrigation.active}, InUse: ${this.irrigation.inUse}`);
 
-      //getRainDelay
-      //Returns the watering delay in days.
-      this.getRainDelay = this.device.getRainDelay();
+    // Valves
+    for (const [zone, valve] of this.valves.entries()) {
+      valve.active = this.rainbird!.isActive(zone)
+        ? this.platform.Characteristic.Active.ACTIVE
+        : this.platform.Characteristic.Active.INACTIVE;
 
-      //getIrrigationState
-      //Returns if the controller is active or irrigation is switched off I think (boolean)
-      this.getIrrigationState = this.device.getIrrigationState();
-      this.platform.log.debug(
-        'Irrigation %s - Fetched Update for Irrigation State: %s, Rain Delay: %s, Rain Sensor State: %',
-        this.accessory.displayName,
-        this.getIrrigationState,
-        this.getRainDelay,
-        this.getRainSensorState,
-      );
-      this.parseStatus();
-      this.updateHomeKitCharacteristics();
-    } catch (e: any) {
-      this.platform.log.error(
-        'Irrigation - Failed to update status of',
-        this.device.name,
-        JSON.stringify(e.message),
-        this.platform.log.debug('Irrigation %s -', this.accessory.displayName, JSON.stringify(e)),
-      );
-      this.apiError(e);
+      valve.inUse = this.rainbird!.isInUse(zone)
+        ? this.platform.Characteristic.InUse.IN_USE
+        : this.platform.Characteristic.InUse.NOT_IN_USE;
+      this.platform.debug(`Valve: ${valve} ${zone}
+      , Active: ${valve.active}, InUse: ${valve.inUse}`);
     }
-  }
-
-  /**
-   * Pushes the requested changes to the Honeywell API
-   */
-  async pushChanges() {
-
-    if (!this.Active) {
-    //stopIrrigation
-    //Stops all irrigation
-      this.device.stopIrrigation();
-
-
-      //setRainDelay(days);
-      //Sets the watering delay in days. Parse the delay as a decimal between 0 and 14
-      this.device.setRainDelay(this.days);
-
-
-      //startZone(zone, minutes);
-      //Manually activates a zone for x minutes. When another zone is active, it will be de-activated.
-      this.device.startZone(this.zone, this.minutes);
-
-      //startAllZones(minutes);
-      //Manually activates all zones in chronological order with x minutes.
-      this.device.startAllZones(this.minutes);
-
-      //startProgram(programNr);
-      //Manually start program x. Not supported on ESP-RZXe but might work on other controllers
-      this.device.startProgram(this.programNr);
-    }
-    this.platform.log.debug('%s pushChanges -', this.accessory.displayName, JSON.stringify(this.device));
-    // Make the API request
-
-    // Refresh the status from the API
-    await this.refreshStatus();
   }
 
   /**
    * Updates the status for each of the HomeKit Characteristics
    */
   updateHomeKitCharacteristics() {
-    if (this.Active !== undefined) {
-      this.service.updateCharacteristic(this.platform.Characteristic.Active, this.Active);
+    // Irrigation System
+    if (this.irrigation.active !== undefined) {
+      this.irrigation.service.updateCharacteristic(this.platform.Characteristic.Active, this.irrigation.active);
     }
-    if (this.InUse !== undefined) {
-      this.service.updateCharacteristic(this.platform.Characteristic.InUse, this.InUse);
+    if (this.irrigation.inUse !== undefined) {
+      this.irrigation.service.updateCharacteristic(this.platform.Characteristic.InUse, this.irrigation.inUse);
     }
-    if (this.InUse !== undefined) {
-      this.service.updateCharacteristic(this.platform.Characteristic.InUse, this.InUse);
+    this.irrigation.service.updateCharacteristic(this.platform.Characteristic.RemainingDuration,
+      this.rainbird!.durationRemaining());
+
+    // Valves
+    for (const [zone, valve] of this.valves.entries()) {
+      if (valve.active !== undefined) {
+        valve.service.updateCharacteristic(this.platform.Characteristic.Active, valve.active);
+      }
+      if (valve.inUse !== undefined) {
+        valve.service.updateCharacteristic(this.platform.Characteristic.InUse, valve.inUse);
+      }
+      if (valve.setDuration !== undefined) {
+        valve.service.updateCharacteristic(this.platform.Characteristic.SetDuration, valve.setDuration);
+      }
+      if (valve.isConfigured !== undefined) {
+        valve.service.updateCharacteristic(this.platform.Characteristic.IsConfigured, valve.isConfigured);
+      }
+      valve.service.updateCharacteristic(this.platform.Characteristic.RemainingDuration,
+        this.rainbird!.durationRemaining(zone));
     }
   }
 
-  public apiError(e: any) {
-    this.service.updateCharacteristic(this.platform.Characteristic.Active, e);
-    this.service.updateCharacteristic(this.platform.Characteristic.InUse, e);
+  /**
+   * Pushes the requested changes to the RainbirdClient
+   */
+  async pushChanges(zone: number): Promise<void> {
+    if (this.valves.get(zone)!.active === this.platform.Characteristic.Active.ACTIVE) {
+      this.rainbird!.activateZone(zone, this.valves.get(zone)!.setDuration);
+    } else {
+      await this.rainbird!.deactivateZone(zone);
+    }
+
+    this.platform.debug(`Irrigation System ${this.accessory.displayName},
+     pushChanges: [Valve: ${zone}, Active: ${this.valves.get(zone)!.active}, SetDuration: ${this.valves.get(zone)!.setDuration}]`);
   }
 
-  private OnSet(value: CharacteristicValue) {
-    this.platform.log.debug('Irrigation %s -', this.accessory.displayName, 'Set HeatingThresholdTemperature:', value);
-    this.On = value;
-    this.doValveUpdate.next();
+  private setActive(value: CharacteristicValue) {
+    this.platform.debug(`Irrigation System ${this.accessory.displayName}, Set Active: ${value}`);
+    this.irrigation.active = value;
   }
 
-  private ActiveSet(value: CharacteristicValue) {
-    this.platform.log.debug('Irrigation %s -', this.accessory.displayName, 'Set CoolingThresholdTemperature:', value);
-    this.Active = value;
-    this.doValveUpdate.next();
+  private setValveActive(zone: number, value: CharacteristicValue) {
+    this.platform.debug(`Irrigation System ${this.accessory.displayName}, Valve: ${zone}, Set Active: ${value}`);
+    this.valves.get(zone)!.active = value;
+    this.doIrrigationSystemUpdate.next(zone);
+  }
+
+  private setValveIsConfigured(zone: number, value: CharacteristicValue) {
+    this.platform.debug(`Irrigation System ${this.accessory.displayName}, Valve: ${zone}, Set IsConfigured: ${value}`);
+    this.valves.get(zone)!.isConfigured = value;
+    this.doIrrigationSystemUpdate.next(zone);
+  }
+
+  private setValveSetDuration(zone: number, value: CharacteristicValue) {
+    this.platform.debug(`Irrigation System ${this.accessory.displayName}, Valve: ${zone}, Set SetDuration: ${value}`);
+    this.valves.get(zone)!.setDuration = value as number;
+    this.doIrrigationSystemUpdate.next(zone);
   }
 }

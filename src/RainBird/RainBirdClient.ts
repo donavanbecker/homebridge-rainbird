@@ -1,9 +1,7 @@
-import events = require('events');
-import fetch = require('node-fetch');
+import fetch from 'node-fetch';
 import crypto = require('crypto');
 import encoder = require('text-encoder');
 import aesjs = require('aes-js');
-import Queue from 'queue';
 
 import { Logger } from 'homebridge';
 import { Request } from './requests/Request';
@@ -16,185 +14,44 @@ import { SerialNumberResponse } from './responses/SerialNumberResponse';
 import { SerialNumberRequest } from './requests/SerialNumberRequest';
 import { AcknowledgedResponse } from './responses/AcknowledgedResponse';
 import { NotAcknowledgedResponse } from './responses/NotAcknowledgedResponse';
+import { RunProgramRequest } from './requests/RunProgramRequest';
 import { RunZoneRequest } from './requests/RunZoneRequest';
 import { StopIrrigationRequest } from './requests/StopIrrigationRequest';
 import { ControllerStateResponse } from './responses/ControllerStateResponse';
+import { ControllerStateRequest } from './requests/ControllerStateRequest';
 
-type Zones = Record<number, {active: boolean, duration: number, startTime?: Date}>;
-
-export class RainBirdClient extends events.EventEmitter {
-
-  private _model = 'Unknown';
-  private _version = 'Unknown';
-  private _serialNumber = 'Unknown';
-  private readonly _zones: Zones = {};
-
-  private zoneTimer?: NodeJS.Timeout;
-
-  private zoneQueue: Queue = new Queue({
-    concurrency: 1,
-    timeout: 3600000,
-    autostart: true,
-  });
+export class RainBirdClient {
 
   constructor(
     private readonly address: string,
     private readonly password: string,
     private readonly log: Logger) {
-
-    super();
   }
 
-  // Public
-
-  async init(): Promise<void> {
-    const respModelAndVersion = await this.getModelAndVersion();
-    const respSerialNumber = await this.getSerialNumber();
-    const respZones = await this.getAvailableZones();
-
-    this._model = respModelAndVersion.modelNumber;
-    this._version = respModelAndVersion.version;
-    this._serialNumber = respSerialNumber.serialNumber;
-    for(const zone of respZones.zones) {
-      this._zones[zone] = {
-        active: false,
-        duration: 300,
-      };
-    }
-  }
-
-  get model(): string {
-    return this._model;
-  }
-
-  get version(): string {
-    return this._version;
-  }
-
-  get serialNumber(): string {
-    return this._serialNumber;
-  }
-
-  get zones(): number[] {
-    return Object.keys(this._zones).map(Number);
-  }
-
-  isActive(zone?: number): boolean {
-    return zone === undefined
-      ? Object.values(this._zones).some((z) => z.active)
-      : this._zones[zone].active;
-  }
-
-  isInUse(zone?: number): boolean {
-    return zone === undefined
-      ? Object.values(this._zones).some((z) => z.startTime !== undefined)
-      : this._zones[zone].startTime !== undefined;
-  }
-
-  duration(zone: number): number {
-    return this._zones[zone].duration;
-  }
-
-  setDuration(zone: number, duration: number): void {
-    this._zones[zone].duration = duration;
-  }
-
-  durationRemaining(zone?: number): number {
-    if (zone === undefined) {
-      let remaining = 0;
-      for(const zone of this.zones) {
-        remaining += this.calcDurationRemaining(zone);
-      }
-      return remaining;
-    }
-    return this.calcDurationRemaining(zone);
-  }
-
-  private calcDurationRemaining(zone: number) {
-    if (!this._zones[zone].active) {
-      return 0;
-    }
-    const remaining = this._zones[zone].startTime === undefined
-      ? this._zones[zone].duration
-      : this._zones[zone].duration - Math.round(((new Date()).getTime() - this._zones[zone].startTime!.getTime()) / 1000);
-
-    return Math.max(remaining, 0);
-  }
-
-  activateZone(zone: number): void {
-    this.log.debug(`Activate zone ${zone}`);
-
-    this._zones[zone].active = true;
-    this.zoneQueue.push(this.startZone.bind(this, zone));
-  }
-
-  async deactivateZone(zone: number): Promise<void> {
-    this.log.debug(`Deactivate zone ${zone}`);
-
-    this._zones[zone].active = false;
-
-    if (this.isInUse(zone)) {
-      this.emit('abort', zone);
-      await this.stopIrrigation();
-    }
-  }
-
-  private async startZone(zone: number): Promise<void> {
-    if (!this.isActive(zone)) {
-      this.log.debug(`Skipping zone ${zone} as its not active`);
-      return;
-    }
-
-    this.log.debug(`Starting zone ${zone} for ${this.duration(zone)} seconds`);
-
-    await this.runZone(zone, this.duration(zone));
-    this._zones[zone].startTime = new Date();
-
-    this.emit('status');
-
-    await this.delay(this.duration(zone));
-
-    this._zones[zone].startTime = undefined;
-    this._zones[zone].active = false;
-
-    this.emit('status');
-  }
-
-  private async delay(sec: number): Promise<void> {
-    await new Promise((resolve) => {
-      const timer = setTimeout(() => {
-        this.removeAllListeners('abort');
-        resolve('');
-      }, sec * 1000);
-      this.on('abort', (zone) => {
-        if (!this.isInUse(zone)) {
-          return;
-        }
-        clearTimeout(timer);
-        this.removeAllListeners('abort');
-        resolve('');
-      });
-    });
-  }
-
-  // Private
-
-  private async getModelAndVersion(): Promise<ModelAndVersionResponse> {
+  public async getModelAndVersion(): Promise<ModelAndVersionResponse> {
     const request = new ModelAndVersionRequest();
     return await this.sendRequest(request) as ModelAndVersionResponse;
   }
 
-  private async getAvailableZones(): Promise<AvailableZonesResponse> {
+  public async getAvailableZones(): Promise<AvailableZonesResponse> {
     const request = new AvailableZonesRequest();
     return await this.sendRequest(request) as AvailableZonesResponse;
   }
 
-  private async getSerialNumber(): Promise<SerialNumberResponse> {
+  public async getSerialNumber(): Promise<SerialNumberResponse> {
     const request = new SerialNumberRequest();
     return await this.sendRequest(request) as SerialNumberResponse;
   }
 
-  private async runZone(zone: number, duration: number): Promise<AcknowledgedResponse | NotAcknowledgedResponse> {
+  public async runProgram(program: number): Promise<AcknowledgedResponse | NotAcknowledgedResponse> {
+    const request = new RunProgramRequest(program);
+    const response = await this.sendRequest(request);
+    return response!.type === 0
+      ? response as NotAcknowledgedResponse
+      : response as AcknowledgedResponse;
+  }
+
+  public async runZone(zone: number, duration: number): Promise<AcknowledgedResponse | NotAcknowledgedResponse> {
     const request = new RunZoneRequest(zone, Math.round(duration / 60));
     const response = await this.sendRequest(request);
     return response!.type === 0
@@ -202,7 +59,7 @@ export class RainBirdClient extends events.EventEmitter {
       : response as AcknowledgedResponse;
   }
 
-  private async stopIrrigation(): Promise<AcknowledgedResponse | NotAcknowledgedResponse> {
+  public async stopIrrigation(): Promise<AcknowledgedResponse | NotAcknowledgedResponse> {
     const request = new StopIrrigationRequest();
     const response = await this.sendRequest(request);
     return response!.type === 0
@@ -210,26 +67,33 @@ export class RainBirdClient extends events.EventEmitter {
       : response as AcknowledgedResponse;
   }
 
+  public async getControllerState(): Promise<ControllerStateResponse> {
+    const request = new ControllerStateRequest();
+    return await this.sendRequest(request) as ControllerStateResponse;
+  }
+
   private async sendRequest(request: Request): Promise<Response | undefined> {
     this.log.debug(`Request: ${request}`);
 
-    try {
-      const url = `http://${this.address}/stick`;
-      const body: Buffer = this.encrypt(request);
-      const resp = await fetch(url, this.createRequestOptions(body));
+    // eslint-disable-next-line no-constant-condition
+    while (true) {
+      try {
+        const url = `http://${this.address}/stick`;
+        const body: Buffer = this.encrypt(request);
+        const resp = await fetch(url, this.createRequestOptions(body));
 
-      if (!resp.ok || resp.status !== 200) {
-        this.log.error(`Invalid Response [Status: ${resp.status}, Text: ${resp.statusText}]`);
-        return;
+        if (!resp.ok || resp.status !== 200) {
+          throw new Error(`Invalid Response [Status: ${resp.status}, Text: ${resp.statusText}]`);
+        }
+
+        const encryptedResponse: Buffer = await resp.buffer();
+        const response = this.getResponse(encryptedResponse);
+
+        return response;
+      } catch (error) {
+        this.log.warn(`RainBird controller request failed. Retry in 30 seconds. [${error}]`);
+        await this.delay(30);
       }
-
-      const encryptedResponse: Buffer = await resp.buffer();
-      const response = this.getResponse(encryptedResponse);
-
-      return response;
-    } catch(error) {
-      this.log.error(`Send Request Failed: ${error}`);
-      throw error;
     }
   }
 
@@ -337,5 +201,13 @@ export class RainBirdClient extends events.EventEmitter {
     const charsToAdd = (dataLength + BLOCK_SIZE) - (dataLength % BLOCK_SIZE) - dataLength;
     const pad_string = Array(charsToAdd + 1).join('\x10');
     return [data, pad_string].join('');
+  }
+
+  private async delay(sec: number): Promise<void> {
+    await new Promise((resolve) => {
+      setTimeout(() => {
+        resolve('');
+      }, sec * 1000);
+    });
   }
 }
