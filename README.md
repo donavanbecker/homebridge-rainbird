@@ -33,3 +33,8 @@ plugin allows you to access your RainBird Controller from HomeKit with
  - [mantorok1](https://github.com/mantorok1)
 
 ##### Thanks for all your help!
+
+## Known Limitations
+- Using the RainBird app while the plugin is running can cause connectivity issues 
+- For some RainBird controllers (such as ESP-RZXe & ESP-Me) it is not currently possible to show the time remaining for a zone that was not started via the plugin (such as a scheduled program). The time remaining will show as `00:00`
+- The RainBird LNK WiFi Module doesn't seem to support "Band Steering" and WiFi Channel 13. Please ensure your router is not configured to use these. 

@@ -29,6 +29,10 @@
     {
       "type": "Paypal",
       "url": "https://www.paypal.me/donavanbecker"
+    },
+    {
+      "type": "Paypal",
+      "url": "https://paypal.me/Mantorok1"
     }
   ],
   "keywords": [
