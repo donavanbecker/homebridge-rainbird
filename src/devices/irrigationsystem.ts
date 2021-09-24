@@ -99,9 +99,15 @@ export class IrrigationSystem {
 
     // Valves for zones
     for (const zone of rainbird!.zones) {
+<<<<<<< HEAD
       this.platform.debug('Create Valve service for zone', zone);
 
       const name = `Zone ${zone}`;
+=======
+
+      const name = `Zone ${zone}`;
+      this.platform.debug(`Load Valve Service for ${name}`);
+>>>>>>> 81cd26d5b9c1f15e243c7d7407e8a8dc9592fffc
       this.valves.set(zone, {
         service: this.accessory.getService(name) ??
           this.accessory.addService(this.platform.Service.Valve, name, zone),
@@ -126,7 +132,11 @@ export class IrrigationSystem {
       this.irrigation.service.addLinkedService(this.valves.get(zone)!.service);
 
       // Create handlers for required Valve characteristics
+<<<<<<< HEAD
       this.platform.debug('Configure Valve service for zone', zone);
+=======
+      this.platform.debug(`Configure Characteristics for ${name}`);
+>>>>>>> 81cd26d5b9c1f15e243c7d7407e8a8dc9592fffc
 
       this.valves.get(zone)!.service
         .getCharacteristic(this.platform.Characteristic.Active)
@@ -219,6 +229,11 @@ export class IrrigationSystem {
     this.irrigation.inUse = this.rainbird!.isInUse()
       ? this.platform.Characteristic.InUse.IN_USE
       : this.platform.Characteristic.InUse.NOT_IN_USE;
+<<<<<<< HEAD
+=======
+    this.platform.debug(`Irrigation System: ${this.accessory.displayName}
+    , Active: ${this.irrigation.active}, InUse: ${this.irrigation.inUse}`);
+>>>>>>> 81cd26d5b9c1f15e243c7d7407e8a8dc9592fffc
 
     // Valves
     for (const [zone, valve] of this.valves.entries()) {
@@ -229,6 +244,11 @@ export class IrrigationSystem {
       valve.inUse = this.rainbird!.isInUse(zone)
         ? this.platform.Characteristic.InUse.IN_USE
         : this.platform.Characteristic.InUse.NOT_IN_USE;
+<<<<<<< HEAD
+=======
+      this.platform.debug(`Valve: ${valve} ${zone}
+      , Active: ${valve.active}, InUse: ${valve.inUse}`);
+>>>>>>> 81cd26d5b9c1f15e243c7d7407e8a8dc9592fffc
     }
   }
 
@@ -247,7 +267,11 @@ export class IrrigationSystem {
       this.rainbird!.durationRemaining());
 
     // Valves
+<<<<<<< HEAD
     for(const [zone, valve] of this.valves.entries()) {
+=======
+    for (const [zone, valve] of this.valves.entries()) {
+>>>>>>> 81cd26d5b9c1f15e243c7d7407e8a8dc9592fffc
       if (valve.active !== undefined) {
         valve.service.updateCharacteristic(this.platform.Characteristic.Active, valve.active);
       }

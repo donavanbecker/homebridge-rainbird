@@ -23,4 +23,13 @@ plugin allows you to access your RainBird Controller from HomeKit with
 
 ## Configuration
 
-1. Login
+1. Set a Static IP Address to your [RainBird](https://www.rainbird.com) Controller - [How to Set Static IP Address](https://www.howtogeek.com/184310/ask-htg-should-i-be-setting-static-ip-addresses-on-my-router/).
+2. Input Static IP Address and Password for [RainBird](https://www.rainbird.com) Controller into Plugin UI Settings and restart Homebridge.
+    - If you choose to create child bridge with this plugin, do it at this time.
+    - Password is the password you used to setup the rainbird controller.
+
+## Collaborators
+
+ - [mantorok1](https://github.com/mantorok1)
+
+##### Thanks for all your help!

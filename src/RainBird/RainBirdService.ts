@@ -63,7 +63,8 @@ export class RainBirdService extends events.EventEmitter {
     address: string,
     password: string,
     refreshRate?: number,
-    log: Logger}) {
+    log: Logger
+  }) {
 
     super();
     this.log = options.log;
@@ -229,7 +230,7 @@ export class RainBirdService extends events.EventEmitter {
       this.log.info(`Zone ${zone}: Run for ${duration} seconds`);
       await this._client.runZone(zone, duration);
       this.emit('refresh_status');
-    } catch(error) {
+    } catch (error) {
       this.log.warn(`Zone ${zone}: Failed to start [${error}]`);
       this.setStatusTimer();
     }
