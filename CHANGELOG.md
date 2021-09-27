@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file. This projec
 
 ### Changes
 
-- Add Support for More Models and Add Compatiable Models to Readme.
+- Add Support for More Models and Added Compatiable Models to Readme.
 - Fixed `Failed to Discover Devices, "Cannot read property 'getTime' of undefined"` [#39](https://github.com/donavanbecker/homebridge-rainbird/issues/39).
 
 ## [Version 1.0.0](https://github.com/donavanbecker/homebridge-rainbird/compare/v0.1.0...v1.0.0) (2021-09-19)
