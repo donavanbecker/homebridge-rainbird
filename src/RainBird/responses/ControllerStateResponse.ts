@@ -24,8 +24,8 @@ export class ControllerStateResponse extends Response {
       response[3],
     );
     this._delayDays = response.readUInt16BE(7);
-    this._rainSetPointReached = response[9] === 1;
-    this._irrigationState = response[10] === 1;
+    this._rainSetPointReached = response[9] !== 0;
+    this._irrigationState = response[10] !== 0;
     this._seasonalAdjust = response.readUInt16BE(11);
     this._currentZoneTimeRemaining = response.readUInt16BE(13);
     this._currentZone = response[15];

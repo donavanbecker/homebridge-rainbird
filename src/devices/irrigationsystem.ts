@@ -99,7 +99,6 @@ export class IrrigationSystem {
 
     // Valves for zones
     for (const zone of rainbird!.zones) {
-
       const name = `Zone ${zone}`;
       this.platform.debug(`Load Valve Service for ${name}`);
       this.valves.set(zone, {
@@ -219,8 +218,8 @@ export class IrrigationSystem {
     this.irrigation.inUse = this.rainbird!.isInUse()
       ? this.platform.Characteristic.InUse.IN_USE
       : this.platform.Characteristic.InUse.NOT_IN_USE;
-    this.platform.debug(`Irrigation System: ${this.accessory.displayName}
-    , Active: ${this.irrigation.active}, InUse: ${this.irrigation.inUse}`);
+    this.platform.debug(
+      `Irrigation System: ${this.accessory.displayName}, Active: ${this.irrigation.active}, InUse: ${this.irrigation.inUse}`);
 
     // Valves
     for (const [zone, valve] of this.valves.entries()) {
@@ -231,8 +230,7 @@ export class IrrigationSystem {
       valve.inUse = this.rainbird!.isInUse(zone)
         ? this.platform.Characteristic.InUse.IN_USE
         : this.platform.Characteristic.InUse.NOT_IN_USE;
-      this.platform.debug(`Valve: ${valve} ${zone}
-      , Active: ${valve.active}, InUse: ${valve.inUse}`);
+      this.platform.debug(`Valve: ${zone}, Active: ${valve.active}, InUse: ${valve.inUse}`);
     }
   }
 

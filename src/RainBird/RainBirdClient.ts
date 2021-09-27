@@ -19,8 +19,21 @@ import { RunZoneRequest } from './requests/RunZoneRequest';
 import { StopIrrigationRequest } from './requests/StopIrrigationRequest';
 import { ControllerStateResponse } from './responses/ControllerStateResponse';
 import { ControllerStateRequest } from './requests/ControllerStateRequest';
+import { ControllerDateRequest } from './requests/ControllerDateRequest';
+import { ControllerDateResponse } from './responses/ControllerDateResponse';
+import { ControllerTimeRequest } from './requests/ControllerTimeRequest';
+import { ControllerTimeResponse } from './responses/ControllerTimeResponse';
+import { IrrigationStateRequest } from './requests/IrrigationStateRequest';
+import { IrrigationStateResponse } from './responses/IrrigationStateResponse';
+import { RainSetPointReachedRequest } from './requests/RainSetPointReachedRequest';
+import { RainSetPointReachedResponse } from './responses/RainSetPointReachedResponse';
+import { CurrentZoneRequest } from './requests/CurrentZoneRequest';
+import { CurrentZoneResponse } from './responses/CurrentZoneResponse';
+
+import { TestRequest } from './requests/TestRequest';
 
 export class RainBirdClient {
+  private readonly RETRY_DELAY = 60;
 
   constructor(
     private readonly address: string,
@@ -69,10 +82,40 @@ export class RainBirdClient {
 
   public async getControllerState(): Promise<ControllerStateResponse> {
     const request = new ControllerStateRequest();
-    return await this.sendRequest(request) as ControllerStateResponse;
+    return await this.sendRequest(request, false) as ControllerStateResponse;
   }
 
-  private async sendRequest(request: Request): Promise<Response | undefined> {
+  public async getControllerDate(): Promise<ControllerDateResponse> {
+    const request = new ControllerDateRequest();
+    return await this.sendRequest(request, false) as ControllerDateResponse;
+  }
+
+  public async getControllerTime(): Promise<ControllerTimeResponse> {
+    const request = new ControllerTimeRequest();
+    return await this.sendRequest(request, false) as ControllerTimeResponse;
+  }
+
+  public async getIrrigationState(): Promise<IrrigationStateResponse> {
+    const request = new IrrigationStateRequest();
+    return await this.sendRequest(request, false) as IrrigationStateResponse;
+  }
+
+  public async getRainSetPointReached(): Promise<RainSetPointReachedResponse> {
+    const request = new RainSetPointReachedRequest();
+    return await this.sendRequest(request, false) as RainSetPointReachedResponse;
+  }
+
+  public async getCurrentZone(): Promise<CurrentZoneResponse> {
+    const request = new CurrentZoneRequest();
+    return await this.sendRequest(request, false) as CurrentZoneResponse;
+  }
+
+  public async getTest(): Promise<Response> {
+    const request = new TestRequest();
+    return await this.sendRequest(request) as Response;
+  }
+
+  private async sendRequest(request: Request, retry = true): Promise<Response | undefined> {
     this.log.debug(`Request: ${request}`);
 
     // eslint-disable-next-line no-constant-condition
@@ -91,8 +134,12 @@ export class RainBirdClient {
 
         return response;
       } catch (error) {
-        this.log.warn(`RainBird controller request failed. Retry in 30 seconds. [${error}]`);
-        await this.delay(30);
+        this.log.warn(`RainBird controller request failed. [${error}]`);
+        if (!retry) {
+          break;
+        }
+        this.log.warn(`Will retry in ${this.RETRY_DELAY} seconds`);
+        await this.delay(this.RETRY_DELAY);
       }
     }
   }
@@ -131,6 +178,21 @@ export class RainBirdClient {
         break;
       case 0x85:
         response = new SerialNumberResponse(data);
+        break;
+      case 0x90:
+        response = new ControllerTimeResponse(data);
+        break;
+      case 0x92:
+        response = new ControllerDateResponse(data);
+        break;
+      case 0xBE:
+        response = new RainSetPointReachedResponse(data);
+        break;
+      case 0xBF:
+        response = new CurrentZoneResponse(data);
+        break;
+      case 0xC8:
+        response = new IrrigationStateResponse(data);
         break;
       case 0xCC:
         response = new ControllerStateResponse(data);
