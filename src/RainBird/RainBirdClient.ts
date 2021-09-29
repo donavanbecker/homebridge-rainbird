@@ -29,6 +29,8 @@ import { RainSetPointReachedRequest } from './requests/RainSetPointReachedReques
 import { RainSetPointReachedResponse } from './responses/RainSetPointReachedResponse';
 import { CurrentZoneRequest } from './requests/CurrentZoneRequest';
 import { CurrentZoneResponse } from './responses/CurrentZoneResponse';
+import { CurrentZoneTimeRemainingRequest } from './requests/CurrentZoneTimeRemainingRequest';
+import { CurrentZoneTimeRemainingResponse } from './responses/CurrentZoneTimeRemainingResponse';
 
 import { TestRequest } from './requests/TestRequest';
 
@@ -110,6 +112,11 @@ export class RainBirdClient {
     return await this.sendRequest(request, false) as CurrentZoneResponse;
   }
 
+  public async getCurrentZoneTimeRemaining(): Promise<CurrentZoneTimeRemainingResponse> {
+    const request = new CurrentZoneTimeRemainingRequest();
+    return await this.sendRequest(request, false) as CurrentZoneTimeRemainingResponse;
+  }
+
   public async getTest(): Promise<Response> {
     const request = new TestRequest();
     return await this.sendRequest(request) as Response;
@@ -184,6 +191,9 @@ export class RainBirdClient {
         break;
       case 0x92:
         response = new ControllerDateResponse(data);
+        break;
+      case 0xBB:
+        response = new CurrentZoneTimeRemainingResponse(data);
         break;
       case 0xBE:
         response = new RainSetPointReachedResponse(data);
