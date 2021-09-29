@@ -243,11 +243,6 @@ export class RainBirdService extends events.EventEmitter {
 
       this.log.info(`Zone ${zone}: Run for ${duration} seconds`);
 
-      if (!this._supportsGetControllerState) {
-        this._status.zones[zone].durationRemaining = duration;
-        this._status.zones[zone].durationTime = new Date();
-      }
-
       await this._client.runZone(zone, duration);
 
     } catch(error) {
@@ -316,10 +311,10 @@ export class RainBirdService extends events.EventEmitter {
       const respTime = await this._client.getControllerTime();
       const respRainSetPointReached = await this._client.getRainSetPointReached();
       const respIrrigationState = await this._client.getIrrigationState();
-      const respCurrentZone = await this._client.getCurrentZone();
+      const respTimeRemaining = await this._client.getCurrentZoneTimeRemaining();
 
       if (respDate === undefined || respTime === undefined || respRainSetPointReached === undefined ||
-        respIrrigationState === undefined || respCurrentZone === undefined
+        respIrrigationState === undefined || respTimeRemaining === undefined
       ) {
         return;
       }
@@ -339,8 +334,8 @@ export class RainBirdService extends events.EventEmitter {
         rainSetPointReached: respRainSetPointReached.rainSetPointReached,
         irrigationState: respIrrigationState.irrigationState,
         seasonalAdjust: 0,
-        currentZone: respCurrentZone.currentZone,
-        currentZoneTimeRemaining: 0,
+        currentZone: respTimeRemaining.currentZone,
+        currentZoneTimeRemaining: respTimeRemaining.timeRemaining,
       };
     } catch (error) {
       this.log.debug(`Failed to get status: ${error}`);
@@ -376,10 +371,8 @@ export class RainBirdService extends events.EventEmitter {
         zone.durationTime = undefined;
       } else {
         zone.active = true;
-        if (this._supportsGetControllerState || zone.durationRemaining === 0) {
-          zone.durationRemaining = status.currentZoneTimeRemaining;
-          zone.durationTime = new Date();
-        }
+        zone.durationRemaining = status.currentZoneTimeRemaining;
+        zone.durationTime = new Date();
       }
     }
 
