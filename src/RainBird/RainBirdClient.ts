@@ -25,14 +25,13 @@ import { ControllerTimeRequest } from './requests/ControllerTimeRequest';
 import { ControllerTimeResponse } from './responses/ControllerTimeResponse';
 import { IrrigationStateRequest } from './requests/IrrigationStateRequest';
 import { IrrigationStateResponse } from './responses/IrrigationStateResponse';
-import { RainSetPointReachedRequest } from './requests/RainSetPointReachedRequest';
-import { RainSetPointReachedResponse } from './responses/RainSetPointReachedResponse';
+import { RainSensorStateRequest } from './requests/RainSensorStateRequest';
+import { RainSensorStateResponse } from './responses/RainSensorStateResponse';
 import { CurrentZoneRequest } from './requests/CurrentZoneRequest';
 import { CurrentZoneResponse } from './responses/CurrentZoneResponse';
-import { CurrentZoneTimeRemainingRequest } from './requests/CurrentZoneTimeRemainingRequest';
-import { CurrentZoneTimeRemainingResponse } from './responses/CurrentZoneTimeRemainingResponse';
-
-import { TestRequest } from './requests/TestRequest';
+import { CurrentZoneStateRequest } from './requests/CurrentZoneStateRequest';
+import { CurrentZoneStateResponse } from './responses/CurrentZoneStateResponse';
+import { AdvanceZoneRequest } from './requests/AdvanceZoneRequest';
 
 export class RainBirdClient {
   private readonly RETRY_DELAY = 60;
@@ -74,6 +73,14 @@ export class RainBirdClient {
       : response as AcknowledgedResponse;
   }
 
+  public async advanceZone(): Promise<AcknowledgedResponse | NotAcknowledgedResponse> {
+    const request = new AdvanceZoneRequest();
+    const response = await this.sendRequest(request);
+    return response!.type === 0
+      ? response as NotAcknowledgedResponse
+      : response as AcknowledgedResponse;
+  }
+
   public async stopIrrigation(): Promise<AcknowledgedResponse | NotAcknowledgedResponse> {
     const request = new StopIrrigationRequest();
     const response = await this.sendRequest(request);
@@ -102,9 +109,9 @@ export class RainBirdClient {
     return await this.sendRequest(request, false) as IrrigationStateResponse;
   }
 
-  public async getRainSetPointReached(): Promise<RainSetPointReachedResponse> {
-    const request = new RainSetPointReachedRequest();
-    return await this.sendRequest(request, false) as RainSetPointReachedResponse;
+  public async getRainSensorState(): Promise<RainSensorStateResponse> {
+    const request = new RainSensorStateRequest();
+    return await this.sendRequest(request, false) as RainSensorStateResponse;
   }
 
   public async getCurrentZone(): Promise<CurrentZoneResponse> {
@@ -112,14 +119,9 @@ export class RainBirdClient {
     return await this.sendRequest(request, false) as CurrentZoneResponse;
   }
 
-  public async getCurrentZoneTimeRemaining(): Promise<CurrentZoneTimeRemainingResponse> {
-    const request = new CurrentZoneTimeRemainingRequest();
-    return await this.sendRequest(request, false) as CurrentZoneTimeRemainingResponse;
-  }
-
-  public async getTest(): Promise<Response> {
-    const request = new TestRequest();
-    return await this.sendRequest(request) as Response;
+  public async getCurrentZoneState(): Promise<CurrentZoneStateResponse> {
+    const request = new CurrentZoneStateRequest();
+    return await this.sendRequest(request, false) as CurrentZoneStateResponse;
   }
 
   private async sendRequest(request: Request, retry = true): Promise<Response | undefined> {
@@ -193,10 +195,10 @@ export class RainBirdClient {
         response = new ControllerDateResponse(data);
         break;
       case 0xBB:
-        response = new CurrentZoneTimeRemainingResponse(data);
+        response = new CurrentZoneStateResponse(data);
         break;
       case 0xBE:
-        response = new RainSetPointReachedResponse(data);
+        response = new RainSensorStateResponse(data);
         break;
       case 0xBF:
         response = new CurrentZoneResponse(data);

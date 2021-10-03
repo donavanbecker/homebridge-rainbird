@@ -35,6 +35,11 @@
               "x-schema-form": {
                 "type": "password"
               }
+            },
+            "showRainSensor": {
+              "title": "Show Rain Sensor (as Leak Sensor)",
+              "type": "boolean",
+              "required": false
             }
           }
         }
@@ -83,7 +88,8 @@
           "buttonText": "Add Device",
           "items": [
             "devices[].ipaddress",
-            "devices[].password"
+            "devices[].password",
+            "devices[].showRainSensor"
           ]
         }
       ]

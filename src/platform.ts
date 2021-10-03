@@ -7,6 +7,7 @@ import {
   DevicesConfig,
 } from './settings';
 import { IrrigationSystem } from './devices/irrigationsystem';
+import { LeakSensor } from './devices/LeakSensor';
 
 /**
  * HomebridgePlatform
@@ -142,6 +143,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
         JSON.stringify(metaData.zones),
       );
       this.createIrrigationSystem(device, rainbird);
+      this.createLeakSensor(device, rainbird);
     }
   }
 
@@ -206,6 +208,62 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
         'Unable to Register new device: %s',
         rainbird!.model,
       );
+    }
+  }
+
+  private createLeakSensor(device: DevicesConfig, rainbird: RainBirdService): void {
+    const model = 'WR2';
+    const uuid = this.api.hap.uuid.generate(`${device.ipaddress}-${model}-${rainbird!.serialNumber}`);
+    // see if an accessory with the same uuid has already been registered and restored from
+    // the cached devices we stored in the `configureAccessory` method above
+    const existingAccessory = this.accessories.find((accessory) => accessory.UUID === uuid);
+
+    if (existingAccessory) {
+      // the accessory already exists
+      if (!this.config.disablePlugin && device.showRainSensor) {
+        this.log.info(`Restoring existing accessory from cache: ${model}`);
+
+        // if you need to update the accessory.context then you should run `api.updatePlatformAccessories`. eg.:
+        existingAccessory.context.device = device;
+        existingAccessory.context.deviceID = rainbird!.serialNumber;
+        existingAccessory.context.model = model;
+        existingAccessory.context.FirmwareRevision = rainbird!.version;
+        this.api.updatePlatformAccessories([existingAccessory]);
+        // create the accessory handler for the restored accessory
+        // this is imported from `platformAccessory.ts`
+        new LeakSensor(this, existingAccessory, device, rainbird);
+        if (this.debugMode) {
+          this.log.warn(`Leak Sensor UDID: ${device.ipaddress}-${model}-${rainbird!.serialNumber}`);
+        }
+
+      } else {
+        this.unregisterPlatformAccessories(existingAccessory);
+      }
+    } else if (!this.config.disablePlugin && device.showRainSensor) {
+      // the accessory does not yet exist, so we need to create it
+      this.log.info(`Adding new accessory: ${model}`);
+
+      // create a new accessory
+      const accessory = new this.api.platformAccessory(model, uuid);
+
+      // store a copy of the device object in the `accessory.context`
+      // the `context` property can be used to store any data about the accessory you may need
+      accessory.context.device = device;
+      accessory.context.deviceID = rainbird!.serialNumber;
+      accessory.context.model = model;
+      accessory.context.FirmwareRevision = rainbird!.version;
+      // create the accessory handler for the newly create accessory
+      // this is imported from `platformAccessory.ts`
+      new LeakSensor(this, accessory, device, rainbird);
+      if (this.debugMode) {
+        this.log.warn(`Leak Sensor UDID: ${device.ipaddress}-${model}-${rainbird!.serialNumber}`);
+      }
+
+      // link the accessory to your platform
+      this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
+      this.accessories.push(accessory);
+    } else if (this.debugMode && device.showRainSensor) {
+      this.log.error(`Unable to Register new device: ${model}`);
     }
   }
 

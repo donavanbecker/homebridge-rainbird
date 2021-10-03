@@ -9,7 +9,7 @@
 <a href="https://discord.gg/8fpZA4S"><img title="discord-rainbird" src="https://badgen.net/discord/online-members/8fpZA4S?icon=discord&label=discord" ></a>
 
 <a href="https://paypal.me/donavanbecker"><img title="donavanbecker" src="https://badgen.net/badge/donavanbecker/paypal/yellow" ></a>
-<a href="https://paypal.me/donavanbecker"><img title="mantorok1" src="https://badgen.net/badge/mantorok1/paypal/yellow" ></a>
+<a href="https://paypal.me/Mantorok1"><img title="mantorok1" src="https://badgen.net/badge/mantorok1/paypal/yellow" ></a>
 
 <p>The Homebridge <a href="https://rainbird.com">RainBird</a> 
 plugin allows you to access your RainBird Controller from HomeKit with
@@ -37,9 +37,10 @@ plugin allows you to access your RainBird Controller from HomeKit with
 
 ## Compatiable Controllers
 
-- ESP-MEI, ESPSM3, LNK WIFI Module firmware v.1.6.3
+Any controller that supports the [RainBird LNK WiFi Module](https://www.rainbird.com/products/lnk-wifi-module) should be compatible. This includes:
+- ESP-Me
 - ESP-TM2
-- ESP-RZXe with Wifi Module
+- ESP-RZXe
 
 ## Known Limitations
 - Using the RainBird app while the plugin is running can cause connectivity issues 

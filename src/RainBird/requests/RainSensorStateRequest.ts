@@ -1,6 +1,6 @@
 import { Request } from './Request';
 
-export class RainSetPointReachedRequest extends Request {
+export class RainSensorStateRequest extends Request {
   get type(): number {
     return 0x3E;
   }
