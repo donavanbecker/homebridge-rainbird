@@ -10,14 +10,19 @@ export class CurrentZoneStateResponse extends Response {
     super();
     this._page = response[1];
 
-    if (response.length === 12) {
-      this._timeRemaining = response.readUInt16BE(4);
-      this._zoneId = response[8];
-      this._running = response[11] !== 0;
-    } else {
-      this._timeRemaining = response.readUInt16BE(8);
-      this._zoneId = response[6];
-      this._running = response[3] !== 0;
+    switch (response.length) {
+      case 12: // ESP-TM2
+        this._timeRemaining = response.readUInt16BE(4);
+        this._zoneId = response[8];
+        this._running = response[11] !== 0;
+        break;
+      case 10: // ESP-RZXe
+        this._timeRemaining = response.readUInt16BE(8);
+        this._zoneId = response[6];
+        this._running = response[3] !== 0;
+        break;
+      default:
+        throw Error(`Invalid response: ${this}`);
     }
   }
 
