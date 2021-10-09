@@ -87,9 +87,24 @@
           "orderable": false,
           "buttonText": "Add Device",
           "items": [
-            "devices[].ipaddress",
-            "devices[].password",
-            "devices[].showRainSensor"
+            {
+              "type": "div",
+              "displayFlex": true,
+              "flex-direction": "column",
+              "items": [
+                "devices[].ipaddress",
+                "devices[].password",
+                {
+                  "type": "fieldset",
+                  "title": "Device Settings",
+                  "expandable": true,
+                  "expanded": false,
+                  "items": [
+                    "devices[].showRainSensor"
+                  ]
+                }
+              ]
+            }
           ]
         }
       ]
