@@ -93,7 +93,6 @@
               "type": "fieldset",
               "title": "Device Settings",
               "expandable": true,
-              "expanded": true,
               "items": [
                 "devices[].showRainSensor"
               ]
