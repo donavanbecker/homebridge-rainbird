@@ -5,6 +5,7 @@ export class CurrentZoneStateResponse extends Response {
   private readonly _timeRemaining: number;
   private readonly _zoneId: number;
   private readonly _running: boolean;
+  private readonly _supported: boolean = true;
 
   constructor(private readonly response: Buffer) {
     super();
@@ -16,13 +17,17 @@ export class CurrentZoneStateResponse extends Response {
         this._zoneId = response[8];
         this._running = response[11] !== 0;
         break;
-      case 10: // ESP-RZXe
+      case 10: // ESP-RZXe & ESP-Me series
         this._timeRemaining = response.readUInt16BE(8);
         this._zoneId = response[6];
         this._running = response[3] !== 0;
         break;
-      default:
-        throw Error(`Invalid response: ${this}`);
+      default: // others such as ESP-ME3
+        this._timeRemaining = 0;
+        this._zoneId = 0;
+        this._running = false;
+        this._supported = false;
+        break;
     }
   }
 
@@ -44,6 +49,10 @@ export class CurrentZoneStateResponse extends Response {
 
   get running(): boolean {
     return this._running;
+  }
+
+  get supported(): boolean {
+    return this._supported;
   }
 
   toBuffer(): Buffer {

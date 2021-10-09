@@ -7,6 +7,7 @@ All notable changes to this project will be documented in this file. This projec
 - Support for rain sensor using the HomeKit leak sensor
 - Suppress a zone's active status when scheduled program has been suspended (due to rain)
 - Use "Advance Zone" command instead of "Stop Irrigation" so remaining zones can still run for a scheduled program
+- Fixed `RainBird controller request failed RangeError [ERR_OUT_OF_RANGE]` for ESP-ME3 [#57](https://github.com/donavanbecker/homebridge-rainbird/issues/57)
 
 ## [Version 1.2.0](https://github.com/donavanbecker/homebridge-rainbird/compare/v1.1.0...v1.2.0) (2021-09-29)
 

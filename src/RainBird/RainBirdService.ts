@@ -18,6 +18,13 @@ type ZoneStatus = {
   durationTime?: Date
 }
 
+type RainBirdStatus = {
+  zoneId: number,
+  timeRemaining: number,
+  running: boolean,
+  rainSensorSetPointReached: boolean
+}
+
 export class RainBirdService extends events.EventEmitter {
   private readonly log: Logger;
   private readonly _client: RainBirdClient;
@@ -29,6 +36,7 @@ export class RainBirdService extends events.EventEmitter {
     zones: [],
   }
 
+  private _currentZoneStateSupported = true;
   private _currentZoneId = 0;
   private _zones: Record<number, ZoneStatus> = {};
   private _rainSetPointReached = false;
@@ -66,6 +74,9 @@ export class RainBirdService extends events.EventEmitter {
     const respModelAndVersion = await this._client.getModelAndVersion();
     const respSerialNumber = await this._client.getSerialNumber();
     const respZones = await this._client.getAvailableZones();
+    const respCurrentZoneState = await this._client.getCurrentZoneState();
+
+    this._currentZoneStateSupported = respCurrentZoneState.supported;
 
     this._metadata = {
       model: respModelAndVersion.modelNumber,
@@ -220,6 +231,11 @@ export class RainBirdService extends events.EventEmitter {
 
       await this._client.runZone(zone, duration);
 
+      if (!this._currentZoneStateSupported) {
+        this._zones[zone].durationRemaining = duration;
+        this._zones[zone].durationTime = new Date();
+      }
+
     } catch(error) {
       this.log.warn(`Zone ${zone}: Failed to start [${error}]`);
     } finally {
@@ -274,26 +290,30 @@ export class RainBirdService extends events.EventEmitter {
   }
 
   private async updateStatus(): Promise<void> {
-    const currentZoneState = await this._client.getCurrentZoneState();
-    const rainSensorState = await this._client.getRainSensorState();
+    const status = await this.getRainBirdStatus();
 
-    if (currentZoneState === undefined || rainSensorState === undefined) {
+    if (status === undefined) {
       return;
     }
 
     const previousZoneId = this._currentZoneId;
-    this._currentZoneId = currentZoneState.zoneId;
+    this._currentZoneId = status.zoneId;
 
-    if (previousZoneId !== 0 && this._zones[previousZoneId].running && previousZoneId !== currentZoneState.zoneId) {
+    if (previousZoneId !== 0 && this._zones[previousZoneId].running && previousZoneId !== status.zoneId) {
       this.log.info(`Zone ${previousZoneId}: Complete`);
     }
 
     for (const [id, zone] of Object.entries(this._zones)) {
-      if (Number(id) === currentZoneState.zoneId && currentZoneState.running) {
+      if (Number(id) === status.zoneId && status.running) {
         zone.active = true;
         zone.running = true;
-        zone.durationRemaining = currentZoneState.timeRemaining;
-        zone.durationTime = new Date();
+        if (this._currentZoneStateSupported) {
+          zone.durationRemaining = status.timeRemaining;
+          zone.durationTime = new Date();
+        } else if (zone.durationTime === undefined) {
+          zone.durationRemaining = 0;
+          zone.durationTime = new Date();
+        }
         continue;
       }
 
@@ -307,11 +327,47 @@ export class RainBirdService extends events.EventEmitter {
 
     this.emit('status');
 
-    if (this._rainSetPointReached !== rainSensorState.setPointReached) {
-      this._rainSetPointReached = rainSensorState.setPointReached;
+    if (this._rainSetPointReached !== status.rainSensorSetPointReached) {
+      this._rainSetPointReached = status.rainSensorSetPointReached;
       this.emit('rain_sensor_state');
-      this.log.info(`Rain Sensor: ${rainSensorState.setPointReached ? 'SetPoint reached': 'Clear'}`);
+      this.log.info(`Rain Sensor: ${status.rainSensorSetPointReached ? 'SetPoint reached': 'Clear'}`);
     }
+  }
+
+  private async getRainBirdStatus(): Promise<RainBirdStatus | undefined> {
+    const rainSensorState = await this._client.getRainSensorState();
+
+    if (rainSensorState === undefined) {
+      return undefined;
+    }
+
+    if (this._currentZoneStateSupported) {
+      const currentZoneState = await this._client.getCurrentZoneState();
+
+      if (currentZoneState === undefined) {
+        return undefined;
+      }
+
+      return {
+        zoneId: currentZoneState.zoneId,
+        timeRemaining: currentZoneState.timeRemaining,
+        running: currentZoneState.running,
+        rainSensorSetPointReached: rainSensorState.setPointReached,
+      };
+    }
+
+    const currentZone = await this._client.getCurrentZone();
+
+    if (currentZone === undefined) {
+      return undefined;
+    }
+
+    return {
+      zoneId: currentZone.zoneId,
+      timeRemaining: 0,
+      running: true,
+      rainSensorSetPointReached: rainSensorState.setPointReached,
+    };
   }
 
   refreshStatus(): void {

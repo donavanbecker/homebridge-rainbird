@@ -41,7 +41,9 @@ Any controller that supports the [RainBird LNK WiFi Module](https://www.rainbird
 - ESP-Me
 - ESP-TM2
 - ESP-RZXe
+- ESP-ME3 (see "Known Limitations")
 
 ## Known Limitations
 - Using the RainBird app while the plugin is running can cause connectivity issues 
-- The RainBird LNK WiFi Module doesn't seem to support "Band Steering" and WiFi Channel 13. Please ensure your router is not configured to use these. 
+- The RainBird LNK WiFi Module doesn't seem to support "Band Steering" and WiFi Channel 13. Please ensure your router is not configured to use these.
+- ESP-ME3: It is not currently possible to show the time remaining for a zone that was not started via the plugin (such as a scheduled program). The time remaining will show as `00:00` in these cases. Also a zone will show as active even though a scheduled program has been suspended (due to rain)
