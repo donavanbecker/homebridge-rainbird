@@ -2,7 +2,9 @@
 
 All notable changes to this project will be documented in this file. This project uses [Semantic Versioning](https://semver.org/)
 
-### NEXT
+## [Version 1.3.0](https://github.com/donavanbecker/homebridge-rainbird/compare/v1.2.0...v1.3.0) (2021-10-09)
+
+### Changes
 
 - Support for rain sensor using the HomeKit leak sensor
 - Suppress a zone's active status when scheduled program has been suspended (due to rain)
