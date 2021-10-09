@@ -2,13 +2,13 @@ import { Response } from './Response';
 
 export class CurrentZoneResponse extends Response {
   private readonly _page: number;
-  private readonly _currentZone: number;
+  private readonly _zoneId: number;
 
   constructor(private readonly response: Buffer) {
     super();
     this._page = response[1];
-    const currentZone = response.readUInt32LE(2);
-    this._currentZone = currentZone === 0
+    const zoneId = response.readUInt32LE(2);
+    this._zoneId = zoneId === 0
       ? 0
       : Math.log2(response.readUInt32LE(2)) + 1;
   }
@@ -21,8 +21,8 @@ export class CurrentZoneResponse extends Response {
     return this._page;
   }
 
-  get currentZone(): number {
-    return this._currentZone;
+  get zoneId(): number {
+    return this._zoneId;
   }
 
   toBuffer(): Buffer {

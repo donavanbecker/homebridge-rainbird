@@ -1,6 +1,6 @@
 import { Request } from './Request';
 
-export class CurrentZoneTimeRemainingRequest extends Request {
+export class CurrentZoneStateRequest extends Request {
   get type(): number {
     return 0x3B;
   }

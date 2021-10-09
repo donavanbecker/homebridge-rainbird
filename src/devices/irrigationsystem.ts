@@ -14,8 +14,8 @@ export class IrrigationSystem {
 
   private irrigation!: {
     service: Service,
-    active: CharacteristicValue;
-    inUse: CharacteristicValue;
+    active: CharacteristicValue,
+    inUse: CharacteristicValue,
   }
 
   private valves: Map<number, {

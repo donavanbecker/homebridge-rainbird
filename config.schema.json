@@ -35,6 +35,11 @@
               "x-schema-form": {
                 "type": "password"
               }
+            },
+            "showRainSensor": {
+              "title": "Show Rain Sensor (as Leak Sensor)",
+              "type": "boolean",
+              "required": false
             }
           }
         }
@@ -82,8 +87,24 @@
           "orderable": false,
           "buttonText": "Add Device",
           "items": [
-            "devices[].ipaddress",
-            "devices[].password"
+            {
+              "type": "div",
+              "displayFlex": true,
+              "flex-direction": "column",
+              "items": [
+                "devices[].ipaddress",
+                "devices[].password",
+                {
+                  "type": "fieldset",
+                  "title": "Device Settings",
+                  "expandable": true,
+                  "expanded": false,
+                  "items": [
+                    "devices[].showRainSensor"
+                  ]
+                }
+              ]
+            }
           ]
         }
       ]

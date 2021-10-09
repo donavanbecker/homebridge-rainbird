@@ -20,6 +20,8 @@ export class ModelAndVersionResponse extends Response {
         return 'ESP-RZXe';
       case 0x0007:
         return 'ESP-Me';
+      case 0x0009:
+        return 'ESP-ME3';
       case 0x010A:
         return 'ESP-TM2';
       default:

@@ -9,7 +9,7 @@
 <a href="https://discord.gg/8fpZA4S"><img title="discord-rainbird" src="https://badgen.net/discord/online-members/8fpZA4S?icon=discord&label=discord" ></a>
 
 <a href="https://paypal.me/donavanbecker"><img title="donavanbecker" src="https://badgen.net/badge/donavanbecker/paypal/yellow" ></a>
-<a href="https://paypal.me/donavanbecker"><img title="mantorok1" src="https://badgen.net/badge/mantorok1/paypal/yellow" ></a>
+<a href="https://paypal.me/Mantorok1"><img title="mantorok1" src="https://badgen.net/badge/mantorok1/paypal/yellow" ></a>
 
 <p>The Homebridge <a href="https://rainbird.com">RainBird</a> 
 plugin allows you to access your RainBird Controller from HomeKit with
@@ -37,10 +37,13 @@ plugin allows you to access your RainBird Controller from HomeKit with
 
 ## Compatiable Controllers
 
-- ESP-MEI, ESPSM3, LNK WIFI Module firmware v.1.6.3
+Any controller that supports the [RainBird LNK WiFi Module](https://www.rainbird.com/products/lnk-wifi-module) should be compatible. This includes:
+- ESP-Me
 - ESP-TM2
-- ESP-RZXe with Wifi Module
+- ESP-RZXe
+- ESP-ME3 (see "Known Limitations")
 
 ## Known Limitations
 - Using the RainBird app while the plugin is running can cause connectivity issues 
-- The RainBird LNK WiFi Module doesn't seem to support "Band Steering" and WiFi Channel 13. Please ensure your router is not configured to use these. 
+- The RainBird LNK WiFi Module doesn't seem to support "Band Steering" and WiFi Channel 13. Please ensure your router is not configured to use these.
+- ESP-ME3: It is not currently possible to show the time remaining for a zone that was not started via the plugin (such as a scheduled program). The time remaining will show as `00:00` in these cases. Also a zone will show as active even though a scheduled program has been suspended (due to rain)

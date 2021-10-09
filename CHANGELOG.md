@@ -2,12 +2,21 @@
 
 All notable changes to this project will be documented in this file. This project uses [Semantic Versioning](https://semver.org/)
 
+## [Version 1.3.0](https://github.com/donavanbecker/homebridge-rainbird/compare/v1.2.0...v1.3.0) (2021-10-09)
+
+### Changes
+
+- Support for rain sensor using the HomeKit leak sensor
+- Suppress a zone's active status when scheduled program has been suspended (due to rain)
+- Use "Advance Zone" command instead of "Stop Irrigation" so remaining zones can still run for a scheduled program
+- Fixed `RainBird controller request failed RangeError [ERR_OUT_OF_RANGE]` for ESP-ME3 [#57](https://github.com/donavanbecker/homebridge-rainbird/issues/57)
+
 ## [Version 1.2.0](https://github.com/donavanbecker/homebridge-rainbird/compare/v1.1.0...v1.2.0) (2021-09-29)
 
 ### Changes
 
 - Added CurrentZoneTimeRemainingRequest & CurrentZoneTimeRemainingResponse function.
-    - Fixed issue where some RainBird controllers (such as ESP-RZXe & ESP-Me) couldn't show the time remaining for a zone that was not started via the plugin (such as a scheduled program).
+- Fixed issue where some RainBird controllers (such as ESP-RZXe & ESP-Me) couldn't show the time remaining for a zone that was not started via the plugin (such as a scheduled program).
 
 ## [Version 1.1.0](https://github.com/donavanbecker/homebridge-rainbird/compare/v1.0.0...v1.1.0) (2021-09-27)
 
