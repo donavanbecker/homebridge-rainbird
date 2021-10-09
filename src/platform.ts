@@ -171,7 +171,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
         // this is imported from `platformAccessory.ts`
         new IrrigationSystem(this, existingAccessory, device, rainbird);
         if (this.debugMode) {
-          this.log.warn(`Irrigation System UDID: ${device.ipaddress}-${rainbird!.model}-${rainbird!.serialNumber}`);
+          this.log.warn(`Irrigation System uuid: ${device.ipaddress}-${rainbird!.model}-${rainbird!.serialNumber}`);
         }
 
       } else {
@@ -197,7 +197,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
       // this is imported from `platformAccessory.ts`
       new IrrigationSystem(this, accessory, device, rainbird);
       if (this.debugMode) {
-        this.log.warn(`Irrigation System UDID: ${device.ipaddress}-${rainbird!.model}-${rainbird!.serialNumber}`);
+        this.log.warn(`Irrigation System uuid: ${device.ipaddress}-${rainbird!.model}-${rainbird!.serialNumber}`);
       }
 
       // link the accessory to your platform
@@ -233,7 +233,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
         // this is imported from `platformAccessory.ts`
         new LeakSensor(this, existingAccessory, device, rainbird);
         if (this.debugMode) {
-          this.log.warn(`Leak Sensor UDID: ${device.ipaddress}-${model}-${rainbird!.serialNumber}`);
+          this.log.warn(`Leak Sensor uuid: ${device.ipaddress}-${model}-${rainbird!.serialNumber}`);
         }
 
       } else {
@@ -256,7 +256,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
       // this is imported from `platformAccessory.ts`
       new LeakSensor(this, accessory, device, rainbird);
       if (this.debugMode) {
-        this.log.warn(`Leak Sensor UDID: ${device.ipaddress}-${model}-${rainbird!.serialNumber}`);
+        this.log.warn(`Leak Sensor uuid: ${device.ipaddress}-${model}-${rainbird!.serialNumber}`);
       }
 
       // link the accessory to your platform
