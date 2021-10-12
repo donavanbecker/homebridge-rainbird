@@ -1,4 +1,4 @@
-import axios, { AxiosInstance } from 'axios';
+import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import crypto = require('crypto');
 import encoder = require('text-encoder');
 import aesjs = require('aes-js');
@@ -137,8 +137,8 @@ export class RainBirdClient {
       try {
         const url = `http://${this.address}/stick`;
         const body: Buffer = this.encrypt(request);
-        const resp = await axios.post(url, this.createRequestOptions(body));
-        this.log.debug(`RainBird controller request: [${resp}]`);
+        const resp: AxiosResponse<any> = await axios.post(url, this.createRequestOptions(body));
+        this.log.warn(`RainBird controller request: [${resp}]`);
 
         if (!resp.statusText || resp.status !== 200) {
           throw new Error(`Invalid Response [Status: ${resp.status}, Text: ${resp.statusText}]`);
