@@ -1,4 +1,4 @@
-import axios, { AxiosInstance } from 'axios';
+import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import crypto = require('crypto');
 import encoder = require('text-encoder');
 import aesjs = require('aes-js');
@@ -36,6 +36,7 @@ import { AdvanceZoneRequest } from './requests/AdvanceZoneRequest';
 export class RainBirdClient {
   private readonly RETRY_DELAY = 60;
 
+
   public axios: AxiosInstance = axios.create({
     responseType: 'json',
   });
@@ -44,6 +45,18 @@ export class RainBirdClient {
     private readonly address: string,
     private readonly password: string,
     private readonly log: Logger) {
+
+    // setup axios interceptor to add headers / api key to each request
+    this.axios.interceptors.request.use((request: AxiosRequestConfig) => {
+              request.headers!['Accept-Language'] = 'en';
+              request.headers!['Accept-Encoding'] = 'gzip, deflate';
+              request.headers!['User-Agent'] = 'RainBird/2.0 CFNetwork/811.5.4 Darwin/16.7.0';
+              request.headers!['Accept'] = '*/*';
+              request.headers!['Connection'] = 'keep-alive';
+              request.headers!['Content-Type'] = 'application/octet-stream';
+              return request;
+    });
+
   }
 
   public async getModelAndVersion(): Promise<ModelAndVersionResponse> {
@@ -136,29 +149,14 @@ export class RainBirdClient {
       try {
         const url = `http://${this.address}/stick`;
         const body: Buffer = this.encrypt(request);
-        const resp = (
-          await axios({
-            url: url,
-            method: 'POST',
-            headers: {
-              'Accept-Language': 'en',
-              'Accept-Encoding': 'gzip, deflate',
-              'User-Agent': 'RainBird/2.0 CFNetwork/811.5.4 Darwin/16.7.0',
-              'Accept': '*/*',
-              'Connection': 'keep-alive',
-              'Content-Type': 'application/octet-stream',
-            },
-            data: body,
-            responseType: 'json',
-          })
-        );
-        const data: any = resp.data;
+        const resp = await axios.post(url, this.createRequestOptions(body));
 
         if (!resp.statusText || resp.status !== 200) {
           throw new Error(`Invalid Response [Status: ${resp.status}, Text: ${resp.statusText}]`);
         }
 
-        const encryptedResponse: Buffer = await data();
+
+        const encryptedResponse: Buffer = resp.data.body;
         const response = this.getResponse(encryptedResponse);
 
         return response;
