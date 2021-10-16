@@ -39,7 +39,7 @@ export class LeakSensor {
     // Add Leak Sensor's Characteristics
     this.leakSensor.service
       .setCharacteristic(this.platform.Characteristic.LeakDetected, this.platform.Characteristic.LeakDetected.LEAK_NOT_DETECTED)
-      .setCharacteristic(this.platform.Characteristic.Name, model)
+      .setCharacteristic(this.platform.Characteristic.Name, `${model} Leak Sensor`)
       .setCharacteristic(this.platform.Characteristic.StatusFault, this.platform.Characteristic.StatusFault.NO_FAULT);
 
     this.leakSensor.service.getCharacteristic(this.platform.Characteristic.LeakDetected)

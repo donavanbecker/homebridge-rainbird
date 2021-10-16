@@ -147,6 +147,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
         this.log.info(`Restoring existing accessory from cache: ${existingAccessory.displayName}`);
 
         // if you need to update the accessory.context then you should run `api.updatePlatformAccessories`. eg.:
+        existingAccessory.displayName = rainbird!.model;
         existingAccessory.context.device = device;
         existingAccessory.context.deviceID = rainbird!.serialNumber;
         existingAccessory.context.model = rainbird!.model;
@@ -201,6 +202,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
         this.log.info(`Restoring existing accessory from cache: ${existingAccessory.displayName}`);
 
         // if you need to update the accessory.context then you should run `api.updatePlatformAccessories`. eg.:
+        existingAccessory.displayName = model;
         existingAccessory.context.device = device;
         existingAccessory.context.deviceID = rainbird!.serialNumber;
         existingAccessory.context.model = model;
