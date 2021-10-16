@@ -61,15 +61,31 @@
             "description": "Indicates the number of seconds between pushes to Rainbird Client."
           },
           "debug": {
-            "title": "Debug",
-            "type": "boolean",
-            "description": "Turn plugin's debug mode on."
+            "title": "Logging Settings",
+            "type": "string",
+            "description": "Enble 'Device' or 'Debug' logging.",
+            "oneOf": [
+              {
+                "title": "Enable Debug Logging",
+                "enum": [
+                  "debug"
+                ]
+              },
+              {
+                "title": "Enable Device Logging",
+                "enum": [
+                  "device"
+                ]
+              }
+            ],
+            "required": false
           }
         }
       },
       "disablePlugin": {
         "title": "Disable Plugin",
-        "type": "boolean"
+        "type": "boolean",
+        "description": "DO NOT USE, UNLESS YOU WANT TO REMOVE ACCESSORIES FROM CACHE."
       }
     }
   },
@@ -132,11 +148,7 @@
           "notitle": true
         },
         "options.debug",
-        {
-          "key": "disablePlugin",
-          "title": "Disable Plugin",
-          "description": "If true, the plugin will remove all accessories and not load the plugin on restart."
-        }
+        "disablePlugin"
       ]
     }
   ]

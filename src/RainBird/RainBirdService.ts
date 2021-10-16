@@ -14,7 +14,7 @@ type RainBirdMetaData = {
 type ZoneStatus = {
   active: boolean,
   running: boolean,
-  durationRemaining: number,
+  RemainingDuration: number,
   durationTime?: Date
 }
 
@@ -34,7 +34,7 @@ export class RainBirdService extends events.EventEmitter {
     version: 'Unknown',
     serialNumber: 'Unknown',
     zones: [],
-  }
+  };
 
   private _currentZoneStateSupported = true;
   private _currentZoneId = 0;
@@ -90,7 +90,7 @@ export class RainBirdService extends events.EventEmitter {
       this._zones[zone] = {
         active: false,
         running: false,
-        durationRemaining: 0,
+        RemainingDuration: 0,
         durationTime: undefined,
       };
     }
@@ -148,24 +148,24 @@ export class RainBirdService extends events.EventEmitter {
       : this._zones[zone].durationTime !== undefined;
   }
 
-  durationRemaining(zone?: number): number {
+  RemainingDuration(zone?: number): number {
     if (zone === undefined) {
       let remaining = 0;
       for (const zone of this.zones) {
-        remaining += this.calcDurationRemaining(zone);
+        remaining += this.calcRemainingDuration(zone);
       }
       return remaining;
     }
-    return this.calcDurationRemaining(zone);
+    return this.calcRemainingDuration(zone);
   }
 
-  private calcDurationRemaining(zone: number): number {
+  private calcRemainingDuration(zone: number): number {
     if (!this._zones[zone].active) {
       return 0;
     }
     const remaining = this._zones[zone].durationTime === undefined
-      ? this._zones[zone].durationRemaining
-      : this._zones[zone].durationRemaining - Math.round(
+      ? this._zones[zone].RemainingDuration
+      : this._zones[zone].RemainingDuration - Math.round(
         ((new Date()).getTime() - this._zones[zone].durationTime!.getTime()) / 1000);
 
     return Math.max(remaining, 0);
@@ -232,7 +232,7 @@ export class RainBirdService extends events.EventEmitter {
       await this._client.runZone(zone, duration);
 
       if (!this._currentZoneStateSupported) {
-        this._zones[zone].durationRemaining = duration;
+        this._zones[zone].RemainingDuration = duration;
         this._zones[zone].durationTime = new Date();
       }
 
@@ -248,11 +248,11 @@ export class RainBirdService extends events.EventEmitter {
 
     let timerDuration = this.options.refreshRate ?? 0;
     if (this._currentZoneId !== 0) {
-      const durationRemaining = this._zones[this._currentZoneId].durationRemaining;
-      if (durationRemaining > 0) {
+      const RemainingDuration = this._zones[this._currentZoneId].RemainingDuration;
+      if (RemainingDuration > 0) {
         timerDuration = timerDuration === 0
-          ? durationRemaining
-          : Math.min(timerDuration, durationRemaining);
+          ? RemainingDuration
+          : Math.min(timerDuration, RemainingDuration);
       }
     }
 
@@ -308,10 +308,10 @@ export class RainBirdService extends events.EventEmitter {
         zone.active = true;
         zone.running = true;
         if (this._currentZoneStateSupported) {
-          zone.durationRemaining = status.timeRemaining;
+          zone.RemainingDuration = status.timeRemaining;
           zone.durationTime = new Date();
         } else if (zone.durationTime === undefined) {
-          zone.durationRemaining = 0;
+          zone.RemainingDuration = 0;
           zone.durationTime = new Date();
         }
         continue;
@@ -321,7 +321,7 @@ export class RainBirdService extends events.EventEmitter {
         zone.active = false;
       }
       zone.running = false;
-      zone.durationRemaining = 0;
+      zone.RemainingDuration = 0;
       zone.durationTime = undefined;
     }
 
