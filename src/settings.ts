@@ -26,5 +26,5 @@ export type options = {
   refreshRate?: number;
   pushRate?: number;
   hide_device: string[];
-  debug?: boolean;
+  debug?: string;
 };

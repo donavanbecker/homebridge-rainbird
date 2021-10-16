@@ -21,11 +21,9 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
   // this is used to track restored cached accessories
   public readonly accessories: PlatformAccessory[] = [];
 
-  version = require('../package.json').version // eslint-disable-line @typescript-eslint/no-var-requires
+  version = require('../package.json').version; // eslint-disable-line @typescript-eslint/no-var-requires
 
   public sensorData = [];
-  debugMode!: boolean;
-  rainbirdDebugMode!: boolean;
 
   constructor(public readonly log: Logger, public readonly config: RainbirdPlatformConfig, public readonly api: API) {
     this.debug('Finished initializing platform:', this.config.name);
@@ -49,8 +47,6 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
       this.debug(JSON.stringify(e));
       return;
     }
-
-    this.debugMode = process.argv.includes('-D') || process.argv.includes('--debug');
 
     // When this event is fired it means Homebridge has restored all cached accessories from disk.
     // Dynamic Platform plugins should only register new accessories after this event was fired,
@@ -83,6 +79,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
    */
   verifyConfig() {
     this.config.disablePlugin;
+    this.config.options?.debug;
 
     if (this.config.devices) {
       for (const device of this.config.devices!) {
@@ -106,18 +103,13 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
     if (!this.config.options.refreshRate && !this.config.disablePlugin) {
       // default 300 seconds (5 minutes)
       this.config.options!.refreshRate! = 300;
-      if (this.debugMode) {
-        this.log.warn('Using Default Refresh Rate.');
-      }
+      this.device('Using Default Refresh Rate.');
     }
 
     if (!this.config.options.pushRate && !this.config.disablePlugin) {
       // default 100 milliseconds
       this.config.options!.pushRate! = 0.1;
-      if (this.debugMode) {
-        this.log.warn('Using Default Push Rate.');
-      }
-
+      this.device('Using Default Push Rate.');
     }
   }
 
@@ -133,15 +125,11 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
         log: this.log,
       });
       const metaData = await rainbird!.init();
+      this.debug(JSON.stringify(metaData));
 
       // Display device details
-      this.log.info(
-        'Model: %s, [Version: %s, Serial Number: %s, Zones: %s]',
-        metaData.model,
-        metaData.version,
-        metaData.serialNumber,
-        JSON.stringify(metaData.zones),
-      );
+      this.log.info(`Model: ${metaData.model}, [Version: ${metaData.version}, Serial Number: ${metaData.serialNumber},`
+        + ` Zones: ${JSON.stringify(metaData.zones)}]`);
       this.createIrrigationSystem(device, rainbird);
       this.createLeakSensor(device, rainbird);
     }
@@ -156,12 +144,10 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
     if (existingAccessory) {
       // the accessory already exists
       if (!this.config.disablePlugin) {
-        this.log.info(
-          'Restoring existing accessory from cache: %s',
-          existingAccessory.displayName,
-        );
+        this.log.info(`Restoring existing accessory from cache: ${existingAccessory.displayName}`);
 
         // if you need to update the accessory.context then you should run `api.updatePlatformAccessories`. eg.:
+        existingAccessory.displayName = rainbird!.model;
         existingAccessory.context.device = device;
         existingAccessory.context.deviceID = rainbird!.serialNumber;
         existingAccessory.context.model = rainbird!.model;
@@ -170,19 +156,14 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
         // create the accessory handler for the restored accessory
         // this is imported from `platformAccessory.ts`
         new IrrigationSystem(this, existingAccessory, device, rainbird);
-        if (this.debugMode) {
-          this.log.warn(`Irrigation System uuid: ${device.ipaddress}-${rainbird!.model}-${rainbird!.serialNumber}`);
-        }
+        this.device(`Irrigation System uuid: ${device.ipaddress}-${rainbird!.model}-${rainbird!.serialNumber}, (${existingAccessory.UUID})`);
 
       } else {
         this.unregisterPlatformAccessories(existingAccessory);
       }
     } else if (!this.config.disablePlugin) {
       // the accessory does not yet exist, so we need to create it
-      this.log.info(
-        'Adding new accessory: %s',
-        rainbird!.model,
-      );
+      this.log.info(`Adding new accessory: ${rainbird!.model}`);
 
       // create a new accessory
       const accessory = new this.api.platformAccessory(rainbird!.model, uuid);
@@ -196,18 +177,15 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
       // create the accessory handler for the newly create accessory
       // this is imported from `platformAccessory.ts`
       new IrrigationSystem(this, accessory, device, rainbird);
-      if (this.debugMode) {
-        this.log.warn(`Irrigation System uuid: ${device.ipaddress}-${rainbird!.model}-${rainbird!.serialNumber}`);
-      }
+      this.device(`Irrigation System uuid: ${device.ipaddress}-${rainbird!.model}-${rainbird!.serialNumber}, (${accessory.UUID})`);
 
       // link the accessory to your platform
       this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
       this.accessories.push(accessory);
-    } else if (this.debugMode) {
-      this.log.error(
-        'Unable to Register new device: %s',
-        rainbird!.model,
-      );
+    } else {
+      if (this.config.options?.debug === 'debug') {
+        this.log.error(`Unable to Register new device: ${rainbird!.model}`);
+      }
     }
   }
 
@@ -221,9 +199,10 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
     if (existingAccessory) {
       // the accessory already exists
       if (!this.config.disablePlugin && device.showRainSensor) {
-        this.log.info(`Restoring existing accessory from cache: ${model}`);
+        this.log.info(`Restoring existing accessory from cache: ${existingAccessory.displayName}`);
 
         // if you need to update the accessory.context then you should run `api.updatePlatformAccessories`. eg.:
+        existingAccessory.displayName = model;
         existingAccessory.context.device = device;
         existingAccessory.context.deviceID = rainbird!.serialNumber;
         existingAccessory.context.model = model;
@@ -232,9 +211,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
         // create the accessory handler for the restored accessory
         // this is imported from `platformAccessory.ts`
         new LeakSensor(this, existingAccessory, device, rainbird);
-        if (this.debugMode) {
-          this.log.warn(`Leak Sensor uuid: ${device.ipaddress}-${model}-${rainbird!.serialNumber}`);
-        }
+        this.device(`Leak Sensor uuid: ${device.ipaddress}-${model}-${rainbird!.serialNumber}, (${existingAccessory.UUID})`);
 
       } else {
         this.unregisterPlatformAccessories(existingAccessory);
@@ -255,15 +232,15 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
       // create the accessory handler for the newly create accessory
       // this is imported from `platformAccessory.ts`
       new LeakSensor(this, accessory, device, rainbird);
-      if (this.debugMode) {
-        this.log.warn(`Leak Sensor uuid: ${device.ipaddress}-${model}-${rainbird!.serialNumber}`);
-      }
+      this.device(`Leak Sensor uuid: ${device.ipaddress}-${model}-${rainbird!.serialNumber}, (${accessory.UUID})`);
 
       // link the accessory to your platform
       this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
       this.accessories.push(accessory);
-    } else if (this.debugMode && device.showRainSensor) {
-      this.log.error(`Unable to Register new device: ${model}`);
+    } else {
+      if (this.config.options?.debug === 'debug' && device.showRainSensor) {
+        this.log.error(`Unable to Register new device: ${model}`);
+      }
     }
   }
 
@@ -276,11 +253,24 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
   /**
    * If debug level logging is turned on, log to log.info
    * Otherwise send debug logs to log.debug
+   * this.debugMode = process.argv.includes('-D') || process.argv.includes('--debug');
    */
   debug(...log: any[]) {
-    if (this.config.options?.debug) {
+    if (this.config.options!.debug === 'debug') {
       this.log.info('[DEBUG]', String(...log));
-    } else{
+    } else {
+      this.log.debug(String(...log));
+    }
+  }
+
+  /**
+   * If device level logging is turned on, log to log.warn
+   * Otherwise send debug logs to log.debug
+   */
+  device(...log: any[]) {
+    if (this.config.options!.debug === 'device') {
+      this.log.warn('[DEVICE]', String(...log));
+    } else {
       this.log.debug(String(...log));
     }
   }

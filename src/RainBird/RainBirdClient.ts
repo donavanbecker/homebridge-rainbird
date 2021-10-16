@@ -1,4 +1,4 @@
-import fetch from 'node-fetch';
+import axios, { AxiosInstance, AxiosResponse } from 'axios';
 import crypto = require('crypto');
 import encoder = require('text-encoder');
 import aesjs = require('aes-js');
@@ -35,6 +35,11 @@ import { AdvanceZoneRequest } from './requests/AdvanceZoneRequest';
 
 export class RainBirdClient {
   private readonly RETRY_DELAY = 60;
+
+
+  public axios: AxiosInstance = axios.create({
+    responseType: 'json',
+  });
 
   constructor(
     private readonly address: string,
@@ -132,13 +137,14 @@ export class RainBirdClient {
       try {
         const url = `http://${this.address}/stick`;
         const body: Buffer = this.encrypt(request);
-        const resp = await fetch(url, this.createRequestOptions(body));
+        const resp: AxiosResponse<any> = await axios.post(url, this.createRequestOptions(body));
+        this.log.warn(`RainBird controller request: [${resp}]`);
 
-        if (!resp.ok || resp.status !== 200) {
+        if (!resp.statusText || resp.status !== 200) {
           throw new Error(`Invalid Response [Status: ${resp.status}, Text: ${resp.statusText}]`);
         }
 
-        const encryptedResponse: Buffer = await resp.buffer();
+        const encryptedResponse: Buffer = resp.data.body;
         const response = this.getResponse(encryptedResponse);
 
         return response;
@@ -252,7 +258,6 @@ export class RainBirdClient {
 
   private createRequestOptions(body: Buffer) {
     return {
-      method: 'POST',
       body: body,
       headers: {
         'Accept-Language': 'en',
