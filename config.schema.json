@@ -40,6 +40,12 @@
               "title": "Show Rain Sensor (as Leak Sensor)",
               "type": "boolean",
               "required": false
+            },
+            "showValveSensor": {
+              "title": "Enable Valve Notifications (as Contact Sensors)",
+              "type": "boolean",
+              "required": false,
+              "description": "If enabled, whichever zone runs the contact sensors will go off as detected so you know that it is running."
             }
           }
         }
@@ -116,7 +122,8 @@
                   "expandable": true,
                   "expanded": false,
                   "items": [
-                    "devices[].showRainSensor"
+                    "devices[].showRainSensor",
+                    "devices[].showValveSensor"
                   ]
                 }
               ]

@@ -20,6 +20,7 @@ export type DevicesConfig = {
   ipaddress?: IPAddress;
   password?: string;
   showRainSensor?: boolean;
+  showValveSensor?: boolean;
 };
 
 export type options = {

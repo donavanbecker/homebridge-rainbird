@@ -7,7 +7,7 @@ import {
   DevicesConfig,
 } from './settings';
 import { IrrigationSystem } from './devices/irrigationsystem';
-import { LeakSensor } from './devices/LeakSensor';
+import { LeakSensor } from './devices/leaksensor';
 
 /**
  * HomebridgePlatform
@@ -78,8 +78,10 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
    * Verify the config passed to the plugin is valid
    */
   verifyConfig() {
-    this.config.disablePlugin;
     this.config.options?.debug;
+    this.config.disablePlugin = this.config.disablePlugin || false;
+    this.config.showRainSensor = this.config.showRainSensor || false;
+    this.config.showValveSensor = this.config.showValveSensor || false;
 
     if (this.config.devices) {
       for (const device of this.config.devices!) {
