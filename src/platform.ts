@@ -7,7 +7,7 @@ import {
   DevicesConfig,
 } from './settings';
 import { IrrigationSystem } from './devices/irrigationsystem';
-import { LeakSensor } from './devices/leaksensor';
+import { LeakSensor } from './devices/LeakSensor';
 
 /**
  * HomebridgePlatform
