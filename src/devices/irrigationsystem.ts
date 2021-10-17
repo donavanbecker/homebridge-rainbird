@@ -103,7 +103,7 @@ export class IrrigationSystem {
     for (const zone of rainbird!.zones) {
       const name = `Zone ${zone}`;
       this.platform.device(`Load Valve Service for ${name}`);
-      if (this.platform.config.showValveSensor) {
+      if (device.showValveSensor) {
         this.valves.set(zone, {
           service: this.accessory.getService(name) ??
           this.accessory.addService(this.platform.Service.Valve, name, zone),
@@ -138,7 +138,7 @@ export class IrrigationSystem {
         .setCharacteristic(this.platform.Characteristic.ServiceLabelIndex, zone)
         .setCharacteristic(this.platform.Characteristic.StatusFault, this.platform.Characteristic.StatusFault.NO_FAULT);
 
-      if (this.platform.config.showValveSensor) {
+      if (device.showValveSensor) {
         this.valves.get(zone)!.contactService!
           .setCharacteristic(this.platform.Characteristic.Name, name)
           .setCharacteristic(this.platform.Characteristic.ContactSensorState, this.valves.get(zone)!.InUse);
@@ -197,7 +197,7 @@ export class IrrigationSystem {
           return this.rainbird!.RemainingDuration(zone);
         });
 
-      if (this.platform.config.showValveSensor) {
+      if (device.showValveSensor) {
         this.valves.get(zone)!.contactService!
           .getCharacteristic(this.platform.Characteristic.ContactSensorState)
           .onGet(() => {
@@ -269,7 +269,7 @@ export class IrrigationSystem {
         ? this.platform.Characteristic.InUse.IN_USE
         : this.platform.Characteristic.InUse.NOT_IN_USE;
 
-      if (this.platform.config.showValveSensor) {
+      if (this.device.showValveSensor) {
         valve.ContactSensorState = this.rainbird!.isInUse(zone)
           ? this.platform.Characteristic.ContactSensorState.CONTACT_NOT_DETECTED
           : this.platform.Characteristic.ContactSensorState.CONTACT_DETECTED;
@@ -338,7 +338,7 @@ export class IrrigationSystem {
         valve.service.updateCharacteristic(this.platform.Characteristic.RemainingDuration, this.rainbird!.RemainingDuration(zone));
         this.platform.device(`Valve ${this.accessory.displayName} updateCharacteristic RemainingDuration: ${this.rainbird!.RemainingDuration(zone)}`);
       }
-      if (this.platform.config.showValveSensor) {
+      if (this.device.showValveSensor) {
         if (valve.ContactSensorState === undefined) {
           this.platform.debug(`Valve ${this.accessory.displayName} ContactSensorState: ${valve.ContactSensorState}`);
         } else {
