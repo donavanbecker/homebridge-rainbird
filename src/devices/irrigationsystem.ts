@@ -24,7 +24,10 @@ export class IrrigationSystem {
     InUse: CharacteristicValue,
     SetDuration: number,
     IsConfigured: CharacteristicValue;
-    contactService?: Service,
+  }> = new Map();
+
+  private contactSensor: Map<number, {
+    service?: Service,
     ContactSensorState?: CharacteristicValue;
   }> = new Map();
 
@@ -104,27 +107,20 @@ export class IrrigationSystem {
       const name = `Zone ${zone}`;
       this.platform.device(`Load Valve Service for ${name}`);
       if (device.showValveSensor) {
-        this.valves.set(zone, {
+        this.contactSensor.set(zone, {
           service: this.accessory.getService(name) ??
-          this.accessory.addService(this.platform.Service.Valve, name, zone),
-          Active: this.platform.Characteristic.Active.INACTIVE as CharacteristicValue,
-          InUse: this.platform.Characteristic.InUse.NOT_IN_USE as CharacteristicValue,
-          SetDuration: 300,
-          IsConfigured: this.platform.Characteristic.IsConfigured.CONFIGURED,
-          contactService: this.accessory.getService(name) ??
-        this.accessory.addService(this.platform.Service.Valve, name, zone),
+            this.accessory.addService(this.platform.Service.Valve, name, zone),
           ContactSensorState: this.platform.Characteristic.ContactSensorState.CONTACT_DETECTED,
         });
-      } else {
-        this.valves.set(zone, {
-          service: this.accessory.getService(name) ??
-          this.accessory.addService(this.platform.Service.Valve, name, zone),
-          Active: this.platform.Characteristic.Active.INACTIVE as CharacteristicValue,
-          InUse: this.platform.Characteristic.InUse.NOT_IN_USE as CharacteristicValue,
-          SetDuration: 300,
-          IsConfigured: this.platform.Characteristic.IsConfigured.CONFIGURED,
-        });
       }
+      this.valves.set(zone, {
+        service: this.accessory.getService(name) ??
+          this.accessory.addService(this.platform.Service.Valve, name, zone),
+        Active: this.platform.Characteristic.Active.INACTIVE as CharacteristicValue,
+        InUse: this.platform.Characteristic.InUse.NOT_IN_USE as CharacteristicValue,
+        SetDuration: 300,
+        IsConfigured: this.platform.Characteristic.IsConfigured.CONFIGURED,
+      });
 
       // Add Valve Service's Characteristics
       this.valves.get(zone)!.service
@@ -139,7 +135,7 @@ export class IrrigationSystem {
         .setCharacteristic(this.platform.Characteristic.StatusFault, this.platform.Characteristic.StatusFault.NO_FAULT);
 
       if (device.showValveSensor) {
-        this.valves.get(zone)!.contactService!
+        this.contactSensor.get(zone)!.service!
           .setCharacteristic(this.platform.Characteristic.Name, name)
           .setCharacteristic(this.platform.Characteristic.ContactSensorState, this.valves.get(zone)!.InUse);
       }
@@ -198,11 +194,11 @@ export class IrrigationSystem {
         });
 
       if (device.showValveSensor) {
-        this.valves.get(zone)!.contactService!
+        this.contactSensor.get(zone)!.service!
           .getCharacteristic(this.platform.Characteristic.ContactSensorState)
           .onGet(() => {
-          this.rainbird!.refreshStatus();
-          return this.valves.get(zone)!.InUse;
+            this.rainbird!.refreshStatus();
+            return this.valves.get(zone)!.InUse;
           });
       }
     }
@@ -269,16 +265,15 @@ export class IrrigationSystem {
         ? this.platform.Characteristic.InUse.IN_USE
         : this.platform.Characteristic.InUse.NOT_IN_USE;
 
-      if (this.device.showValveSensor) {
+      this.platform.debug(`Valve: ${zone}, Active: ${valve.Active}, InUse: ${valve.InUse}`);
+    }
+    if (this.device.showValveSensor) {
+      for (const [zone, valve] of this.contactSensor.entries()) {
         valve.ContactSensorState = this.rainbird!.isInUse(zone)
           ? this.platform.Characteristic.ContactSensorState.CONTACT_NOT_DETECTED
           : this.platform.Characteristic.ContactSensorState.CONTACT_DETECTED;
-        this.platform.debug(`Valve: ${zone}, Active: ${valve.Active}, InUse: ${valve.InUse}, ContactSensorState: ${valve.ContactSensorState}`);
-      } else {
-        this.platform.debug(`Valve: ${zone}, Active: ${valve.Active}, InUse: ${valve.InUse}`);
+        this.platform.debug(`ContactSensorState: ${valve.ContactSensorState}`);
       }
-
-
     }
   }
 
@@ -338,14 +333,17 @@ export class IrrigationSystem {
         valve.service.updateCharacteristic(this.platform.Characteristic.RemainingDuration, this.rainbird!.RemainingDuration(zone));
         this.platform.device(`Valve ${this.accessory.displayName} updateCharacteristic RemainingDuration: ${this.rainbird!.RemainingDuration(zone)}`);
       }
+    }
+    for (const [zone, valve] of this.contactSensor.entries()) {
       if (this.device.showValveSensor) {
         if (valve.ContactSensorState === undefined) {
-          this.platform.debug(`Valve ${this.accessory.displayName} ContactSensorState: ${valve.ContactSensorState}`);
+          this.platform.debug(`Valve ${this.accessory.displayName} ContactSensorState: ${valve.ContactSensorState}, ${zone}`);
         } else {
-          valve.contactService!.updateCharacteristic(this.platform.Characteristic.ContactSensorState, valve.ContactSensorState);
-          this.platform.device(`Valve ${this.accessory.displayName} updateCharacteristic ContactSensorState: ${valve.ContactSensorState}`);
+          valve.service!.updateCharacteristic(this.platform.Characteristic.ContactSensorState, valve.ContactSensorState);
+          this.platform.device(`Valve ${this.accessory.displayName} updateCharacteristic ContactSensorState: ${valve.ContactSensorState}, ${zone}`);
         }
       }
+
     }
   }
 
