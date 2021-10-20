@@ -63,8 +63,7 @@ export class ContactSensor {
         .onGet(() => {
           this.rainbird!.refreshStatus();
           return this.valves.get(zone)!.ContactSensorState;
-        })
-        .onSet(this.setValveActive.bind(this, zone));
+        });
     }
 
     // Initial Device Parse
@@ -105,8 +104,8 @@ export class ContactSensor {
     // Valves
     for (const [zone, valve] of this.valves.entries()) {
       valve.ContactSensorState = this.rainbird!.isActive(zone)
-        ? this.platform.Characteristic.Active.ACTIVE
-        : this.platform.Characteristic.Active.INACTIVE;
+        ? this.platform.Characteristic.ContactSensorState.CONTACT_DETECTED
+        : this.platform.Characteristic.ContactSensorState.CONTACT_NOT_DETECTED;
       this.platform.debug(`Valve: ${zone}, ContactSensorState: ${valve.ContactSensorState}`);
     }
   }
@@ -124,11 +123,5 @@ export class ContactSensor {
         this.platform.device(`Valve ${this.accessory.displayName} updateCharacteristic ContactSensorState: ${valve.ContactSensorState}, ${zone}`);
       }
     }
-  }
-
-  private setValveActive(zone: number, value: CharacteristicValue) {
-    this.platform.device(`Irrigation System ${this.accessory.displayName}, Valve: ${zone}, Set ContactSensorState: ${value}`);
-    this.valves.get(zone)!.ContactSensorState = value;
-    this.doContactSensorUpdate.next(zone);
   }
 }
