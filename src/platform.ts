@@ -6,7 +6,7 @@ import {
   RainbirdPlatformConfig,
   DevicesConfig,
 } from './settings';
-import { IrrigationSystem } from './devices/IrrigationSystem';
+import { IrrigationSystem } from './devices/Irrigation';
 import { ContactSensor } from './devices/ContactSensor';
 import { LeakSensor } from './devices/LeakSensor';
 
