@@ -46,7 +46,7 @@ export class ContactSensor {
       this.platform.device(`Load Valve Service for ${name}`);
       this.valves.set(zone, {
         service: this.accessory.getService(name) ??
-          this.accessory.addService(this.platform.Service.Valve, name, zone),
+          this.accessory.addService(this.platform.Service.ContactSensor, name, zone),
         ContactSensorState: this.platform.Characteristic.ContactSensorState.CONTACT_DETECTED,
       });
 
