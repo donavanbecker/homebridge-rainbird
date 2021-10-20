@@ -17,7 +17,7 @@ export class ContactSensor {
     ContactSensorState: CharacteristicValue,
   }> = new Map();
 
-  // Irrigation System Updates
+  // Contact Sensor Updates
   private contactSensorUpdateInProgress!: boolean;
   private doContactSensorUpdate: Subject<number>;
 
@@ -43,7 +43,7 @@ export class ContactSensor {
     // Valves for zones
     for (const zone of rainbird!.zones) {
       const name = `Zone ${zone}`;
-      this.platform.device(`Load Valve Service for ${name}`);
+      this.platform.device(`Load Contact Sensor Service for ${name}`);
       this.valves.set(zone, {
         service: this.accessory.getService(name) ??
           this.accessory.addService(this.platform.Service.ContactSensor, name, zone),
@@ -52,9 +52,7 @@ export class ContactSensor {
 
       // Add Valve Service's Characteristics
       this.valves.get(zone)!.service
-        .setCharacteristic(this.platform.Characteristic.Name, name)
-        .setCharacteristic(this.platform.Characteristic.ContactSensorState, this.valves.get(zone)!.ContactSensorState);
-
+        .setCharacteristic(this.platform.Characteristic.Name, name);
       // Create handlers for required Valve characteristics
       this.platform.device(`Configure Characteristics for ${name}`);
 
@@ -106,7 +104,7 @@ export class ContactSensor {
       valve.ContactSensorState = this.rainbird!.isActive(zone)
         ? this.platform.Characteristic.ContactSensorState.CONTACT_DETECTED
         : this.platform.Characteristic.ContactSensorState.CONTACT_NOT_DETECTED;
-      this.platform.debug(`Valve: ${zone}, ContactSensorState: ${valve.ContactSensorState}`);
+      this.platform.debug(`Contact Sensor: ${zone}, ContactSensorState: ${valve.ContactSensorState}`);
     }
   }
 
@@ -117,10 +115,11 @@ export class ContactSensor {
     // Valves
     for (const [zone, valve] of this.valves.entries()) {
       if (valve.ContactSensorState === undefined) {
-        this.platform.debug(`Valve ${this.accessory.displayName} ContactSensorState: ${valve.ContactSensorState}, ${zone}`);
+        this.platform.debug(`Contact Sensor ${this.accessory.displayName} ContactSensorState: ${valve.ContactSensorState}, ${zone}`);
       } else {
         valve.service.updateCharacteristic(this.platform.Characteristic.Active, valve.ContactSensorState);
-        this.platform.device(`Valve ${this.accessory.displayName} updateCharacteristic ContactSensorState: ${valve.ContactSensorState}, ${zone}`);
+        this.platform.device(`Contact Sensor ${this.accessory.displayName}`
+          + ` updateCharacteristic ContactSensorState: ${valve.ContactSensorState}, ${zone}`);
       }
     }
   }
