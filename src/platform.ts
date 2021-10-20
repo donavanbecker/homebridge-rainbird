@@ -6,7 +6,8 @@ import {
   RainbirdPlatformConfig,
   DevicesConfig,
 } from './settings';
-import { IrrigationSystem } from './devices/irrigationsystem';
+import { IrrigationSystem } from './devices/IrrigationSystem';
+import { ContactSensor } from './devices/ContactSensor';
 import { LeakSensor } from './devices/LeakSensor';
 
 /**
@@ -158,6 +159,9 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
         // create the accessory handler for the restored accessory
         // this is imported from `platformAccessory.ts`
         new IrrigationSystem(this, existingAccessory, device, rainbird);
+        if (device.showValveSensor) {
+          new ContactSensor(this, existingAccessory, device, rainbird);
+        }
         this.device(`Irrigation System uuid: ${device.ipaddress}-${rainbird!.model}-${rainbird!.serialNumber}, (${existingAccessory.UUID})`);
 
       } else {
@@ -179,6 +183,9 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
       // create the accessory handler for the newly create accessory
       // this is imported from `platformAccessory.ts`
       new IrrigationSystem(this, accessory, device, rainbird);
+      if (device.showValveSensor) {
+        new ContactSensor(this, accessory, device, rainbird);
+      }
       this.device(`Irrigation System uuid: ${device.ipaddress}-${rainbird!.model}-${rainbird!.serialNumber}, (${accessory.UUID})`);
 
       // link the accessory to your platform
