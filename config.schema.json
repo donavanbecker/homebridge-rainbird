@@ -69,7 +69,7 @@
           "debug": {
             "title": "Logging Settings",
             "type": "string",
-            "description": "Enble 'Device' or 'Debug' logging.",
+            "description": "Enable 'Device' or 'Debug' logging.",
             "oneOf": [
               {
                 "title": "Enable Debug Logging",
