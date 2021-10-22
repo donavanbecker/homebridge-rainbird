@@ -135,6 +135,9 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
         + ` Zones: ${JSON.stringify(metaData.zones)}]`);
       this.createIrrigationSystem(device, rainbird);
       this.createLeakSensor(device, rainbird);
+      for(const zoneId of metaData.zones) {
+        this.createContactSensor(device, rainbird, zoneId);
+      }
     }
   }
 
@@ -159,11 +162,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
         // create the accessory handler for the restored accessory
         // this is imported from `platformAccessory.ts`
         new IrrigationSystem(this, existingAccessory, device, rainbird);
-        if (device.showValveSensor) {
-          new ContactSensor(this, existingAccessory, device, rainbird);
-        }
         this.device(`Irrigation System uuid: ${device.ipaddress}-${rainbird!.model}-${rainbird!.serialNumber}, (${existingAccessory.UUID})`);
-
       } else {
         this.unregisterPlatformAccessories(existingAccessory);
       }
@@ -183,9 +182,6 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
       // create the accessory handler for the newly create accessory
       // this is imported from `platformAccessory.ts`
       new IrrigationSystem(this, accessory, device, rainbird);
-      if (device.showValveSensor) {
-        new ContactSensor(this, accessory, device, rainbird);
-      }
       this.device(`Irrigation System uuid: ${device.ipaddress}-${rainbird!.model}-${rainbird!.serialNumber}, (${accessory.UUID})`);
 
       // link the accessory to your platform
@@ -249,6 +245,63 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
     } else {
       if (this.config.options?.debug === 'debug' && device.showRainSensor) {
         this.log.error(`Unable to Register new device: ${model}`);
+      }
+    }
+  }
+
+  createContactSensor(device: DevicesConfig, rainbird: RainBirdService, zoneId: number): void {
+    const model = `${rainbird!.model}-${zoneId}`;
+    const uuid = this.api.hap.uuid.generate(`${device.ipaddress}-${model}-${rainbird!.serialNumber}`);
+    // see if an accessory with the same uuid has already been registered and restored from
+    // the cached devices we stored in the `configureAccessory` method above
+    const existingAccessory = this.accessories.find((accessory) => accessory.UUID === uuid);
+
+    if (existingAccessory) {
+      // the accessory already exists
+      if (!this.config.disablePlugin && device.showValveSensor) {
+        this.log.info(`Restoring existing accessory from cache: ${existingAccessory.displayName}`);
+
+        // if you need to update the accessory.context then you should run `api.updatePlatformAccessories`. eg.:
+        existingAccessory.displayName = model;
+        existingAccessory.context.device = device;
+        existingAccessory.context.deviceID = rainbird!.serialNumber;
+        existingAccessory.context.model = model;
+        existingAccessory.context.FirmwareRevision = rainbird!.version;
+        existingAccessory.context.zoneId = zoneId;
+        this.api.updatePlatformAccessories([existingAccessory]);
+        // create the accessory handler for the restored accessory
+        // this is imported from `platformAccessory.ts`
+        new ContactSensor(this, existingAccessory, device, rainbird);
+        this.device(`Contact Sensor uuid: ${device.ipaddress}-${model}-${rainbird!.serialNumber}, (${existingAccessory.UUID})`);
+
+      } else {
+        this.unregisterPlatformAccessories(existingAccessory);
+      }
+    } else if (!this.config.disablePlugin && device.showValveSensor) {
+      // the accessory does not yet exist, so we need to create it
+      this.log.info(`Adding new accessory: ${model}`);
+
+      // create a new accessory
+      const accessory = new this.api.platformAccessory(model, uuid);
+
+      // store a copy of the device object in the `accessory.context`
+      // the `context` property can be used to store any data about the accessory you may need
+      accessory.context.device = device;
+      accessory.context.deviceID = rainbird!.serialNumber;
+      accessory.context.model = model;
+      accessory.context.FirmwareRevision = rainbird!.version;
+      accessory.context.zoneId = zoneId;
+      // create the accessory handler for the newly create accessory
+      // this is imported from `platformAccessory.ts`
+      new ContactSensor(this, accessory, device, rainbird);
+      this.device(`Contact Sensor uuid: ${device.ipaddress}-${model}-${rainbird!.serialNumber}, (${accessory.UUID})`);
+
+      // link the accessory to your platform
+      this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
+      this.accessories.push(accessory);
+    } else {
+      if (this.config.options?.debug === 'debug' && device.showValveSensor) {
+        this.log.error(`Unable to Register new device: ${rainbird!.model}-${zoneId}`);
       }
     }
   }

@@ -1,8 +1,7 @@
 import { Service, PlatformAccessory, CharacteristicValue } from 'homebridge';
 import { RainbirdPlatform } from '../platform';
 import { RainBirdService } from '../RainBird/RainBirdService';
-import { Subject, fromEvent, interval } from 'rxjs';
-import { debounceTime, skipWhile, tap } from 'rxjs/operators';
+import { fromEvent } from 'rxjs';
 import { DevicesConfig } from '../settings';
 
 /**
@@ -11,15 +10,10 @@ import { DevicesConfig } from '../settings';
  * Each accessory may expose multiple services of different service types.
  */
 export class ContactSensor {
-
-  private valves: Map<number, {
+  private contactSensor!: {
     service: Service,
-    ContactSensorState: CharacteristicValue,
-  }> = new Map();
-
-  // Contact Sensor Updates
-  private contactSensorUpdateInProgress!: boolean;
-  private doContactSensorUpdate: Subject<number>;
+    state: CharacteristicValue
+  };
 
   constructor(
     private readonly platform: RainbirdPlatform,
@@ -27,10 +21,6 @@ export class ContactSensor {
     public device: DevicesConfig,
     public rainbird: RainBirdService,
   ) {
-    // this is subject we use to track when we need to send changes to Rainbird Client
-    this.doContactSensorUpdate = new Subject();
-    this.contactSensorUpdateInProgress = false;
-
     // Set accessory information
     accessory
       .getService(this.platform.Service.AccessoryInformation)!
@@ -40,29 +30,26 @@ export class ContactSensor {
       .setCharacteristic(this.platform.Characteristic.FirmwareRevision, accessory.context.FirmwareRevision ?? rainbird!.version)
       .getCharacteristic(this.platform.Characteristic.FirmwareRevision).updateValue(accessory.context.FirmwareRevision);
 
-    // Valves for zones
-    for (const zone of rainbird!.zones) {
-      const name = `Zone ${zone}`;
-      this.platform.device(`Load Contact Sensor Service for ${name}`);
-      this.valves.set(zone, {
-        service: this.accessory.getService(name) ??
-          this.accessory.addService(this.platform.Service.ContactSensor, name, zone),
-        ContactSensorState: this.platform.Characteristic.ContactSensorState.CONTACT_DETECTED,
+    // Contact Sensor Service
+    const name = `Zone ${accessory.context.zoneId}`;
+    this.platform.device(`Load Contact Sensor Service for ${name}`);
+    this.contactSensor = {
+      service: this.accessory.getService(this.platform.Service.ContactSensor) ??
+        this.accessory.addService(this.platform.Service.ContactSensor),
+      state: this.platform.Characteristic.ContactSensorState.CONTACT_DETECTED,
+    };
+
+    // Add Contact Sensor's Characteristics
+    this.contactSensor.service
+      .setCharacteristic(this.platform.Characteristic.ContactSensorState, this.platform.Characteristic.ContactSensorState.CONTACT_DETECTED)
+      .setCharacteristic(this.platform.Characteristic.Name, name)
+      .setCharacteristic(this.platform.Characteristic.StatusFault, this.platform.Characteristic.StatusFault.NO_FAULT);
+
+    this.contactSensor.service.getCharacteristic(this.platform.Characteristic.ContactSensorState)
+      .onGet(() => {
+        this.rainbird!.refreshStatus();
+        return this.contactSensor.state;
       });
-
-      // Add Valve Service's Characteristics
-      this.valves.get(zone)!.service
-        .setCharacteristic(this.platform.Characteristic.Name, name);
-      // Create handlers for required Valve characteristics
-      this.platform.device(`Configure Characteristics for ${name}`);
-
-      this.valves.get(zone)!.service
-        .getCharacteristic(this.platform.Characteristic.ContactSensorState)
-        .onGet(() => {
-          this.rainbird!.refreshStatus();
-          return this.valves.get(zone)!.ContactSensorState;
-        });
-    }
 
     // Initial Device Parse
     this.parseStatus();
@@ -75,37 +62,16 @@ export class ContactSensor {
         this.updateHomeKitCharacteristics();
       },
     });
-
-    // Start an update interval
-    interval(this.platform.config.options!.refreshRate! * 1000)
-      .pipe(skipWhile(() => this.contactSensorUpdateInProgress))
-      .subscribe(() => {
-        this.rainbird!.refreshStatus();
-      });
-
-    this.doContactSensorUpdate
-      .pipe(
-        tap(() => {
-          this.contactSensorUpdateInProgress = true;
-        }),
-        debounceTime(this.platform.config.options!.pushRate! * 1000),
-      )
-      .subscribe(async () => {
-        this.contactSensorUpdateInProgress = false;
-      });
   }
 
   /**
    * Parse the device status from the RainbirdClient
    */
   parseStatus() {
-    // Valves
-    for (const [zone, valve] of this.valves.entries()) {
-      valve.ContactSensorState = this.rainbird!.isActive(zone)
-        ? this.platform.Characteristic.ContactSensorState.CONTACT_DETECTED
-        : this.platform.Characteristic.ContactSensorState.CONTACT_NOT_DETECTED;
-      this.platform.debug(`Contact Sensor: ${zone}, ContactSensorState: ${valve.ContactSensorState}`);
-    }
+    this.contactSensor.state = this.rainbird!.isInUse(this.accessory.context.zoneId)
+      ? this.platform.Characteristic.ContactSensorState.CONTACT_NOT_DETECTED
+      : this.platform.Characteristic.ContactSensorState.CONTACT_DETECTED;
+    this.platform.debug(`Contact Sensor: ${this.accessory.context.zoneId}, ContactSensorState: ${this.contactSensor.state}`);
   }
 
   /**
@@ -113,14 +79,13 @@ export class ContactSensor {
    */
   updateHomeKitCharacteristics() {
     // Valves
-    for (const [zone, valve] of this.valves.entries()) {
-      if (valve.ContactSensorState === undefined) {
-        this.platform.debug(`Contact Sensor ${this.accessory.displayName} ContactSensorState: ${valve.ContactSensorState}, ${zone}`);
-      } else {
-        valve.service.updateCharacteristic(this.platform.Characteristic.Active, valve.ContactSensorState);
-        this.platform.device(`Contact Sensor ${this.accessory.displayName}`
-          + ` updateCharacteristic ContactSensorState: ${valve.ContactSensorState}, ${zone}`);
-      }
+    if (this.contactSensor.state === undefined) {
+      this.platform.debug(
+        `Contact Sensor ${this.accessory.displayName} ContactSensorState: ${this.contactSensor.state}, ${this.accessory.context.zoneId}`);
+    } else {
+      this.contactSensor.service.updateCharacteristic(this.platform.Characteristic.ContactSensorState, this.contactSensor.state);
+      this.platform.device(
+        `Contact Sensor ${this.accessory.displayName} ContactSensorState: ${this.contactSensor.state}, ${this.accessory.context.zoneId}`);
     }
   }
 }
