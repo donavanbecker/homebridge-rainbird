@@ -3,6 +3,7 @@ import Queue from 'queue';
 import { Logger } from 'homebridge';
 import { RainBirdClient } from './RainBirdClient';
 import { debounceTime, fromEvent, Subject, Subscription, timer } from 'rxjs';
+import { AcknowledgedResponse } from './responses/AcknowledgedResponse';
 
 type RainBirdMetaData = {
   model: string,
@@ -37,6 +38,7 @@ export class RainBirdService extends events.EventEmitter {
   };
 
   private _currentZoneStateSupported = true;
+  private _advanceZoneSupported = true;
   private _currentZoneId = 0;
   private _zones: Record<number, ZoneStatus> = {};
   private _rainSetPointReached = false;
@@ -184,7 +186,13 @@ export class RainBirdService extends events.EventEmitter {
     this._zones[zone].active = false;
 
     if (this.isInUse(zone)) {
-      await this._client.advanceZone();
+      if (this._advanceZoneSupported) {
+        const response = await this._client.advanceZone();
+        this._advanceZoneSupported = response instanceof AcknowledgedResponse;
+      }
+      if (!this._advanceZoneSupported) {
+        await this._client.stopIrrigation();
+      }
       this._statusRefreshSubject.next();
     }
   }

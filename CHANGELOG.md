@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file. This projec
 - Added Device Logging and Debug Logging for plugin
 - Changed from `node-fetch` to `axios`
 - Updated dependencies
+- Fixed issue where some models were not able to stop a zone
 
 ## [Version 1.3.0](https://github.com/donavanbecker/homebridge-rainbird/compare/v1.2.0...v1.3.0) (2021-10-09)
 
