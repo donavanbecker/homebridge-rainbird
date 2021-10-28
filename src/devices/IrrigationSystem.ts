@@ -40,6 +40,13 @@ export class IrrigationSystem {
     this.doIrrigationSystemUpdate = new Subject();
     this.irrigationSystemUpdateInProgress = false;
 
+    if (accessory.context.configured === undefined) {
+      accessory.context.configured = {};
+    }
+    if (accessory.context.duration === undefined) {
+      accessory.context.duration = {};
+    }
+
     // Set accessory information
     accessory
       .getService(this.platform.Service.AccessoryInformation)!
@@ -106,8 +113,8 @@ export class IrrigationSystem {
           this.accessory.addService(this.platform.Service.Valve, name, zone),
         Active: this.platform.Characteristic.Active.INACTIVE as CharacteristicValue,
         InUse: this.platform.Characteristic.InUse.NOT_IN_USE as CharacteristicValue,
-        SetDuration: 300,
-        IsConfigured: this.platform.Characteristic.IsConfigured.CONFIGURED,
+        SetDuration: this.accessory.context.duration[zone] ?? 300,
+        IsConfigured: this.accessory.context.configured[zone] ?? this.platform.Characteristic.IsConfigured.CONFIGURED,
       });
 
       // Add Valve Service's Characteristics
@@ -329,12 +336,12 @@ export class IrrigationSystem {
   private setValveIsConfigured(zone: number, value: CharacteristicValue) {
     this.platform.device(`Irrigation System ${this.accessory.displayName}, Valve: ${zone}, Set IsConfigured: ${value}`);
     this.valves.get(zone)!.IsConfigured = value;
-    this.doIrrigationSystemUpdate.next(zone);
+    this.accessory.context.configured[zone] = value;
   }
 
   private setValveSetDuration(zone: number, value: CharacteristicValue) {
     this.platform.device(`Irrigation System ${this.accessory.displayName}, Valve: ${zone}, Set SetDuration: ${value}`);
     this.valves.get(zone)!.SetDuration = value as number;
-    this.doIrrigationSystemUpdate.next(zone);
+    this.accessory.context.duration[zone] = value;
   }
 }
