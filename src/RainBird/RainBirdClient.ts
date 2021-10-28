@@ -1,7 +1,8 @@
-import fetch from 'node-fetch';
+import axios = require('axios');
 import crypto = require('crypto');
 import encoder = require('text-encoder');
 import aesjs = require('aes-js');
+import cq = require('concurrent-queue');
 
 import { Logger } from 'homebridge';
 import { Request } from './requests/Request';
@@ -36,6 +37,10 @@ import { AdvanceZoneRequest } from './requests/AdvanceZoneRequest';
 export class RainBirdClient {
   private readonly RETRY_DELAY = 60;
 
+  private requestQueue = cq()
+    .limit({ concurrency: 1 })
+    .process(this.sendRequest.bind(this));
+
   constructor(
     private readonly address: string,
     private readonly password: string,
@@ -44,22 +49,22 @@ export class RainBirdClient {
 
   public async getModelAndVersion(): Promise<ModelAndVersionResponse> {
     const request = new ModelAndVersionRequest();
-    return await this.sendRequest(request) as ModelAndVersionResponse;
+    return await this.requestQueue(request) as ModelAndVersionResponse;
   }
 
   public async getAvailableZones(): Promise<AvailableZonesResponse> {
     const request = new AvailableZonesRequest();
-    return await this.sendRequest(request) as AvailableZonesResponse;
+    return await this.requestQueue(request) as AvailableZonesResponse;
   }
 
   public async getSerialNumber(): Promise<SerialNumberResponse> {
     const request = new SerialNumberRequest();
-    return await this.sendRequest(request) as SerialNumberResponse;
+    return await this.requestQueue(request) as SerialNumberResponse;
   }
 
   public async runProgram(program: number): Promise<AcknowledgedResponse | NotAcknowledgedResponse> {
     const request = new RunProgramRequest(program);
-    const response = await this.sendRequest(request);
+    const response = await this.requestQueue(request);
     return response!.type === 0
       ? response as NotAcknowledgedResponse
       : response as AcknowledgedResponse;
@@ -67,7 +72,7 @@ export class RainBirdClient {
 
   public async runZone(zone: number, duration: number): Promise<AcknowledgedResponse | NotAcknowledgedResponse> {
     const request = new RunZoneRequest(zone, Math.round(duration / 60));
-    const response = await this.sendRequest(request);
+    const response = await this.requestQueue(request);
     return response!.type === 0
       ? response as NotAcknowledgedResponse
       : response as AcknowledgedResponse;
@@ -75,7 +80,7 @@ export class RainBirdClient {
 
   public async advanceZone(): Promise<AcknowledgedResponse | NotAcknowledgedResponse> {
     const request = new AdvanceZoneRequest();
-    const response = await this.sendRequest(request);
+    const response = await this.requestQueue(request);
     return response!.type === 0
       ? response as NotAcknowledgedResponse
       : response as AcknowledgedResponse;
@@ -83,7 +88,7 @@ export class RainBirdClient {
 
   public async stopIrrigation(): Promise<AcknowledgedResponse | NotAcknowledgedResponse> {
     const request = new StopIrrigationRequest();
-    const response = await this.sendRequest(request);
+    const response = await this.requestQueue(request);
     return response!.type === 0
       ? response as NotAcknowledgedResponse
       : response as AcknowledgedResponse;
@@ -91,37 +96,37 @@ export class RainBirdClient {
 
   public async getControllerState(): Promise<ControllerStateResponse> {
     const request = new ControllerStateRequest();
-    return await this.sendRequest(request, false) as ControllerStateResponse;
+    return await this.requestQueue(request, false) as ControllerStateResponse;
   }
 
   public async getControllerDate(): Promise<ControllerDateResponse> {
     const request = new ControllerDateRequest();
-    return await this.sendRequest(request, false) as ControllerDateResponse;
+    return await this.requestQueue(request, false) as ControllerDateResponse;
   }
 
   public async getControllerTime(): Promise<ControllerTimeResponse> {
     const request = new ControllerTimeRequest();
-    return await this.sendRequest(request, false) as ControllerTimeResponse;
+    return await this.requestQueue(request, false) as ControllerTimeResponse;
   }
 
   public async getIrrigationState(): Promise<IrrigationStateResponse> {
     const request = new IrrigationStateRequest();
-    return await this.sendRequest(request, false) as IrrigationStateResponse;
+    return await this.requestQueue(request, false) as IrrigationStateResponse;
   }
 
   public async getRainSensorState(): Promise<RainSensorStateResponse> {
     const request = new RainSensorStateRequest();
-    return await this.sendRequest(request, false) as RainSensorStateResponse;
+    return await this.requestQueue(request, false) as RainSensorStateResponse;
   }
 
   public async getCurrentZone(): Promise<CurrentZoneResponse> {
     const request = new CurrentZoneRequest();
-    return await this.sendRequest(request, false) as CurrentZoneResponse;
+    return await this.requestQueue(request, false) as CurrentZoneResponse;
   }
 
   public async getCurrentZoneState(): Promise<CurrentZoneStateResponse> {
     const request = new CurrentZoneStateRequest();
-    return await this.sendRequest(request, false) as CurrentZoneStateResponse;
+    return await this.requestQueue(request, false) as CurrentZoneStateResponse;
   }
 
   private async sendRequest(request: Request, retry = true): Promise<Response | undefined> {
@@ -131,15 +136,16 @@ export class RainBirdClient {
     while (true) {
       try {
         const url = `http://${this.address}/stick`;
-        const body: Buffer = this.encrypt(request);
-        const resp = await fetch(url, this.createRequestOptions(body));
+        const data: Buffer = this.encrypt(request);
+        const config = this.createRequestConfig();
 
-        if (!resp.ok || resp.status !== 200) {
+        const resp = await axios.default.post(url, data, config);
+
+        if (!resp.statusText || resp.status !== 200) {
           throw new Error(`Invalid Response [Status: ${resp.status}, Text: ${resp.statusText}]`);
         }
 
-        const encryptedResponse: Buffer = await resp.buffer();
-        const response = this.getResponse(encryptedResponse);
+        const response = this.getResponse(resp.data as Buffer);
 
         return response;
       } catch (error) {
@@ -250,10 +256,9 @@ export class RainBirdClient {
     });
   }
 
-  private createRequestOptions(body: Buffer) {
+  private createRequestConfig(): axios.AxiosRequestConfig {
     return {
-      method: 'POST',
-      body: body,
+      responseType: 'arraybuffer',
       headers: {
         'Accept-Language': 'en',
         'Accept-Encoding': 'gzip, deflate',

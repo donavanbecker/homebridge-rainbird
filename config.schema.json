@@ -40,6 +40,12 @@
               "title": "Show Rain Sensor (as Leak Sensor)",
               "type": "boolean",
               "required": false
+            },
+            "showValveSensor": {
+              "title": "Enable Valve Notifications (as Contact Sensors)",
+              "type": "boolean",
+              "required": false,
+              "description": "If enabled, whichever zone runs the contact sensors will go off as detected so you know that it is running."
             }
           }
         }
@@ -61,15 +67,31 @@
             "description": "Indicates the number of seconds between pushes to Rainbird Client."
           },
           "debug": {
-            "title": "Debug",
-            "type": "boolean",
-            "description": "Turn plugin's debug mode on."
+            "title": "Logging Settings",
+            "type": "string",
+            "description": "Enable 'Device' or 'Debug' logging.",
+            "oneOf": [
+              {
+                "title": "Enable Debug Logging",
+                "enum": [
+                  "debug"
+                ]
+              },
+              {
+                "title": "Enable Device Logging",
+                "enum": [
+                  "device"
+                ]
+              }
+            ],
+            "required": false
           }
         }
       },
       "disablePlugin": {
         "title": "Disable Plugin",
-        "type": "boolean"
+        "type": "boolean",
+        "description": "DO NOT USE, UNLESS YOU WANT TO REMOVE ACCESSORIES FROM CACHE."
       }
     }
   },
@@ -100,7 +122,8 @@
                   "expandable": true,
                   "expanded": false,
                   "items": [
-                    "devices[].showRainSensor"
+                    "devices[].showRainSensor",
+                    "devices[].showValveSensor"
                   ]
                 }
               ]
@@ -132,11 +155,7 @@
           "notitle": true
         },
         "options.debug",
-        {
-          "key": "disablePlugin",
-          "title": "Disable Plugin",
-          "description": "If true, the plugin will remove all accessories and not load the plugin on restart."
-        }
+        "disablePlugin"
       ]
     }
   ]

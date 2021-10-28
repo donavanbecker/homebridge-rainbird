@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. This project uses [Semantic Versioning](https://semver.org/)
 
+## [Version 1.4.0](https://github.com/donavanbecker/homebridge-rainbird/compare/v1.3.0...v1.4.0) (2021-10-28)
+
+### Changes
+
+- Added support to show vavles as contact sensors
+    - Allows you to get notified in the Home App when a Zone has started.
+- Added Device Logging and Debug Logging for plugin
+- Changed from `node-fetch` to `axios`
+- Updated dependencies
+- Persist configured and duration values
+- Fixed issue where some models were not able to stop a zone
+
 ## [Version 1.3.0](https://github.com/donavanbecker/homebridge-rainbird/compare/v1.2.0...v1.3.0) (2021-10-09)
 
 ### Changes

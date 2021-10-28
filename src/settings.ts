@@ -20,11 +20,12 @@ export type DevicesConfig = {
   ipaddress?: IPAddress;
   password?: string;
   showRainSensor?: boolean;
+  showValveSensor?: boolean;
 };
 
 export type options = {
   refreshRate?: number;
   pushRate?: number;
   hide_device: string[];
-  debug?: boolean;
+  debug?: string;
 };
