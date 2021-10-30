@@ -126,6 +126,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
         password: device.password!,
         refreshRate: this.config.options!.refreshRate,
         log: this.log,
+        logCommands: this.config.options!.debug === 'command',
       });
       const metaData = await rainbird!.init();
       this.debug(JSON.stringify(metaData));

@@ -2,11 +2,7 @@
 
 All notable changes to this project will be documented in this file. This project uses [Semantic Versioning](https://semver.org/)
 
-<<<<<<< HEAD
-## [Beta-Version 1.4.0](https://github.com/donavanbecker/homebridge-rainbird/compare/v1.3.0...v1.4.0) (2021-10-XX)
-=======
 ## [Version 1.4.0](https://github.com/donavanbecker/homebridge-rainbird/compare/v1.3.0...v1.4.0) (2021-10-28)
->>>>>>> 77e2cc2027ae80636462f508a8dcfd7a72e7733b
 
 ### Changes
 
@@ -15,10 +11,7 @@ All notable changes to this project will be documented in this file. This projec
 - Added Device Logging and Debug Logging for plugin
 - Changed from `node-fetch` to `axios`
 - Updated dependencies
-<<<<<<< HEAD
-=======
 - Persist configured and duration values
->>>>>>> 77e2cc2027ae80636462f508a8dcfd7a72e7733b
 - Fixed issue where some models were not able to stop a zone
 
 ## [Version 1.3.0](https://github.com/donavanbecker/homebridge-rainbird/compare/v1.2.0...v1.3.0) (2021-10-09)

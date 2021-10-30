@@ -57,12 +57,12 @@ export class RainBirdService extends events.EventEmitter {
     address: string,
     password: string,
     refreshRate?: number,
-    log: Logger
+    log: Logger,
+    logCommands: boolean,
   }) {
-
     super();
     this.log = options.log;
-    this._client = new RainBirdClient(options.address, options.password, options.log);
+    this._client = new RainBirdClient(options.address, options.password, options.log, options.logCommands);
 
     this._statusRefreshSubject
       .pipe(
