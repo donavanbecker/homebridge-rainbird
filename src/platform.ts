@@ -318,7 +318,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
    * this.debugMode = process.argv.includes('-D') || process.argv.includes('--debug');
    */
   debug(...log: any[]) {
-    if (this.config.options!.debug === 'debug') {
+    if (this.config.options?.debug === 'debug') {
       this.log.info('[DEBUG]', String(...log));
     } else {
       this.log.debug(String(...log));
@@ -330,7 +330,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
    * Otherwise send debug logs to log.debug
    */
   device(...log: any[]) {
-    if (this.config.options!.debug === 'device') {
+    if (this.config.options?.debug === 'device') {
       this.log.warn('[DEVICE]', String(...log));
     } else {
       this.log.debug(String(...log));
