@@ -126,7 +126,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
         password: device.password!,
         refreshRate: this.config.options!.refreshRate,
         log: this.log,
-        logCommands: this.config.options!.debug === 'command',
+        logCommands: this.config.options?.debug === 'command',
       });
       const metaData = await rainbird!.init();
       this.debug(JSON.stringify(metaData));
@@ -134,15 +134,33 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
       // Display device details
       this.log.info(`Model: ${metaData.model}, [Version: ${metaData.version}, Serial Number: ${metaData.serialNumber},`
         + ` Zones: ${JSON.stringify(metaData.zones)}]`);
-      this.createIrrigationSystem(device, rainbird);
+      const irrigationAccessory = this.createIrrigationSystem(device, rainbird);
       this.createLeakSensor(device, rainbird);
       for(const zoneId of metaData.zones) {
-        this.createContactSensor(device, rainbird, zoneId);
+        const configured = irrigationAccessory!.context.configured[zoneId] ?? this.Characteristic.IsConfigured.CONFIGURED;
+        if (configured === this.Characteristic.IsConfigured.CONFIGURED) {
+          this.createContactSensor(device, rainbird, zoneId);
+        }
       }
+
+      // Handle zone enable/disable
+      rainbird.on('zone_enable', (zoneId, enabled) => {
+        if (enabled) {
+          this.createContactSensor(device, rainbird, zoneId);
+        } else {
+          const model = `${rainbird!.model}-${zoneId}`;
+          const uuid = this.api.hap.uuid.generate(`${device.ipaddress}-${model}-${rainbird!.serialNumber}`);
+          const index = this.accessories.findIndex((accessory) => accessory.UUID === uuid);
+          if (index >= 0) {
+            this.unregisterPlatformAccessories(this.accessories[index]);
+            this.accessories.splice(index, 1);
+          }
+        }
+      });
     }
   }
 
-  private createIrrigationSystem(device: DevicesConfig, rainbird: RainBirdService): void {
+  private createIrrigationSystem(device: DevicesConfig, rainbird: RainBirdService): PlatformAccessory | undefined {
     const uuid = this.api.hap.uuid.generate(`${device.ipaddress}-${rainbird!.model}-${rainbird!.serialNumber}`);
     // see if an accessory with the same uuid has already been registered and restored from
     // the cached devices we stored in the `configureAccessory` method above
@@ -164,6 +182,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
         // this is imported from `platformAccessory.ts`
         new IrrigationSystem(this, existingAccessory, device, rainbird);
         this.device(`Irrigation System uuid: ${device.ipaddress}-${rainbird!.model}-${rainbird!.serialNumber}, (${existingAccessory.UUID})`);
+        return existingAccessory;
       } else {
         this.unregisterPlatformAccessories(existingAccessory);
       }
@@ -188,6 +207,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
       // link the accessory to your platform
       this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
       this.accessories.push(accessory);
+      return accessory;
     } else {
       if (this.config.options?.debug === 'debug') {
         this.log.error(`Unable to Register new device: ${rainbird!.model}`);

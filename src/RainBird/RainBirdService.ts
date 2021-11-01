@@ -197,6 +197,10 @@ export class RainBirdService extends events.EventEmitter {
     }
   }
 
+  enableZone(zone: number, enabled: boolean): void {
+    this.emit('zone_enable', zone, enabled);
+  }
+
   private async startZone(zone: number, duration: number): Promise<void> {
     this.log.debug(`Zone ${zone}: Start for ${duration} seconds`);
 
