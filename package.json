@@ -64,6 +64,6 @@
     "ts-node": "^10.4.0",
     "typescript": "^4.4.4",
     "typescript-axios-wb": "^1.0.3",
-    "npm-check-updates": "^11.8.5"
+    "npm-check-updates": "^12.0.0"
   }
 }
