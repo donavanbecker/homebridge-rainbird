@@ -337,6 +337,7 @@ export class IrrigationSystem {
     this.platform.device(`Irrigation System ${this.accessory.displayName}, Valve: ${zone}, Set IsConfigured: ${value}`);
     this.valves.get(zone)!.IsConfigured = value;
     this.accessory.context.configured[zone] = value;
+    this.rainbird!.enableZone(zone, value === this.platform.Characteristic.IsConfigured.CONFIGURED);
   }
 
   private setValveSetDuration(zone: number, value: CharacteristicValue) {

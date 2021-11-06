@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. This project uses [Semantic Versioning](https://semver.org/)
 
+## [Version 1.5.0](https://github.com/donavanbecker/homebridge-rainbird/compare/v1.4.0...v1.5.0) (2021-11-06)
+
+### Changes
+
+- Added enableZone to find Enabled Zones
+- Added Command Logging for plugin
+- Updated dependencies
+
 ## [Version 1.4.0](https://github.com/donavanbecker/homebridge-rainbird/compare/v1.3.0...v1.4.0) (2021-10-28)
 
 ### Changes

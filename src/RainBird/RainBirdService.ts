@@ -57,12 +57,12 @@ export class RainBirdService extends events.EventEmitter {
     address: string,
     password: string,
     refreshRate?: number,
-    log: Logger
+    log: Logger,
+    logCommands: boolean,
   }) {
-
     super();
     this.log = options.log;
-    this._client = new RainBirdClient(options.address, options.password, options.log);
+    this._client = new RainBirdClient(options.address, options.password, options.log, options.logCommands);
 
     this._statusRefreshSubject
       .pipe(
@@ -195,6 +195,10 @@ export class RainBirdService extends events.EventEmitter {
       }
       this._statusRefreshSubject.next();
     }
+  }
+
+  enableZone(zone: number, enabled: boolean): void {
+    this.emit('zone_enable', zone, enabled);
   }
 
   private async startZone(zone: number, duration: number): Promise<void> {

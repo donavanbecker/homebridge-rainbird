@@ -69,7 +69,7 @@
           "debug": {
             "title": "Logging Settings",
             "type": "string",
-            "description": "Enable 'Device' or 'Debug' logging.",
+            "description": "Enable 'Device', 'Debug' or 'Command' logging.",
             "oneOf": [
               {
                 "title": "Enable Debug Logging",
@@ -81,6 +81,12 @@
                 "title": "Enable Device Logging",
                 "enum": [
                   "device"
+                ]
+              },
+              {
+                "title": "Enable Command Logging",
+                "enum": [
+                  "command"
                 ]
               }
             ],
