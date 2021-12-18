@@ -27,11 +27,15 @@
   },
   "funding": [
     {
-      "type": "Paypal",
+      "type": "Paypal - donavanbecker",
       "url": "https://paypal.me/donavanbecker"
     },
     {
-      "type": "Paypal",
+      "type": "GitHub - donavanbecker",
+      "url": "https://github.com/sponsors/donavanbecker"
+    },
+    {
+      "type": "Paypal - Mantorok1",
       "url": "https://paypal.me/Mantorok1"
     }
   ],
