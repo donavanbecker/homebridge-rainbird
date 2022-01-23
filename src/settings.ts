@@ -21,6 +21,9 @@ export type DevicesConfig = {
   password?: string;
   showRainSensor?: boolean;
   showValveSensor?: boolean;
+  showProgramASwitch?: boolean;
+  showProgramBSwitch?: boolean;
+  showProgramCSwitch?: boolean;
 };
 
 export type options = {

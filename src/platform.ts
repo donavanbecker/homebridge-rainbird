@@ -9,6 +9,7 @@ import {
 import { IrrigationSystem } from './devices/IrrigationSystem';
 import { ContactSensor } from './devices/ContactSensor';
 import { LeakSensor } from './devices/LeakSensor';
+import { ProgramSwitch } from './devices/ProgramSwitch';
 
 /**
  * HomebridgePlatform
@@ -79,10 +80,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
    * Verify the config passed to the plugin is valid
    */
   verifyConfig() {
-    this.config.options?.debug;
-    this.config.disablePlugin = this.config.disablePlugin || false;
-    this.config.showRainSensor = this.config.showRainSensor || false;
-    this.config.showValveSensor = this.config.showValveSensor || false;
+    this.initialiseConfig();
 
     if (this.config.devices) {
       for (const device of this.config.devices!) {
@@ -116,6 +114,17 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
     }
   }
 
+  private initialiseConfig(): void {
+    this.config.disablePlugin = this.config.disablePlugin ?? false;
+    for(const device of this.config.devices ?? []) {
+      device.showRainSensor = device.showRainSensor ?? false;
+      device.showValveSensor = device.showValveSensor ?? false;
+      device.showProgramASwitch = device.showProgramASwitch ?? false;
+      device.showProgramBSwitch = device.showProgramBSwitch ?? false;
+      device.showProgramCSwitch = device.showProgramCSwitch ?? false;
+    }
+  }
+
   /**
    * This method is used to discover the your location and devices.
    */
@@ -141,6 +150,9 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
         if (configured === this.Characteristic.IsConfigured.CONFIGURED) {
           this.createContactSensor(device, rainbird, zoneId);
         }
+      }
+      for(const programId of ['A', 'B', 'C']) {
+        this.createProgramSwitch(device, rainbird, programId);
       }
 
       // Handle zone enable/disable
@@ -323,6 +335,64 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
     } else {
       if (this.config.options?.debug === 'debug' && device.showValveSensor) {
         this.log.error(`Unable to Register new device: ${rainbird!.model}-${zoneId}`);
+      }
+    }
+  }
+
+  createProgramSwitch(device: DevicesConfig, rainbird: RainBirdService, programId: string): void {
+    const model = `${rainbird!.model}-pgm-${programId}`;
+    const uuid = this.api.hap.uuid.generate(`${device.ipaddress}-${model}-${rainbird!.serialNumber}`);
+    // see if an accessory with the same uuid has already been registered and restored from
+    // the cached devices we stored in the `configureAccessory` method above
+    const existingAccessory = this.accessories.find((accessory) => accessory.UUID === uuid);
+    const showProgramSwitch = device[`showProgram${programId}Switch`];
+
+    if (existingAccessory) {
+      // the accessory already exists
+      if (!this.config.disablePlugin && showProgramSwitch) {
+        this.log.info(`Restoring existing accessory from cache: ${existingAccessory.displayName}`);
+
+        // if you need to update the accessory.context then you should run `api.updatePlatformAccessories`. eg.:
+        existingAccessory.displayName = model;
+        existingAccessory.context.device = device;
+        existingAccessory.context.deviceID = rainbird!.serialNumber;
+        existingAccessory.context.model = model;
+        existingAccessory.context.FirmwareRevision = rainbird!.version;
+        existingAccessory.context.programId = programId;
+        this.api.updatePlatformAccessories([existingAccessory]);
+        // create the accessory handler for the restored accessory
+        // this is imported from `platformAccessory.ts`
+        new ProgramSwitch(this, existingAccessory, device, rainbird);
+        this.device(`Program Switch uuid: ${device.ipaddress}-${model}-${rainbird!.serialNumber}, (${existingAccessory.UUID})`);
+      } else {
+        this.unregisterPlatformAccessories(existingAccessory);
+      }
+    } else if (!this.config.disablePlugin && showProgramSwitch) {
+      // the accessory does not yet exist, so we need to create it
+      this.log.info(`Adding new accessory: ${model}`);
+
+      // create a new accessory
+      const accessory = new this.api.platformAccessory(model, uuid);
+
+      // store a copy of the device object in the `accessory.context`
+      // the `context` property can be used to store any data about the accessory you may need
+      accessory.context.device = device;
+      accessory.context.deviceID = rainbird!.serialNumber;
+      accessory.context.model = model;
+      accessory.context.FirmwareRevision = rainbird!.version;
+      accessory.context.programId = programId;
+
+      // create the accessory handler for the newly create accessory
+      // this is imported from `platformAccessory.ts`
+      new ProgramSwitch(this, accessory, device, rainbird);
+      this.device(`Program Switch uuid: ${device.ipaddress}-${model}-${rainbird!.serialNumber}, (${accessory.UUID})`);
+
+      // link the accessory to your platform
+      this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
+      this.accessories.push(accessory);
+    } else {
+      if (this.config.options?.debug === 'debug' && showProgramSwitch) {
+        this.log.error(`Unable to Register new device: ${model}`);
       }
     }
   }

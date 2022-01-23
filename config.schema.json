@@ -46,6 +46,21 @@
               "type": "boolean",
               "required": false,
               "description": "If enabled, whichever zone runs the contact sensors will go off as detected so you know that it is running."
+            },
+            "showProgramASwitch": {
+              "title": "Show Program A Switch",
+              "type": "boolean",
+              "requried": false
+            },
+            "showProgramBSwitch": {
+              "title": "Show Program B Switch",
+              "type": "boolean",
+              "requried": false
+            },
+            "showProgramCSwitch": {
+              "title": "Show Program C Switch",
+              "type": "boolean",
+              "requried": false
             }
           }
         }
@@ -129,7 +144,10 @@
                   "expanded": false,
                   "items": [
                     "devices[].showRainSensor",
-                    "devices[].showValveSensor"
+                    "devices[].showValveSensor",
+                    "devices[].showProgramASwitch",
+                    "devices[].showProgramBSwitch",
+                    "devices[].showProgramCSwitch"
                   ]
                 }
               ]
