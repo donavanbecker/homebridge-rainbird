@@ -61,6 +61,11 @@
               "title": "Show Program C Switch",
               "type": "boolean",
               "requried": false
+            },
+            "showStopIrrigationSwitch": {
+              "title": "Show Stop Irrigation Switch",
+              "type": "boolean",
+              "requried": false
             }
           }
         }
@@ -147,7 +152,8 @@
                     "devices[].showValveSensor",
                     "devices[].showProgramASwitch",
                     "devices[].showProgramBSwitch",
-                    "devices[].showProgramCSwitch"
+                    "devices[].showProgramCSwitch",
+                    "devices[].showStopIrrigationSwitch"
                   ]
                 }
               ]

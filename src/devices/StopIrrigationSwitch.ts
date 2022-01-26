@@ -4,8 +4,8 @@ import { RainBirdService } from '../RainBird/RainBirdService';
 import { fromEvent } from 'rxjs';
 import { DevicesConfig } from '../settings';
 
-export class ProgramSwitch {
-  private programSwitch!: {
+export class StopIrrigationSwitch {
+  private stopIrrigationSwitch!: {
     service: Service,
     state: CharacteristicValue
   };
@@ -25,24 +25,24 @@ export class ProgramSwitch {
       .setCharacteristic(this.platform.Characteristic.FirmwareRevision, accessory.context.FirmwareRevision ?? rainbird!.version)
       .getCharacteristic(this.platform.Characteristic.FirmwareRevision).updateValue(accessory.context.FirmwareRevision);
 
-    // Program Switch Service
-    const name = `Program ${accessory.context.programId}`;
+    // Stop Irrigation Switch Service
+    const name = 'Stop Irrigation';
     this.platform.device(`Load Switch Service for ${name}`);
-    this.programSwitch = {
+    this.stopIrrigationSwitch = {
       service: this.accessory.getService(this.platform.Service.Switch) ??
         this.accessory.addService(this.platform.Service.Switch),
       state: false,
     };
 
     // Add Contact Sensor's Characteristics
-    this.programSwitch.service
+    this.stopIrrigationSwitch.service
       .setCharacteristic(this.platform.Characteristic.On, false)
       .setCharacteristic(this.platform.Characteristic.Name, name);
 
-    this.programSwitch.service.getCharacteristic(this.platform.Characteristic.On)
+    this.stopIrrigationSwitch.service.getCharacteristic(this.platform.Characteristic.On)
       .onGet(() => {
         this.rainbird!.refreshStatus();
-        return this.programSwitch.state;
+        return this.stopIrrigationSwitch.state;
       })
       .onSet(this.setOn.bind(this));
 
@@ -61,38 +61,31 @@ export class ProgramSwitch {
 
   private async setOn(value: CharacteristicValue) {
     this.platform.device(`Switch ${this.accessory.displayName}, Set On: ${value}`);
-    this.programSwitch.state = value;
     if (value) {
-      await this.rainbird!.startProgram(this.accessory.context.programId);
-    } else {
+      this.rainbird!.deactivateAllZones();
       await this.rainbird!.stopIrrigation();
     }
+    setTimeout(() => {
+      this.updateHomeKitCharacteristics();
+    }, 500);
   }
 
   /**
    * Parse the device status from the RainbirdClient
    */
   parseStatus() {
-    const isRunning = this.rainbird!.isProgramRunning(this.accessory.context.programId);
-    if (isRunning !== undefined) {
-      this.programSwitch.state = isRunning;
-    } else {
-      if (this.programSwitch.state && !this.rainbird!.isInUse()) {
-        this.programSwitch.state = false;
-      }
-    }
-    this.platform.debug(`Switch ${this.accessory.displayName} On: ${this.programSwitch.state}`);
+    this.platform.debug(`Switch ${this.accessory.displayName} On: ${this.stopIrrigationSwitch.state}`);
   }
 
   /**
    * Updates the status for each of the HomeKit Characteristics
    */
   updateHomeKitCharacteristics() {
-    if (this.programSwitch.state === undefined) {
-      this.platform.debug(`Switch ${this.accessory.displayName} On: ${this.programSwitch.state}`);
+    if (this.stopIrrigationSwitch.state === undefined) {
+      this.platform.debug(`Switch ${this.accessory.displayName} On: ${this.stopIrrigationSwitch.state}`);
     } else {
-      this.programSwitch.service.updateCharacteristic(this.platform.Characteristic.On, this.programSwitch.state);
-      this.platform.device(`Switch ${this.accessory.displayName} On: ${this.programSwitch.state}`);
+      this.stopIrrigationSwitch.service.updateCharacteristic(this.platform.Characteristic.On, this.stopIrrigationSwitch.state);
+      this.platform.device(`Switch ${this.accessory.displayName} On: ${this.stopIrrigationSwitch.state}`);
     }
   }
 }
