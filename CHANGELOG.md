@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. This project uses [Semantic Versioning](https://semver.org/)
 
+## [Version 1.6.0](https://github.com/donavanbecker/homebridge-rainbird/releases/tag/v1.6.0) (2022-01-27)
+
+### What's Changes
+
+- Added option to show Program Switches for Program A, B, & C.
+- Added option to enable a switch to Stop Irrigation Switch.
+- Housekeeping and updated dependencies.
+
+**Full Changelog**: https://github.com/donavanbecker/homebridge-rainbird/compare/v1.5.1...v1.6.0
+
 ## [Version 1.5.2](https://github.com/donavanbecker/homebridge-rainbird/releases/tag/v1.5.2) (2021-12-15)
 
 ### What's Changes
