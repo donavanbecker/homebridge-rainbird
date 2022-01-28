@@ -24,11 +24,13 @@ export type DevicesConfig = {
   showProgramASwitch?: boolean;
   showProgramBSwitch?: boolean;
   showProgramCSwitch?: boolean;
+  logging?: string;
+  refreshRate?: number;
 };
 
 export type options = {
   refreshRate?: number;
   pushRate?: number;
   hide_device: string[];
-  debug?: string;
+  logging?: string;
 };

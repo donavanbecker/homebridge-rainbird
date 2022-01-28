@@ -61,6 +61,31 @@
               "title": "Show Program C Switch",
               "type": "boolean",
               "requried": false
+            },
+            "refreshRate": {
+              "title": "Device Refresh Rate",
+              "type": "number",
+              "minimum": 120,
+              "placeholder": 900,
+              "description": "Indicates the number of seconds between refreshes of the Rainbird Client."
+            },
+            "logging": {
+              "title": "Device Logging Override Setting",
+              "type": "string",
+              "oneOf": [
+                {
+                  "title": "Standard Logging",
+                  "enum": ["standard"]
+                },
+                {
+                  "title": "No Logging",
+                  "enum": ["none"]
+                },
+                {
+                  "title": "Debug Logging",
+                  "enum": ["debug"]
+                }
+              ]
             }
           }
         }
@@ -81,31 +106,23 @@
             "placeholder": 1,
             "description": "Indicates the number of seconds between pushes to Rainbird Client."
           },
-          "debug": {
-            "title": "Logging Settings",
+          "logging": {
+            "title": "Logging Setting",
             "type": "string",
-            "description": "Enable 'Device', 'Debug' or 'Command' logging.",
             "oneOf": [
               {
-                "title": "Enable Debug Logging",
-                "enum": [
-                  "debug"
-                ]
+                "title": "Standard Logging",
+                "enum": ["standard"]
               },
               {
-                "title": "Enable Device Logging",
-                "enum": [
-                  "device"
-                ]
+                "title": "No Logging",
+                "enum": ["none"]
               },
               {
-                "title": "Enable Command Logging",
-                "enum": [
-                  "command"
-                ]
+                "title": "Debug Logging",
+                "enum": ["debug"]
               }
-            ],
-            "required": false
+            ]
           }
         }
       },
@@ -147,7 +164,9 @@
                     "devices[].showValveSensor",
                     "devices[].showProgramASwitch",
                     "devices[].showProgramBSwitch",
-                    "devices[].showProgramCSwitch"
+                    "devices[].showProgramCSwitch",
+                    "devices[].refreshRate",
+                    "devices[].logging"
                   ]
                 }
               ]
@@ -178,7 +197,7 @@
           "key": "options.pushRate",
           "notitle": true
         },
-        "options.debug",
+        "options.logging",
         "disablePlugin"
       ]
     }
