@@ -62,7 +62,7 @@ export class ProgramSwitch {
     this.platform.device(`Switch ${this.accessory.displayName}, Set On: ${value}`);
     this.programSwitch.state = value;
     if (value) {
-      await this.rainbird!.runProgram(this.accessory.context.programId);
+      await this.rainbird!.startProgram(this.accessory.context.programId);
     } else {
       await this.rainbird!.stopIrrigation();
     }
@@ -80,7 +80,7 @@ export class ProgramSwitch {
         this.programSwitch.state = false;
       }
     }
-    this.platform.debug(`Program Switch: ${this.accessory.context.programId}, On: ${this.programSwitch.state}`);
+    this.platform.debug(`Switch ${this.accessory.displayName} On: ${this.programSwitch.state}`);
   }
 
   /**

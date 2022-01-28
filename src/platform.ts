@@ -5,6 +5,7 @@ import { IrrigationSystem } from './devices/IrrigationSystem';
 import { ContactSensor } from './devices/ContactSensor';
 import { LeakSensor } from './devices/LeakSensor';
 import { ProgramSwitch } from './devices/ProgramSwitch';
+import { StopIrrigationSwitch } from './devices/StopIrrigationSwitch';
 
 /**
  * HomebridgePlatform
@@ -137,6 +138,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
       device.showProgramASwitch = device.showProgramASwitch ?? false;
       device.showProgramBSwitch = device.showProgramBSwitch ?? false;
       device.showProgramCSwitch = device.showProgramCSwitch ?? false;
+      device.showStopIrrigationSwitch = device.showStopIrrigationSwitch ?? false;
     }
   }
 
@@ -171,6 +173,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
       for (const programId of ['A', 'B', 'C']) {
         this.createProgramSwitch(device, rainbird, programId);
       }
+      this.createStopIrrigationSwitch(device, rainbird);
 
       // Handle zone enable/disable
       rainbird.on('zone_enable', (zoneId, enabled) => {
@@ -411,6 +414,62 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
       }
     }
   }
+
+  createStopIrrigationSwitch(device: DevicesConfig, rainbird: RainBirdService): void {
+    const model = `${rainbird!.model}-stop`;
+    const uuid = this.api.hap.uuid.generate(`${device.ipaddress}-${model}-${rainbird!.serialNumber}`);
+    // see if an accessory with the same uuid has already been registered and restored from
+    // the cached devices we stored in the `configureAccessory` method above
+    const existingAccessory = this.accessories.find((accessory) => accessory.UUID === uuid);
+
+    if (existingAccessory) {
+      // the accessory already exists
+      if (!this.config.disablePlugin && device.showStopIrrigationSwitch) {
+        this.log.info(`Restoring existing accessory from cache: ${existingAccessory.displayName}`);
+
+        // if you need to update the accessory.context then you should run `api.updatePlatformAccessories`. eg.:
+        existingAccessory.displayName = model;
+        existingAccessory.context.device = device;
+        existingAccessory.context.deviceID = rainbird!.serialNumber;
+        existingAccessory.context.model = model;
+        existingAccessory.context.FirmwareRevision = rainbird!.version;
+        this.api.updatePlatformAccessories([existingAccessory]);
+        // create the accessory handler for the restored accessory
+        // this is imported from `platformAccessory.ts`
+        new StopIrrigationSwitch(this, existingAccessory, device, rainbird);
+        this.device(`Stop Irrigation Switch uuid: ${device.ipaddress}-${model}-${rainbird!.serialNumber}, (${existingAccessory.UUID})`);
+      } else {
+        this.unregisterPlatformAccessories(existingAccessory);
+      }
+    } else if (!this.config.disablePlugin && device.showStopIrrigationSwitch) {
+      // the accessory does not yet exist, so we need to create it
+      this.log.info(`Adding new accessory: ${model}`);
+
+      // create a new accessory
+      const accessory = new this.api.platformAccessory(model, uuid);
+
+      // store a copy of the device object in the `accessory.context`
+      // the `context` property can be used to store any data about the accessory you may need
+      accessory.context.device = device;
+      accessory.context.deviceID = rainbird!.serialNumber;
+      accessory.context.model = model;
+      accessory.context.FirmwareRevision = rainbird!.version;
+
+      // create the accessory handler for the newly create accessory
+      // this is imported from `platformAccessory.ts`
+      new StopIrrigationSwitch(this, accessory, device, rainbird);
+      this.device(`Stop Irrigation Switch uuid: ${device.ipaddress}-${model}-${rainbird!.serialNumber}, (${accessory.UUID})`);
+
+      // link the accessory to your platform
+      this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
+      this.accessories.push(accessory);
+    } else {
+      if (this.config.options?.debug === 'debug' && device.showStopIrrigationSwitch) {
+        this.log.error(`Unable to Register new device: ${model}`);
+      }
+    }
+  }
+
 
   public unregisterPlatformAccessories(existingAccessory: PlatformAccessory) {
     // remove platform accessories when no longer present

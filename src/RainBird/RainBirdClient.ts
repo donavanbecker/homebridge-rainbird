@@ -34,6 +34,12 @@ import { CurrentZoneStateRequest } from './requests/CurrentZoneStateRequest';
 import { CurrentZoneStateResponse } from './responses/CurrentZoneStateResponse';
 import { AdvanceZoneRequest } from './requests/AdvanceZoneRequest';
 
+type RainBirdRequest = {
+  type: Request,
+  retry: boolean,
+  postDelay: number
+}
+
 export class RainBirdClient {
   private readonly RETRY_DELAY = 60;
 
@@ -49,22 +55,38 @@ export class RainBirdClient {
   }
 
   public async getModelAndVersion(): Promise<ModelAndVersionResponse> {
-    const request = new ModelAndVersionRequest();
+    const request: RainBirdRequest = {
+      type: new ModelAndVersionRequest(),
+      retry: true,
+      postDelay: 0,
+    };
     return await this.requestQueue(request) as ModelAndVersionResponse;
   }
 
   public async getAvailableZones(): Promise<AvailableZonesResponse> {
-    const request = new AvailableZonesRequest();
+    const request: RainBirdRequest = {
+      type: new AvailableZonesRequest(),
+      retry: true,
+      postDelay: 0,
+    };
     return await this.requestQueue(request) as AvailableZonesResponse;
   }
 
   public async getSerialNumber(): Promise<SerialNumberResponse> {
-    const request = new SerialNumberRequest();
+    const request: RainBirdRequest = {
+      type: new SerialNumberRequest(),
+      retry: true,
+      postDelay: 0,
+    };
     return await this.requestQueue(request) as SerialNumberResponse;
   }
 
   public async runProgram(program: number): Promise<AcknowledgedResponse | NotAcknowledgedResponse> {
-    const request = new RunProgramRequest(program);
+    const request: RainBirdRequest = {
+      type: new RunProgramRequest(program),
+      retry: true,
+      postDelay: 1,
+    };
     const response = await this.requestQueue(request);
     return response!.type === 0
       ? response as NotAcknowledgedResponse
@@ -72,7 +94,11 @@ export class RainBirdClient {
   }
 
   public async runZone(zone: number, duration: number): Promise<AcknowledgedResponse | NotAcknowledgedResponse> {
-    const request = new RunZoneRequest(zone, Math.round(duration / 60));
+    const request: RainBirdRequest = {
+      type: new RunZoneRequest(zone, Math.round(duration / 60)),
+      retry: true,
+      postDelay: 1,
+    };
     const response = await this.requestQueue(request);
     return response!.type === 0
       ? response as NotAcknowledgedResponse
@@ -80,7 +106,11 @@ export class RainBirdClient {
   }
 
   public async advanceZone(): Promise<AcknowledgedResponse | NotAcknowledgedResponse> {
-    const request = new AdvanceZoneRequest();
+    const request: RainBirdRequest = {
+      type: new AdvanceZoneRequest(),
+      retry: true,
+      postDelay: 1,
+    };
     const response = await this.requestQueue(request);
     return response!.type === 0
       ? response as NotAcknowledgedResponse
@@ -88,7 +118,11 @@ export class RainBirdClient {
   }
 
   public async stopIrrigation(): Promise<AcknowledgedResponse | NotAcknowledgedResponse> {
-    const request = new StopIrrigationRequest();
+    const request: RainBirdRequest = {
+      type: new StopIrrigationRequest(),
+      retry: true,
+      postDelay: 1,
+    };
     const response = await this.requestQueue(request);
     return response!.type === 0
       ? response as NotAcknowledgedResponse
@@ -96,48 +130,76 @@ export class RainBirdClient {
   }
 
   public async getControllerState(): Promise<ControllerStateResponse> {
-    const request = new ControllerStateRequest();
-    return await this.requestQueue(request, false) as ControllerStateResponse;
+    const request: RainBirdRequest = {
+      type: new ControllerStateRequest(),
+      retry: false,
+      postDelay: 0,
+    };
+    return await this.requestQueue(request) as ControllerStateResponse;
   }
 
   public async getControllerDate(): Promise<ControllerDateResponse> {
-    const request = new ControllerDateRequest();
-    return await this.requestQueue(request, false) as ControllerDateResponse;
+    const request: RainBirdRequest = {
+      type: new ControllerDateRequest(),
+      retry: false,
+      postDelay: 0,
+    };
+    return await this.requestQueue(request) as ControllerDateResponse;
   }
 
   public async getControllerTime(): Promise<ControllerTimeResponse> {
-    const request = new ControllerTimeRequest();
-    return await this.requestQueue(request, false) as ControllerTimeResponse;
+    const request: RainBirdRequest = {
+      type: new ControllerTimeRequest(),
+      retry: false,
+      postDelay: 0,
+    };
+    return await this.requestQueue(request) as ControllerTimeResponse;
   }
 
   public async getIrrigationState(): Promise<IrrigationStateResponse> {
-    const request = new IrrigationStateRequest();
-    return await this.requestQueue(request, false) as IrrigationStateResponse;
+    const request: RainBirdRequest = {
+      type: new IrrigationStateRequest(),
+      retry: false,
+      postDelay: 0,
+    };
+    return await this.requestQueue(request) as IrrigationStateResponse;
   }
 
   public async getRainSensorState(): Promise<RainSensorStateResponse> {
-    const request = new RainSensorStateRequest();
-    return await this.requestQueue(request, false) as RainSensorStateResponse;
+    const request: RainBirdRequest = {
+      type: new RainSensorStateRequest(),
+      retry: false,
+      postDelay: 0,
+    };
+    return await this.requestQueue(request) as RainSensorStateResponse;
   }
 
   public async getCurrentZone(): Promise<CurrentZoneResponse> {
-    const request = new CurrentZoneRequest();
-    return await this.requestQueue(request, false) as CurrentZoneResponse;
+    const request: RainBirdRequest = {
+      type: new CurrentZoneRequest(),
+      retry: false,
+      postDelay: 0,
+    };
+    return await this.requestQueue(request) as CurrentZoneResponse;
   }
 
   public async getCurrentZoneState(): Promise<CurrentZoneStateResponse> {
-    const request = new CurrentZoneStateRequest();
-    return await this.requestQueue(request, false) as CurrentZoneStateResponse;
+    const request: RainBirdRequest = {
+      type: new CurrentZoneStateRequest(),
+      retry: false,
+      postDelay: 0,
+    };
+    return await this.requestQueue(request) as CurrentZoneStateResponse;
   }
 
-  private async sendRequest(request: Request, retry = true): Promise<Response | undefined> {
-    this.logCommand(`Request: ${request}`);
+  private async sendRequest(request: RainBirdRequest): Promise<Response | undefined> {
+    this.logCommand(`Request: ${request.type}`);
 
     // eslint-disable-next-line no-constant-condition
     while (true) {
       try {
         const url = `http://${this.address}/stick`;
-        const data: Buffer = this.encrypt(request);
+        const data: Buffer = this.encrypt(request.type);
         const config = this.createRequestConfig();
 
         const resp = await axios.default.post(url, data, config);
@@ -147,11 +209,12 @@ export class RainBirdClient {
         }
 
         const response = this.getResponse(resp.data as Buffer);
+        await this.delay(request.postDelay);
 
         return response;
       } catch (error) {
         this.log.warn(`RainBird controller request failed. [${error}]`);
-        if (!retry) {
+        if (!request.retry) {
           break;
         }
         this.log.warn(`Will retry in ${this.RETRY_DELAY} seconds`);

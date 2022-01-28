@@ -199,16 +199,21 @@ export class RainBirdService extends events.EventEmitter {
     }
   }
 
+  deactivateAllZones(): void {
+    for(const zone of this.zones) {
+      this._zones[zone].active = false;
+    }
+  }
+
   enableZone(zone: number, enabled: boolean): void {
     this.emit('zone_enable', zone, enabled);
   }
 
-  async runProgram(programId: string): Promise<void> {
-    this.log.info(`Program ${programId}: Run`);
+  async startProgram(programId: string): Promise<void> {
+    this.log.info(`Program ${programId}: Start`);
 
     const programNumber = this.getProgramNumber(programId);
     await this._client.runProgram(programNumber);
-    await new Promise(r => setTimeout(r, 1000));
     await this.updateStatus();
   }
 
@@ -278,7 +283,7 @@ export class RainBirdService extends events.EventEmitter {
         return;
       }
 
-      this.log.info(`Zone ${zone}: Run for ${duration} seconds`);
+      this.log.info(`Zone ${zone}: Start [Duration: ${duration} seconds]`);
 
       await this._client.runZone(zone, duration);
 
@@ -359,6 +364,14 @@ export class RainBirdService extends events.EventEmitter {
       this.log.info(`Program ${previousProgramId}: Complete`);
     }
 
+    if (this._currentProgramId !== undefined && this._currentProgramId !== '' && previousProgramId !== this._currentProgramId) {
+      this.log.info(`Program ${this._currentProgramId}: Running`);
+    }
+
+    if (status.zoneId !== 0 && status.running && previousZoneId !== status.zoneId) {
+      this.log.info(`Zone ${status.zoneId}: Running`);
+    }
+
     for (const [id, zone] of Object.entries(this._zones)) {
       if (Number(id) === status.zoneId && status.running) {
         zone.active = true;
@@ -392,10 +405,6 @@ export class RainBirdService extends events.EventEmitter {
 
   private async getRainBirdStatus(): Promise<RainBirdStatus | undefined> {
     const rainSensorState = await this._client.getRainSensorState();
-
-    if (rainSensorState === undefined) {
-      return undefined;
-    }
 
     if (this._currentZoneStateSupported) {
       const currentZoneState = await this._client.getCurrentZoneState();
