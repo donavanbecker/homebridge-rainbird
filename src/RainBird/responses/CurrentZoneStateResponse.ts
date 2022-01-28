@@ -4,6 +4,7 @@ export class CurrentZoneStateResponse extends Response {
   private readonly _page: number;
   private readonly _timeRemaining: number;
   private readonly _zoneId: number;
+  private readonly _programNumber?: number;
   private readonly _running: boolean;
   private readonly _supported: boolean = true;
 
@@ -15,16 +16,19 @@ export class CurrentZoneStateResponse extends Response {
       case 12: // ESP-TM2
         this._timeRemaining = response.readUInt16BE(4);
         this._zoneId = response[8];
+        this._programNumber = response[9];
         this._running = response[11] !== 0;
         break;
       case 10: // ESP-RZXe & ESP-Me series
         this._timeRemaining = response.readUInt16BE(8);
         this._zoneId = response[6];
+        this._programNumber = undefined;
         this._running = response[3] !== 0;
         break;
       default: // others such as ESP-ME3
         this._timeRemaining = 0;
         this._zoneId = 0;
+        this._programNumber = undefined;
         this._running = false;
         this._supported = false;
         break;
@@ -41,6 +45,10 @@ export class CurrentZoneStateResponse extends Response {
 
   get zoneId(): number {
     return this._zoneId;
+  }
+
+  get programNumber(): number | undefined {
+    return this._programNumber;
   }
 
   get timeRemaining(): number {

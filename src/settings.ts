@@ -21,11 +21,17 @@ export type DevicesConfig = {
   password?: string;
   showRainSensor?: boolean;
   showValveSensor?: boolean;
+  showProgramASwitch?: boolean;
+  showProgramBSwitch?: boolean;
+  showProgramCSwitch?: boolean;
+  showStopIrrigationSwitch?: boolean;
+  refreshRate?: number;
+  logging?: string;
 };
 
 export type options = {
   refreshRate?: number;
   pushRate?: number;
   hide_device: string[];
-  debug?: string;
+  logging?: string;
 };

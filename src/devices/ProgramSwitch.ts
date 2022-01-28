@@ -4,10 +4,10 @@ import { RainBirdService } from '../RainBird/RainBirdService';
 import { fromEvent } from 'rxjs';
 import { DevicesConfig } from '../settings';
 
-export class LeakSensor {
-  private leakSensor!: {
+export class ProgramSwitch {
+  private programSwitch!: {
     service: Service;
-    LeakDetected: CharacteristicValue;
+    state: CharacteristicValue;
   };
 
   // Config
@@ -22,43 +22,41 @@ export class LeakSensor {
   ) {
     this.logs(device);
     this.refreshRate(device);
-
-    const model = 'WR2';
-
     // Set accessory information
     accessory
       .getService(this.platform.Service.AccessoryInformation)!
       .setCharacteristic(this.platform.Characteristic.Manufacturer, 'RainBird')
-      .setCharacteristic(this.platform.Characteristic.Model, accessory.context.model ?? model)
+      .setCharacteristic(this.platform.Characteristic.Model, accessory.context.model ?? rainbird!.model)
       .setCharacteristic(this.platform.Characteristic.SerialNumber, accessory.context.deviceID ?? rainbird!.serialNumber)
       .setCharacteristic(this.platform.Characteristic.FirmwareRevision, accessory.context.FirmwareRevision ?? rainbird!.version)
       .getCharacteristic(this.platform.Characteristic.FirmwareRevision)
       .updateValue(accessory.context.FirmwareRevision);
 
-    // Leak Sensor Service
-    this.debugLog('Configure Leak Sensor Service');
-    this.leakSensor = {
-      service: this.accessory.getService(this.platform.Service.LeakSensor) ?? this.accessory.addService(this.platform.Service.LeakSensor),
-      LeakDetected: this.platform.Characteristic.LeakDetected.LEAK_NOT_DETECTED,
+    // Program Switch Service
+    const name = `Program ${accessory.context.programId}`;
+    this.debugLog(`Load Switch Service for ${name}`);
+    this.programSwitch = {
+      service: this.accessory.getService(this.platform.Service.Switch) ?? this.accessory.addService(this.platform.Service.Switch),
+      state: false,
     };
 
-    // Add Leak Sensor's Characteristics
-    this.leakSensor.service
-      .setCharacteristic(this.platform.Characteristic.LeakDetected, this.platform.Characteristic.LeakDetected.LEAK_NOT_DETECTED)
-      .setCharacteristic(this.platform.Characteristic.Name, `${model} Leak Sensor`)
-      .setCharacteristic(this.platform.Characteristic.StatusFault, this.platform.Characteristic.StatusFault.NO_FAULT);
+    // Add Contact Sensor's Characteristics
+    this.programSwitch.service.setCharacteristic(this.platform.Characteristic.On, false).setCharacteristic(this.platform.Characteristic.Name, name);
 
-    this.leakSensor.service.getCharacteristic(this.platform.Characteristic.LeakDetected).onGet(() => {
-      this.rainbird!.refreshStatus();
-      return this.leakSensor.LeakDetected;
-    });
+    this.programSwitch.service
+      .getCharacteristic(this.platform.Characteristic.On)
+      .onGet(() => {
+        this.rainbird!.refreshStatus();
+        return this.programSwitch.state;
+      })
+      .onSet(this.setOn.bind(this));
 
     // Initial Device Parse
     this.parseStatus();
     this.updateHomeKitCharacteristics();
 
     // Device Parse when status event emitted
-    fromEvent(rainbird!, 'rain_sensor_state').subscribe({
+    fromEvent(rainbird!, 'status').subscribe({
       next: () => {
         this.parseStatus();
         this.updateHomeKitCharacteristics();
@@ -66,44 +64,66 @@ export class LeakSensor {
     });
   }
 
-  parseStatus() {
-    this.leakSensor.LeakDetected = this.rainbird!.rainSetPointReached
-      ? this.platform.Characteristic.LeakDetected.LEAK_DETECTED
-      : this.platform.Characteristic.LeakDetected.LEAK_NOT_DETECTED;
+  private async setOn(value: CharacteristicValue) {
+    this.debugLog(`Program Switch: ${this.accessory.displayName}, Set On: ${value}`);
+    this.programSwitch.state = value;
+    if (value) {
+      await this.rainbird!.startProgram(this.accessory.context.programId);
+    } else {
+      await this.rainbird!.stopIrrigation();
+    }
   }
 
-  updateHomeKitCharacteristics() {
-    if (this.leakSensor.LeakDetected === undefined) {
-      this.debugLog(`Leak Sensor ${this.accessory.displayName} LeakDetected: ${this.leakSensor.LeakDetected}`);
+  /**
+   * Parse the device status from the RainbirdClient
+   */
+  parseStatus() {
+    const isRunning = this.rainbird!.isProgramRunning(this.accessory.context.programId);
+    if (isRunning !== undefined) {
+      this.programSwitch.state = isRunning;
     } else {
-      this.leakSensor.service.updateCharacteristic(this.platform.Characteristic.LeakDetected, this.leakSensor.LeakDetected);
-      this.debugLog(`Leak Sensor ${this.accessory.displayName} updateCharacteristic LeakDetected: ${this.leakSensor.LeakDetected}`);
+      if (this.programSwitch.state && !this.rainbird!.isInUse()) {
+        this.programSwitch.state = false;
+      }
+    }
+    this.debugLog(`Program Switch: ${this.accessory.displayName} On: ${this.programSwitch.state}`);
+  }
+
+  /**
+   * Updates the status for each of the HomeKit Characteristics
+   */
+  updateHomeKitCharacteristics() {
+    if (this.programSwitch.state === undefined) {
+      this.debugLog(`Program Switch: ${this.accessory.displayName} On: ${this.programSwitch.state}`);
+    } else {
+      this.programSwitch.service.updateCharacteristic(this.platform.Characteristic.On, this.programSwitch.state);
+      this.debugLog(`Program Switch: ${this.accessory.displayName} On: ${this.programSwitch.state}`);
     }
   }
 
   refreshRate(device: DevicesConfig) {
     if (device.refreshRate) {
       this.deviceRefreshRate = this.accessory.context.refreshRate = device.refreshRate;
-      this.debugLog(`Thermostat: ${this.accessory.displayName} Using Device Config refreshRate: ${this.deviceRefreshRate}`);
+      this.debugLog(`Program Switch: ${this.accessory.displayName} Using Device Config refreshRate: ${this.deviceRefreshRate}`);
     } else if (this.platform.config.options!.refreshRate) {
       this.deviceRefreshRate = this.accessory.context.refreshRate = this.platform.config.options!.refreshRate;
-      this.debugLog(`Thermostat: ${this.accessory.displayName} Using Platform Config refreshRate: ${this.deviceRefreshRate}`);
+      this.debugLog(`Program Switch: ${this.accessory.displayName} Using Platform Config refreshRate: ${this.deviceRefreshRate}`);
     }
   }
 
   logs(device: DevicesConfig) {
     if (this.platform.debugMode) {
       this.deviceLogging = this.accessory.context.logging = 'debugMode';
-      this.debugLog(`Thermostat: ${this.accessory.displayName} Using Debug Mode Logging: ${this.deviceLogging}`);
+      this.debugLog(`Program Switch: ${this.accessory.displayName} Using Debug Mode Logging: ${this.deviceLogging}`);
     } else if (device.logging) {
       this.deviceLogging = this.accessory.context.logging = device.logging;
-      this.debugLog(`Thermostat: ${this.accessory.displayName} Using Device Config Logging: ${this.deviceLogging}`);
+      this.debugLog(`Program Switch: ${this.accessory.displayName} Using Device Config Logging: ${this.deviceLogging}`);
     } else if (this.platform.config.options?.logging) {
       this.deviceLogging = this.accessory.context.logging = this.platform.config.options?.logging;
-      this.debugLog(`Thermostat: ${this.accessory.displayName} Using Platform Config Logging: ${this.deviceLogging}`);
+      this.debugLog(`Program Switch: ${this.accessory.displayName} Using Platform Config Logging: ${this.deviceLogging}`);
     } else {
       this.deviceLogging = this.accessory.context.logging = 'standard';
-      this.debugLog(`Thermostat: ${this.accessory.displayName} Logging Not Set, Using: ${this.deviceLogging}`);
+      this.debugLog(`Program Switch: ${this.accessory.displayName} Logging Not Set, Using: ${this.deviceLogging}`);
     }
   }
 
