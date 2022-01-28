@@ -25,7 +25,7 @@ All notable changes to this project will be documented in this file. This projec
 - Added option to enable a switch to Stop Irrigation Switch.
 - Housekeeping and updated dependencies.
 
-**Full Changelog**: https://github.com/donavanbecker/homebridge-rainbird/compare/v1.5.1...v1.6.0
+**Full Changelog**: https://github.com/donavanbecker/homebridge-rainbird/compare/v1.5.2...v1.6.0
 
 ## [Version 1.5.2](https://github.com/donavanbecker/homebridge-rainbird/releases/tag/v1.5.2) (2021-12-15)
 
