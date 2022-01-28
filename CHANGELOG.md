@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file. This project uses [Semantic Versioning](https://semver.org/)
 
-## [Version 1.6.0](https://github.com/donavanbecker/homebridge-rainbird/releases/tag/v1.6.0) (2022-01-XX)
+## [Version 1.6.0](https://github.com/donavanbecker/homebridge-rainbird/releases/tag/v1.6.0) (2022-01-27)
 
 ### What's Changes
 

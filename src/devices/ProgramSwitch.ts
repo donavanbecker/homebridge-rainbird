@@ -10,12 +10,18 @@ export class ProgramSwitch {
     state: CharacteristicValue;
   };
 
+  // Config
+  deviceRefreshRate!: number;
+  deviceLogging!: string;
+
   constructor(
     private readonly platform: RainbirdPlatform,
     private accessory: PlatformAccessory,
     public device: DevicesConfig,
     public rainbird: RainBirdService,
   ) {
+    this.logs(device);
+    this.refreshRate(device);
     // Set accessory information
     accessory
       .getService(this.platform.Service.AccessoryInformation)!
@@ -28,7 +34,7 @@ export class ProgramSwitch {
 
     // Program Switch Service
     const name = `Program ${accessory.context.programId}`;
-    this.platform.device(`Load Switch Service for ${name}`);
+    this.debugLog(`Load Switch Service for ${name}`);
     this.programSwitch = {
       service: this.accessory.getService(this.platform.Service.Switch) ?? this.accessory.addService(this.platform.Service.Switch),
       state: false,
@@ -59,7 +65,7 @@ export class ProgramSwitch {
   }
 
   private async setOn(value: CharacteristicValue) {
-    this.platform.device(`Switch ${this.accessory.displayName}, Set On: ${value}`);
+    this.debugLog(`Program Switch: ${this.accessory.displayName}, Set On: ${value}`);
     this.programSwitch.state = value;
     if (value) {
       await this.rainbird!.startProgram(this.accessory.context.programId);
@@ -80,7 +86,7 @@ export class ProgramSwitch {
         this.programSwitch.state = false;
       }
     }
-    this.platform.debug(`Switch ${this.accessory.displayName} On: ${this.programSwitch.state}`);
+    this.debugLog(`Program Switch: ${this.accessory.displayName} On: ${this.programSwitch.state}`);
   }
 
   /**
@@ -88,42 +94,42 @@ export class ProgramSwitch {
    */
   updateHomeKitCharacteristics() {
     if (this.programSwitch.state === undefined) {
-      this.platform.debug(`Switch ${this.accessory.displayName} On: ${this.programSwitch.state}`);
+      this.debugLog(`Program Switch: ${this.accessory.displayName} On: ${this.programSwitch.state}`);
     } else {
       this.programSwitch.service.updateCharacteristic(this.platform.Characteristic.On, this.programSwitch.state);
-      this.platform.device(`Switch ${this.accessory.displayName} On: ${this.programSwitch.state}`);
+      this.debugLog(`Program Switch: ${this.accessory.displayName} On: ${this.programSwitch.state}`);
     }
   }
 
-  refreshRate(device: device & devicesConfig) {
+  refreshRate(device: DevicesConfig) {
     if (device.refreshRate) {
       this.deviceRefreshRate = this.accessory.context.refreshRate = device.refreshRate;
-      this.debugLog(`Thermostat: ${this.accessory.displayName} Using Device Config refreshRate: ${this.deviceRefreshRate}`);
+      this.debugLog(`Program Switch: ${this.accessory.displayName} Using Device Config refreshRate: ${this.deviceRefreshRate}`);
     } else if (this.platform.config.options!.refreshRate) {
       this.deviceRefreshRate = this.accessory.context.refreshRate = this.platform.config.options!.refreshRate;
-      this.debugLog(`Thermostat: ${this.accessory.displayName} Using Platform Config refreshRate: ${this.deviceRefreshRate}`);
+      this.debugLog(`Program Switch: ${this.accessory.displayName} Using Platform Config refreshRate: ${this.deviceRefreshRate}`);
     }
   }
 
-  logs(device: device & devicesConfig) {
+  logs(device: DevicesConfig) {
     if (this.platform.debugMode) {
       this.deviceLogging = this.accessory.context.logging = 'debugMode';
-      this.debugLog(`Thermostat: ${this.accessory.displayName} Using Debug Mode Logging: ${this.deviceLogging}`);
+      this.debugLog(`Program Switch: ${this.accessory.displayName} Using Debug Mode Logging: ${this.deviceLogging}`);
     } else if (device.logging) {
       this.deviceLogging = this.accessory.context.logging = device.logging;
-      this.debugLog(`Thermostat: ${this.accessory.displayName} Using Device Config Logging: ${this.deviceLogging}`);
+      this.debugLog(`Program Switch: ${this.accessory.displayName} Using Device Config Logging: ${this.deviceLogging}`);
     } else if (this.platform.config.options?.logging) {
       this.deviceLogging = this.accessory.context.logging = this.platform.config.options?.logging;
-      this.debugLog(`Thermostat: ${this.accessory.displayName} Using Platform Config Logging: ${this.deviceLogging}`);
+      this.debugLog(`Program Switch: ${this.accessory.displayName} Using Platform Config Logging: ${this.deviceLogging}`);
     } else {
       this.deviceLogging = this.accessory.context.logging = 'standard';
-      this.debugLog(`Thermostat: ${this.accessory.displayName} Logging Not Set, Using: ${this.deviceLogging}`);
+      this.debugLog(`Program Switch: ${this.accessory.displayName} Logging Not Set, Using: ${this.deviceLogging}`);
     }
   }
 
   /**
- * Logging for Device
- */
+   * Logging for Device
+   */
   infoLog(...log: any[]) {
     if (this.enablingDeviceLogging()) {
       this.platform.log.info(String(...log));

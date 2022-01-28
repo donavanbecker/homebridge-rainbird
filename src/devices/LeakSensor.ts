@@ -6,9 +6,13 @@ import { DevicesConfig } from '../settings';
 
 export class LeakSensor {
   private leakSensor!: {
-    service: Service,
-    LeakDetected: CharacteristicValue
+    service: Service;
+    LeakDetected: CharacteristicValue;
   };
+
+  // Config
+  deviceRefreshRate!: number;
+  deviceLogging!: string;
 
   constructor(
     private readonly platform: RainbirdPlatform,
@@ -16,6 +20,8 @@ export class LeakSensor {
     public device: DevicesConfig,
     public rainbird: RainBirdService,
   ) {
+    this.logs(device);
+    this.refreshRate(device);
 
     const model = 'WR2';
 
@@ -26,13 +32,13 @@ export class LeakSensor {
       .setCharacteristic(this.platform.Characteristic.Model, accessory.context.model ?? model)
       .setCharacteristic(this.platform.Characteristic.SerialNumber, accessory.context.deviceID ?? rainbird!.serialNumber)
       .setCharacteristic(this.platform.Characteristic.FirmwareRevision, accessory.context.FirmwareRevision ?? rainbird!.version)
-      .getCharacteristic(this.platform.Characteristic.FirmwareRevision).updateValue(accessory.context.FirmwareRevision);
+      .getCharacteristic(this.platform.Characteristic.FirmwareRevision)
+      .updateValue(accessory.context.FirmwareRevision);
 
     // Leak Sensor Service
-    this.platform.device('Configure Leak Sensor Service');
+    this.debugLog('Configure Leak Sensor Service');
     this.leakSensor = {
-      service: this.accessory.getService(this.platform.Service.LeakSensor) ??
-        this.accessory.addService(this.platform.Service.LeakSensor),
+      service: this.accessory.getService(this.platform.Service.LeakSensor) ?? this.accessory.addService(this.platform.Service.LeakSensor),
       LeakDetected: this.platform.Characteristic.LeakDetected.LEAK_NOT_DETECTED,
     };
 
@@ -42,11 +48,10 @@ export class LeakSensor {
       .setCharacteristic(this.platform.Characteristic.Name, `${model} Leak Sensor`)
       .setCharacteristic(this.platform.Characteristic.StatusFault, this.platform.Characteristic.StatusFault.NO_FAULT);
 
-    this.leakSensor.service.getCharacteristic(this.platform.Characteristic.LeakDetected)
-      .onGet(() => {
-        this.rainbird!.refreshStatus();
-        return this.leakSensor.LeakDetected;
-      });
+    this.leakSensor.service.getCharacteristic(this.platform.Characteristic.LeakDetected).onGet(() => {
+      this.rainbird!.refreshStatus();
+      return this.leakSensor.LeakDetected;
+    });
 
     // Initial Device Parse
     this.parseStatus();
@@ -69,14 +74,14 @@ export class LeakSensor {
 
   updateHomeKitCharacteristics() {
     if (this.leakSensor.LeakDetected === undefined) {
-      this.platform.debug(`Leak Sensor ${this.accessory.displayName} LeakDetected: ${this.leakSensor.LeakDetected}`);
+      this.debugLog(`Leak Sensor ${this.accessory.displayName} LeakDetected: ${this.leakSensor.LeakDetected}`);
     } else {
       this.leakSensor.service.updateCharacteristic(this.platform.Characteristic.LeakDetected, this.leakSensor.LeakDetected);
-      this.platform.device(`Leak Sensor ${this.accessory.displayName} updateCharacteristic LeakDetected: ${this.leakSensor.LeakDetected}`);
+      this.debugLog(`Leak Sensor ${this.accessory.displayName} updateCharacteristic LeakDetected: ${this.leakSensor.LeakDetected}`);
     }
   }
 
-  refreshRate(device: device & devicesConfig) {
+  refreshRate(device: DevicesConfig) {
     if (device.refreshRate) {
       this.deviceRefreshRate = this.accessory.context.refreshRate = device.refreshRate;
       this.debugLog(`Thermostat: ${this.accessory.displayName} Using Device Config refreshRate: ${this.deviceRefreshRate}`);
@@ -86,7 +91,7 @@ export class LeakSensor {
     }
   }
 
-  logs(device: device & devicesConfig) {
+  logs(device: DevicesConfig) {
     if (this.platform.debugMode) {
       this.deviceLogging = this.accessory.context.logging = 'debugMode';
       this.debugLog(`Thermostat: ${this.accessory.displayName} Using Debug Mode Logging: ${this.deviceLogging}`);
@@ -103,8 +108,8 @@ export class LeakSensor {
   }
 
   /**
- * Logging for Device
- */
+   * Logging for Device
+   */
   infoLog(...log: any[]) {
     if (this.enablingDeviceLogging()) {
       this.platform.log.info(String(...log));

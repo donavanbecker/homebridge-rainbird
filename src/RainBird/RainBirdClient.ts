@@ -224,6 +224,7 @@ export class RainBirdClient {
   }
 
   private getResponse(encryptedResponse: Buffer): Response | undefined {
+    // eslint-disable-next-line no-control-regex
     const decryptedResponse = JSON.parse(this.decrypt(encryptedResponse).replace(/[\x10\x0A\x00]/g, ''));
 
     if (!decryptedResponse) {
