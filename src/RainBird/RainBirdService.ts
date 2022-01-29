@@ -60,11 +60,11 @@ export class RainBirdService extends events.EventEmitter {
     password: string,
     refreshRate?: number,
     log: Logger,
-    logCommands: boolean,
+    showRequestResponse: boolean,
   }) {
     super();
     this.log = options.log;
-    this._client = new RainBirdClient(options.address, options.password, options.log, options.logCommands);
+    this._client = new RainBirdClient(options.address, options.password, options.log, options.showRequestResponse);
 
     this._statusRefreshSubject
       .pipe(
@@ -221,7 +221,7 @@ export class RainBirdService extends events.EventEmitter {
     // NOTE: If plugin is not able to determine if program is running then return undefined
     return this._currentProgramId === undefined
       ? undefined
-      : this._currentProgramId === programId;
+      : this._currentProgramId === programId && this.isInUse();
   }
 
   private getProgramNumber(programId: string): number {
@@ -359,7 +359,7 @@ export class RainBirdService extends events.EventEmitter {
     }
 
     const previousProgramId = this._currentProgramId;
-    this._currentProgramId = status.programId;
+    this._currentProgramId = status.running ? status.programId : undefined;
     if (previousProgramId !== undefined && previousProgramId !== '' && previousProgramId !== this._currentProgramId) {
       this.log.info(`Program ${previousProgramId}: Complete`);
     }

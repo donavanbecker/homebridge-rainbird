@@ -51,7 +51,7 @@ export class RainBirdClient {
     private readonly address: string,
     private readonly password: string,
     private readonly log: Logger,
-    private readonly logCommands: boolean) {
+    private readonly showRequestResponse: boolean) {
   }
 
   public async getModelAndVersion(): Promise<ModelAndVersionResponse> {
@@ -193,7 +193,9 @@ export class RainBirdClient {
   }
 
   private async sendRequest(request: RainBirdRequest): Promise<Response | undefined> {
-    this.logCommand(`Request: ${request.type}`);
+    if (this.showRequestResponse) {
+      this.log.warn(`[${this.address}] Request:  ${request.type}`);
+    }
 
     // eslint-disable-next-line no-constant-condition
     while (true) {
@@ -282,7 +284,9 @@ export class RainBirdClient {
         break;
     }
 
-    this.logCommand(`Response: ${response ?? 'Unknown'}`);
+    if (this.showRequestResponse) {
+      this.log.warn(`[${this.address}] Response: ${response ?? 'Unknown'}`);
+    }
 
     return response;
   }
@@ -353,13 +357,5 @@ export class RainBirdClient {
         resolve('');
       }, sec * 1000);
     });
-  }
-
-  logCommand(...log: any[]) {
-    if (this.logCommands) {
-      this.log.warn('[COMMAND]', String(...log));
-    } else {
-      this.log.debug(String(...log));
-    }
   }
 }
