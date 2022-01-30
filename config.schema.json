@@ -67,6 +67,11 @@
               "type": "boolean",
               "requried": false
             },
+            "showRequestResponse": {
+              "title": "Show RainBird requests and responses in the log",
+              "type": "boolean",
+              "requried": false
+            },
             "refreshRate": {
               "title": "Device Refresh Rate",
               "type": "number",
@@ -110,12 +115,6 @@
             "minimum": 120,
             "placeholder": 900,
             "description": "Indicates the number of seconds between refreshes of the Rainbird Client."
-          },
-          "pushRate": {
-            "title": "Push Rate",
-            "type": "number",
-            "placeholder": 1,
-            "description": "Indicates the number of seconds between pushes to Rainbird Client."
           },
           "logging": {
             "title": "Logging Setting",
@@ -183,6 +182,7 @@
                     "devices[].showProgramBSwitch",
                     "devices[].showProgramCSwitch",
                     "devices[].showStopIrrigationSwitch",
+                    "devices[].showRequestResponse",
                     "devices[].refreshRate",
                     "devices[].logging"
                   ]

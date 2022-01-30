@@ -26,6 +26,7 @@ export type DevicesConfig = {
   showProgramCSwitch?: boolean;
   showStopIrrigationSwitch?: boolean;
   refreshRate?: number;
+  showRequestResponse?: boolean;
   logging?: string;
 };
 

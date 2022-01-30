@@ -135,6 +135,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
       device.showProgramBSwitch = device.showProgramBSwitch ?? false;
       device.showProgramCSwitch = device.showProgramCSwitch ?? false;
       device.showStopIrrigationSwitch = device.showStopIrrigationSwitch ?? false;
+      device.showRequestResponse = device.showRequestResponse ?? false;
     }
   }
 
@@ -148,7 +149,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
         password: device.password!,
         refreshRate: this.config.options!.refreshRate,
         log: this.log,
-        logCommands: this.config.options?.logging === 'command',
+        showRequestResponse: device.showRequestResponse!,
       });
       const metaData = await rainbird!.init();
       this.debugLog(JSON.stringify(metaData));
