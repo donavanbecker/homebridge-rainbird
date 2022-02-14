@@ -51,7 +51,7 @@
   "dependencies": {
     "@homebridge/plugin-ui-utils": "^0.0.19",
     "aes-js": "^3.1.2",
-    "axios": "^0.25.0",
+    "axios": "^0.26.0",
     "concurrent-queue": "^7.0.2",
     "queue": "^6.0.2",
     "rxjs": "^7.5.4",
