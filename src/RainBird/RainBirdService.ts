@@ -63,6 +63,7 @@ export class RainBirdService extends events.EventEmitter {
     showRequestResponse: boolean,
   }) {
     super();
+    this.setMaxListeners(50);
     this.log = options.log;
     this._client = new RainBirdClient(options.address, options.password, options.log, options.showRequestResponse);
 

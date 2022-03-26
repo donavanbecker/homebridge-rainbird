@@ -2,9 +2,14 @@
 
 All notable changes to this project will be documented in this file. This project uses [Semantic Versioning](https://semver.org/)
 
+### What's Changed
+
+- Added option to show zones as separate valve accessories.
+- Refactored device classes to use a common base class.
+
 ## [Version 1.6.4](https://github.com/donavanbecker/homebridge-rainbird/releases/tag/v1.6.4) (2022-03-19)
 
-### What's Changes
+### What's Changed
 
 - Housekeeping and updated dependencies.
 
@@ -12,7 +17,7 @@ All notable changes to this project will be documented in this file. This projec
 
 ## [Version 1.6.3](https://github.com/donavanbecker/homebridge-rainbird/releases/tag/v1.6.3) (2022-02-15)
 
-### What's Changes
+### What's Changed
 
 - Housekeeping and updated dependencies.
 
@@ -20,7 +25,7 @@ All notable changes to this project will be documented in this file. This projec
 
 ## [Version 1.6.2](https://github.com/donavanbecker/homebridge-rainbird/releases/tag/v1.6.2) (2022-02-12)
 
-### What's Changes
+### What's Changed
 
 - Housekeeping and updated dependencies.
 
@@ -28,7 +33,7 @@ All notable changes to this project will be documented in this file. This projec
 
 ## [Version 1.6.1](https://github.com/donavanbecker/homebridge-rainbird/releases/tag/v1.6.1) (2022-01-29)
 
-### What's Changes
+### What's Changed
 
 - Restore Request/Response logging.
 - prevent Program Switch showing as running when rain set point reached.
@@ -38,7 +43,7 @@ All notable changes to this project will be documented in this file. This projec
 
 ## [Version 1.6.0](https://github.com/donavanbecker/homebridge-rainbird/releases/tag/v1.6.0) (2022-01-27)
 
-### What's Changes
+### What's Changed
 
 ### Major Change To `Logging`:
 
@@ -63,7 +68,7 @@ All notable changes to this project will be documented in this file. This projec
 
 ## [Version 1.5.2](https://github.com/donavanbecker/homebridge-rainbird/releases/tag/v1.5.2) (2021-12-15)
 
-### What's Changes
+### What's Changed
 
 - Housekeeping and updated dependencies.
 
@@ -71,7 +76,7 @@ All notable changes to this project will be documented in this file. This projec
 
 ## [Version 1.5.1](https://github.com/donavanbecker/homebridge-rainbird/compare/v1.5.0...v1.5.1) (2021-11-12)
 
-### What's Changes
+### What's Changed
 
 - Housekeeping and updated dependencies.
 
@@ -79,7 +84,7 @@ All notable changes to this project will be documented in this file. This projec
 
 ## [Version 1.5.0](https://github.com/donavanbecker/homebridge-rainbird/compare/v1.4.0...v1.5.0) (2021-11-06)
 
-### What's Changes
+### What's Changed
 
 - Added enableZone to find Enabled Zones
 - Added Command Logging for plugin
@@ -89,7 +94,7 @@ All notable changes to this project will be documented in this file. This projec
 
 ## [Version 1.4.0](https://github.com/donavanbecker/homebridge-rainbird/compare/v1.3.0...v1.4.0) (2021-10-28)
 
-### What's Changes
+### What's Changed
 
 - Added support to show vavles as contact sensors
   - Allows you to get notified in the Home App when a Zone has started.
@@ -103,7 +108,7 @@ All notable changes to this project will be documented in this file. This projec
 
 ## [Version 1.3.0](https://github.com/donavanbecker/homebridge-rainbird/compare/v1.2.0...v1.3.0) (2021-10-09)
 
-### What's Changes
+### What's Changed
 
 - Support for rain sensor using the HomeKit leak sensor
 - Suppress a zone's active status when scheduled program has been suspended (due to rain)
@@ -114,7 +119,7 @@ All notable changes to this project will be documented in this file. This projec
 
 ## [Version 1.2.0](https://github.com/donavanbecker/homebridge-rainbird/compare/v1.1.0...v1.2.0) (2021-09-29)
 
-### What's Changes
+### What's Changed
 
 - Added CurrentZoneTimeRemainingRequest & CurrentZoneTimeRemainingResponse function.
 - Fixed issue where some RainBird controllers (such as ESP-RZXe & ESP-Me) couldn't show the time remaining for a zone that was not started via the plugin (such as a scheduled program).
@@ -123,7 +128,7 @@ All notable changes to this project will be documented in this file. This projec
 
 ## [Version 1.1.0](https://github.com/donavanbecker/homebridge-rainbird/compare/v1.0.0...v1.1.0) (2021-09-27)
 
-### What's Changes
+### What's Changed
 
 - Add Support for More Models and Added Compatiable Models to Readme.
 - Fixed `Failed to Discover Devices, "Cannot read property 'getTime' of undefined"` [#39](https://github.com/donavanbecker/homebridge-rainbird/issues/39).
@@ -132,7 +137,7 @@ All notable changes to this project will be documented in this file. This projec
 
 ## [Version 1.0.0](https://github.com/donavanbecker/homebridge-rainbird/compare/v0.1.0...v1.0.0) (2021-09-19)
 
-### What's Changes
+### What's Changed
 
 - Official Release of Homebridge RainBird Plugin.
 
@@ -140,7 +145,7 @@ All notable changes to this project will be documented in this file. This projec
 
 ## [Version 0.2.0](https://github.com/donavanbecker/homebridge-rainbird/tag/v0.0.1) (2021-09-17)
 
-### What's Changes
+### What's Changed
 
 - Add Plugin Debug Config Option
 
@@ -148,6 +153,6 @@ All notable changes to this project will be documented in this file. This projec
 
 ## [Version 0.1.0](https://github.com/donavanbecker/homebridge-rainbird/tag/v0.0.1) (2021-08-29)
 
-### What's Changes
+### What's Changed
 
 - Initial Release

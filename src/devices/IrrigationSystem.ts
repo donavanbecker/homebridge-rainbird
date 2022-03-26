@@ -4,13 +4,14 @@ import { RainBirdService } from '../RainBird/RainBirdService';
 import { Subject, fromEvent, interval } from 'rxjs';
 import { debounceTime, skipWhile, tap } from 'rxjs/operators';
 import { DevicesConfig } from '../settings';
+import { DeviceBase } from './DeviceBase';
 
 /**
  * Platform Accessory
  * An instance of this class is created for each accessory your platform registers
  * Each accessory may expose multiple services of different service types.
  */
-export class IrrigationSystem {
+export class IrrigationSystem extends DeviceBase {
   private irrigation!: {
     service: Service;
     Active: CharacteristicValue;
@@ -23,28 +24,22 @@ export class IrrigationSystem {
       service: Service;
       Active: CharacteristicValue;
       InUse: CharacteristicValue;
-      SetDuration: number;
-      IsConfigured: CharacteristicValue;
     }
   > = new Map();
-
-  // Config
-  deviceRefreshRate!: number;
-  deviceLogging!: string;
 
   // Irrigation System Updates
   private irrigationSystemUpdateInProgress!: boolean;
   private doIrrigationSystemUpdate: Subject<number>;
 
   constructor(
-    private readonly platform: RainbirdPlatform,
-    private accessory: PlatformAccessory,
-    public device: DevicesConfig,
-    public rainbird: RainBirdService,
+    readonly platform: RainbirdPlatform,
+    accessory: PlatformAccessory,
+    device: DevicesConfig,
+    rainbird: RainBirdService,
   ) {
-    this.logs(device);
-    this.refreshRate(device);
+    super(platform, accessory, device, rainbird);
     this.config(device);
+
     // this is subject we use to track when we need to send changes to Rainbird Client
     this.doIrrigationSystemUpdate = new Subject();
     this.irrigationSystemUpdateInProgress = false;
@@ -55,16 +50,6 @@ export class IrrigationSystem {
     if (accessory.context.duration === undefined) {
       accessory.context.duration = {};
     }
-
-    // Set accessory information
-    accessory
-      .getService(this.platform.Service.AccessoryInformation)!
-      .setCharacteristic(this.platform.Characteristic.Manufacturer, 'RainBird')
-      .setCharacteristic(this.platform.Characteristic.Model, accessory.context.model ?? rainbird!.model)
-      .setCharacteristic(this.platform.Characteristic.SerialNumber, accessory.context.deviceID ?? rainbird!.serialNumber)
-      .setCharacteristic(this.platform.Characteristic.FirmwareRevision, accessory.context.FirmwareRevision ?? rainbird!.version)
-      .getCharacteristic(this.platform.Characteristic.FirmwareRevision)
-      .updateValue(accessory.context.FirmwareRevision);
 
     // Irrigation Service
     this.debugLog('Configure Irrigation Service');
@@ -114,12 +99,18 @@ export class IrrigationSystem {
     for (const zone of rainbird!.zones) {
       const name = `Zone ${zone}`;
       this.debugLog(`Load Valve Service for ${name}`);
+
+      if (this.accessory.context.configured[zone] === undefined) {
+        this.accessory.context.configured[zone] = this.platform.Characteristic.IsConfigured.CONFIGURED;
+      }
+      if (this.accessory.context.duration[zone] === undefined) {
+        this.accessory.context.duration[zone] = 300;
+      }
+
       this.valves.set(zone, {
         service: this.accessory.getService(name) ?? this.accessory.addService(this.platform.Service.Valve, name, zone),
         Active: this.platform.Characteristic.Active.INACTIVE as CharacteristicValue,
         InUse: this.platform.Characteristic.InUse.NOT_IN_USE as CharacteristicValue,
-        SetDuration: this.accessory.context.duration[zone] ?? 300,
-        IsConfigured: this.accessory.context.configured[zone] ?? this.platform.Characteristic.IsConfigured.CONFIGURED,
       });
 
       // Add Valve Service's Characteristics
@@ -129,9 +120,9 @@ export class IrrigationSystem {
         .setCharacteristic(this.platform.Characteristic.Active, this.valves.get(zone)!.Active)
         .setCharacteristic(this.platform.Characteristic.InUse, this.valves.get(zone)!.InUse)
         .setCharacteristic(this.platform.Characteristic.ValveType, this.platform.Characteristic.ValveType.IRRIGATION)
-        .setCharacteristic(this.platform.Characteristic.SetDuration, this.valves.get(zone)!.SetDuration)
+        .setCharacteristic(this.platform.Characteristic.SetDuration, this.accessory.context.duration[zone])
         .setCharacteristic(this.platform.Characteristic.RemainingDuration, 0)
-        .setCharacteristic(this.platform.Characteristic.IsConfigured, this.valves.get(zone)!.IsConfigured)
+        .setCharacteristic(this.platform.Characteristic.IsConfigured, this.accessory.context.configured[zone])
         .setCharacteristic(this.platform.Characteristic.ServiceLabelIndex, zone)
         .setCharacteristic(this.platform.Characteristic.StatusFault, this.platform.Characteristic.StatusFault.NO_FAULT);
 
@@ -183,7 +174,7 @@ export class IrrigationSystem {
         .get(zone)!
         .service.getCharacteristic(this.platform.Characteristic.SetDuration)
         .onGet(() => {
-          return Number(this.valves.get(zone)!.SetDuration);
+          return Number(this.accessory.context.duration[zone]);
         })
         .onSet(this.setValveSetDuration.bind(this, zone));
 
@@ -226,9 +217,9 @@ export class IrrigationSystem {
         try {
           await this.pushChanges(zone);
         } catch (e: any) {
-          this.debugLog(`Irrigation System ${this.accessory.displayName} - ${JSON.stringify(e.messsage)}`);
+          this.debugLog(`${this.constructor.name} ${this.accessory.displayName} - ${JSON.stringify(e.messsage)}`);
           if (this.deviceLogging.includes('debug')) {
-            this.debugLog(`Irrigation System ${this.accessory.displayName} - ${JSON.stringify(e)}`);
+            this.debugLog(`${this.constructor.name} ${this.accessory.displayName} - ${JSON.stringify(e)}`);
           }
         }
         this.irrigationSystemUpdateInProgress = false;
@@ -243,7 +234,7 @@ export class IrrigationSystem {
     this.irrigation.Active = this.rainbird!.isActive() ? this.platform.Characteristic.Active.ACTIVE : this.platform.Characteristic.Active.INACTIVE;
 
     this.irrigation.InUse = this.rainbird!.isInUse() ? this.platform.Characteristic.InUse.IN_USE : this.platform.Characteristic.InUse.NOT_IN_USE;
-    this.debugLog(`Irrigation System: ${this.accessory.displayName}, Active: ${this.irrigation.Active}, InUse: ${this.irrigation.InUse}`);
+    this.debugLog(`${this.constructor.name}: ${this.accessory.displayName}, Active: ${this.irrigation.Active}, InUse: ${this.irrigation.InUse}`);
 
     // Valves
     for (const [zone, valve] of this.valves.entries()) {
@@ -251,7 +242,7 @@ export class IrrigationSystem {
 
       valve.InUse = this.rainbird!.isInUse(zone) ? this.platform.Characteristic.InUse.IN_USE : this.platform.Characteristic.InUse.NOT_IN_USE;
 
-      this.debugLog(`Valve: ${zone}, Active: ${valve.Active}, InUse: ${valve.InUse}`);
+      this.debugLog(`${this.constructor.name} Valve: ${zone}, Active: ${valve.Active}, InUse: ${valve.InUse}`);
     }
   }
 
@@ -261,55 +252,56 @@ export class IrrigationSystem {
   updateHomeKitCharacteristics() {
     // Irrigation System
     if (this.irrigation.Active === undefined) {
-      this.debugLog(`Irrigation ${this.accessory.displayName} Active: ${this.irrigation.Active}`);
+      this.debugLog(`${this.constructor.name} ${this.accessory.displayName} Active: ${this.irrigation.Active}`);
     } else {
       this.irrigation.service.updateCharacteristic(this.platform.Characteristic.Active, this.irrigation.Active);
-      this.debugLog(`Irrigation ${this.accessory.displayName} updateCharacteristic Active: ${this.irrigation.Active}`);
+      this.debugLog(`${this.constructor.name} ${this.accessory.displayName} updateCharacteristic Active: ${this.irrigation.Active}`);
     }
     if (this.irrigation.InUse === undefined) {
-      this.debugLog(`Irrigation ${this.accessory.displayName} InUse: ${this.irrigation.InUse}`);
+      this.debugLog(`${this.constructor.name} ${this.accessory.displayName} InUse: ${this.irrigation.InUse}`);
     } else {
       this.irrigation.service.updateCharacteristic(this.platform.Characteristic.InUse, this.irrigation.InUse);
-      this.debugLog(`Irrigation ${this.accessory.displayName} updateCharacteristic InUse: ${this.irrigation.InUse}`);
+      this.debugLog(`${this.constructor.name} ${this.accessory.displayName} updateCharacteristic InUse: ${this.irrigation.InUse}`);
     }
     if (this.rainbird!.RemainingDuration() === undefined) {
-      this.debugLog(`Irrigation ${this.accessory.displayName} RemainingDuration: ${this.rainbird!.RemainingDuration()}`);
+      this.debugLog(`${this.constructor.name} ${this.accessory.displayName} RemainingDuration: ${this.rainbird!.RemainingDuration()}`);
     } else {
       this.irrigation.service.updateCharacteristic(this.platform.Characteristic.RemainingDuration, this.rainbird!.RemainingDuration());
-      this.debugLog(`Irrigation ${this.accessory.displayName} updateCharacteristic RemainingDuration: ${this.rainbird!.RemainingDuration()}`);
+      this.debugLog(
+        `${this.constructor.name} ${this.accessory.displayName} updateCharacteristic RemainingDuration: ${this.rainbird!.RemainingDuration()}`);
     }
 
     // Valves
     for (const [zone, valve] of this.valves.entries()) {
       if (valve.Active === undefined) {
-        this.debugLog(`Valve ${this.accessory.displayName} Active: ${valve.Active}`);
+        this.debugLog(`${this.constructor.name} Valve ${zone} Active: ${valve.Active}`);
       } else {
         valve.service.updateCharacteristic(this.platform.Characteristic.Active, valve.Active);
-        this.debugLog(`Valve ${this.accessory.displayName} updateCharacteristic Active: ${valve.Active}`);
+        this.debugLog(`${this.constructor.name} Valve ${zone} updateCharacteristic Active: ${valve.Active}`);
       }
       if (valve.InUse === undefined) {
-        this.debugLog(`Valve ${this.accessory.displayName} InUse: ${valve.InUse}`);
+        this.debugLog(`${this.constructor.name} Valve ${zone} InUse: ${valve.InUse}`);
       } else {
         valve.service.updateCharacteristic(this.platform.Characteristic.InUse, valve.InUse);
-        this.debugLog(`Valve ${this.accessory.displayName} updateCharacteristic InUse: ${valve.InUse}`);
+        this.debugLog(`${this.constructor.name} Valve ${zone} updateCharacteristic InUse: ${valve.InUse}`);
       }
-      if (valve.SetDuration === undefined) {
-        this.debugLog(`Valve ${this.accessory.displayName} SetDuration: ${valve.InUse}`);
+      if (this.accessory.context.duration[zone] === undefined) {
+        this.debugLog(`${this.constructor.name} Valve ${zone} SetDuration: ${this.accessory.context.duration[zone]}`);
       } else {
-        valve.service.updateCharacteristic(this.platform.Characteristic.SetDuration, valve.SetDuration);
-        this.debugLog(`Valve ${this.accessory.displayName} updateCharacteristic SetDuration: ${valve.SetDuration}`);
+        valve.service.updateCharacteristic(this.platform.Characteristic.SetDuration, this.accessory.context.duration[zone]);
+        this.debugLog(`${this.constructor.name} Valve ${zone} updateCharacteristic SetDuration: ${this.accessory.context.duration[zone]}`);
       }
-      if (valve.IsConfigured === undefined) {
-        this.debugLog(`Valve ${this.accessory.displayName} IsConfigured: ${valve.IsConfigured}`);
+      if (this.accessory.context.configured[zone] === undefined) {
+        this.debugLog(`${this.constructor.name} Valve ${zone} IsConfigured: ${this.accessory.context.configured[zone]}`);
       } else {
-        valve.service.updateCharacteristic(this.platform.Characteristic.IsConfigured, valve.IsConfigured);
-        this.debugLog(`Valve ${this.accessory.displayName} updateCharacteristic IsConfigured: ${valve.IsConfigured}`);
+        valve.service.updateCharacteristic(this.platform.Characteristic.IsConfigured, this.accessory.context.configured[zone]);
+        this.debugLog(`${this.constructor.name} Valve ${zone} updateCharacteristic IsConfigured: ${this.accessory.context.configured[zone]}`);
       }
       if (this.rainbird!.RemainingDuration(zone) === undefined) {
-        this.debugLog(`Valve ${this.accessory.displayName} RemainingDuration: ${this.rainbird!.RemainingDuration(zone)}`);
+        this.debugLog(`${this.constructor.name} Valve ${zone} RemainingDuration: ${this.rainbird!.RemainingDuration(zone)}`);
       } else {
         valve.service.updateCharacteristic(this.platform.Characteristic.RemainingDuration, this.rainbird!.RemainingDuration(zone));
-        this.debugLog(`Valve ${this.accessory.displayName} updateCharacteristic RemainingDuration: ${this.rainbird!.RemainingDuration(zone)}`);
+        this.debugLog(`${this.constructor.name} Valve ${zone} updateCharacteristic RemainingDuration: ${this.rainbird!.RemainingDuration(zone)}`);
       }
     }
   }
@@ -319,106 +311,43 @@ export class IrrigationSystem {
    */
   async pushChanges(zone: number): Promise<void> {
     if (this.valves.get(zone)!.Active === this.platform.Characteristic.Active.ACTIVE) {
-      this.rainbird!.activateZone(zone, this.valves.get(zone)!.SetDuration);
+      this.rainbird!.activateZone(zone, this.accessory.context.duration[zone]);
     } else {
       await this.rainbird!.deactivateZone(zone);
     }
 
     this.debugLog(
-      `Irrigation System ${this.accessory.displayName}, pushChanges: [Valve: ${zone},` +
-        ` Active: ${this.valves.get(zone)!.Active}, SetDuration: ${this.valves.get(zone)!.SetDuration}]`,
+      `${this.constructor.name} ${this.accessory.displayName}, pushChanges: [Valve: ${zone},` +
+        ` Active: ${this.valves.get(zone)!.Active}, SetDuration: ${this.accessory.context.duration[zone]}]`,
     );
   }
 
   private setActive(value: CharacteristicValue) {
-    this.debugLog(`Irrigation System ${this.accessory.displayName}, Set Active: ${value}`);
+    this.debugLog(`${this.constructor.name} ${this.accessory.displayName}, Set Active: ${value}`);
     this.irrigation.Active = value;
   }
 
   private setValveActive(zone: number, value: CharacteristicValue) {
-    this.debugLog(`Irrigation System ${this.accessory.displayName}, Valve: ${zone}, Set Active: ${value}`);
+    this.debugLog(`${this.constructor.name} ${this.accessory.displayName}, Valve: ${zone}, Set Active: ${value}`);
     this.valves.get(zone)!.Active = value;
     this.doIrrigationSystemUpdate.next(zone);
   }
 
   private setValveIsConfigured(zone: number, value: CharacteristicValue) {
-    this.debugLog(`Irrigation System ${this.accessory.displayName}, Valve: ${zone}, Set IsConfigured: ${value}`);
-    this.valves.get(zone)!.IsConfigured = value;
+    this.debugLog(`${this.constructor.name} ${this.accessory.displayName}, Valve: ${zone}, Set IsConfigured: ${value}`);
     this.accessory.context.configured[zone] = value;
     this.rainbird!.enableZone(zone, value === this.platform.Characteristic.IsConfigured.CONFIGURED);
   }
 
   private setValveSetDuration(zone: number, value: CharacteristicValue) {
-    this.debugLog(`Irrigation System ${this.accessory.displayName}, Valve: ${zone}, Set SetDuration: ${value}`);
-    this.valves.get(zone)!.SetDuration = value as number;
+    this.debugLog(`${this.constructor.name} ${this.accessory.displayName}, Valve: ${zone}, Set SetDuration: ${value}`);
     this.accessory.context.duration[zone] = value;
   }
 
   config(device: DevicesConfig) {
     const config: DevicesConfig = device;
     if (Object.entries(config).length !== 0) {
-      this.warnLog(`Leak Sensor: ${this.accessory.displayName} Config: ${JSON.stringify(config)}`);
+      this.warnLog(`${this.constructor.name} ${this.accessory.displayName} Config: ${JSON.stringify(config)}`);
     }
-  }
-
-  refreshRate(device: DevicesConfig) {
-    if (device.refreshRate) {
-      this.deviceRefreshRate = this.accessory.context.refreshRate = device.refreshRate;
-      this.debugLog(`Thermostat: ${this.accessory.displayName} Using Device Config refreshRate: ${this.deviceRefreshRate}`);
-    } else if (this.platform.config.options!.refreshRate) {
-      this.deviceRefreshRate = this.accessory.context.refreshRate = this.platform.config.options!.refreshRate;
-      this.debugLog(`Thermostat: ${this.accessory.displayName} Using Platform Config refreshRate: ${this.deviceRefreshRate}`);
-    }
-  }
-
-  logs(device: DevicesConfig) {
-    if (this.platform.debugMode) {
-      this.deviceLogging = this.accessory.context.logging = 'debugMode';
-      this.debugLog(`Thermostat: ${this.accessory.displayName} Using Debug Mode Logging: ${this.deviceLogging}`);
-    } else if (device.logging) {
-      this.deviceLogging = this.accessory.context.logging = device.logging;
-      this.debugLog(`Thermostat: ${this.accessory.displayName} Using Device Config Logging: ${this.deviceLogging}`);
-    } else if (this.platform.config.options?.logging) {
-      this.deviceLogging = this.accessory.context.logging = this.platform.config.options?.logging;
-      this.debugLog(`Thermostat: ${this.accessory.displayName} Using Platform Config Logging: ${this.deviceLogging}`);
-    } else {
-      this.deviceLogging = this.accessory.context.logging = 'standard';
-      this.debugLog(`Thermostat: ${this.accessory.displayName} Logging Not Set, Using: ${this.deviceLogging}`);
-    }
-  }
-
-  /**
-   * Logging for Device
-   */
-  infoLog(...log: any[]) {
-    if (this.enablingDeviceLogging()) {
-      this.platform.log.info(String(...log));
-    }
-  }
-
-  warnLog(...log: any[]) {
-    if (this.enablingDeviceLogging()) {
-      this.platform.log.warn(String(...log));
-    }
-  }
-
-  errorLog(...log: any[]) {
-    if (this.enablingDeviceLogging()) {
-      this.platform.log.error(String(...log));
-    }
-  }
-
-  debugLog(...log: any[]) {
-    if (this.enablingDeviceLogging()) {
-      if (this.deviceLogging === 'debug') {
-        this.platform.log.info('[DEBUG]', String(...log));
-      } else {
-        this.platform.log.debug(String(...log));
-      }
-    }
-  }
-
-  enablingDeviceLogging(): boolean {
-    return this.deviceLogging.includes('debug') || this.deviceLogging === 'standard';
   }
 }
