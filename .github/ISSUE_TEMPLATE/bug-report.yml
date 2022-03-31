@@ -2,7 +2,9 @@ name: Bug-Report
 description: Report a Bug to help us improve
 title: "Bug: "
 labels: [bug]
-assignees: 'donavanbecker'
+assignees:
+  - donavanbecker
+  - mantorok1
 body:
   - type: markdown
     attributes:

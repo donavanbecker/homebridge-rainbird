@@ -3,7 +3,9 @@ name: Enhancement
 about: Contribute to Plugin through Pull Request
 title: ''
 labels: 'enhancement'
-assignees: 'donavanbecker'
+assignees:
+  - donavanbecker
+  - mantorok1
 ---
 
 **Is your enhancement related to a problem? Please describe.**
