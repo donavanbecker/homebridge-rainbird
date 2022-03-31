@@ -2,7 +2,9 @@ name: Support Request
 description: Need help?
 title: "Support Request: "
 labels: [question]
-assignees: 'donavanbecker'
+assignees:
+  - donavanbecker
+  - mantorok1
 body:
   - type: markdown
     attributes:

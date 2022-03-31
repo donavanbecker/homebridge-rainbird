@@ -6,6 +6,7 @@ import { ContactSensor } from './devices/ContactSensor';
 import { LeakSensor } from './devices/LeakSensor';
 import { ProgramSwitch } from './devices/ProgramSwitch';
 import { StopIrrigationSwitch } from './devices/StopIrrigationSwitch';
+import { ZoneValve } from './devices/ZoneValve';
 
 /**
  * HomebridgePlatform
@@ -135,6 +136,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
       device.showProgramBSwitch = device.showProgramBSwitch ?? false;
       device.showProgramCSwitch = device.showProgramCSwitch ?? false;
       device.showStopIrrigationSwitch = device.showStopIrrigationSwitch ?? false;
+      device.showZoneValve = device.showZoneValve ?? false;
       device.showRequestResponse = device.showRequestResponse ?? false;
     }
   }
@@ -164,6 +166,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
       for (const zoneId of metaData.zones) {
         const configured = irrigationAccessory!.context.configured[zoneId] ?? this.Characteristic.IsConfigured.CONFIGURED;
         if (configured === this.Characteristic.IsConfigured.CONFIGURED) {
+          this.createZoneValve(device, rainbird, zoneId);
           this.createContactSensor(device, rainbird, zoneId);
         }
       }
@@ -176,14 +179,10 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
       rainbird.on('zone_enable', (zoneId, enabled) => {
         if (enabled) {
           this.createContactSensor(device, rainbird, zoneId);
+          this.createZoneValve(device, rainbird, zoneId);
         } else {
-          const model = `${rainbird!.model}-${zoneId}`;
-          const uuid = this.api.hap.uuid.generate(`${device.ipaddress}-${model}-${rainbird!.serialNumber}`);
-          const index = this.accessories.findIndex((accessory) => accessory.UUID === uuid);
-          if (index >= 0) {
-            this.unregisterPlatformAccessories(this.accessories[index]);
-            this.accessories.splice(index, 1);
-          }
+          this.removeContactSensor(device, rainbird, zoneId);
+          this.removeZoneValve(device, rainbird, zoneId);
         }
       });
     }
@@ -298,6 +297,75 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
     }
   }
 
+  createZoneValve(device: DevicesConfig, rainbird: RainBirdService, zoneId: number): void {
+    const model = `${rainbird!.model}-valve-${zoneId}`;
+    const uuid = this.api.hap.uuid.generate(`${device.ipaddress}-${model}-${rainbird!.serialNumber}`);
+    const name = `Zone ${zoneId}`;
+    // see if an accessory with the same uuid has already been registered and restored from
+    // the cached devices we stored in the `configureAccessory` method above
+    const existingAccessory = this.accessories.find((accessory) => accessory.UUID === uuid);
+
+    const irrigationUuid = this.api.hap.uuid.generate(`${device.ipaddress}-${rainbird!.model}-${rainbird!.serialNumber}`);
+    const irrigationAccessory = this.accessories.find((accessory) => accessory.UUID === irrigationUuid);
+
+    if (existingAccessory) {
+      // the accessory already exists
+      if (!this.config.disablePlugin && device.showZoneValve) {
+        this.infoLog(`Restoring existing accessory from cache: ${existingAccessory.displayName}`);
+
+        // if you need to update the accessory.context then you should run `api.updatePlatformAccessories`. eg.:
+        existingAccessory.context.device = device;
+        existingAccessory.context.deviceID = rainbird!.serialNumber;
+        existingAccessory.context.model = model;
+        existingAccessory.context.FirmwareRevision = rainbird!.version;
+        existingAccessory.context.zoneId = zoneId;
+        this.api.updatePlatformAccessories([existingAccessory]);
+        // create the accessory handler for the restored accessory
+        // this is imported from `platformAccessory.ts`
+        new ZoneValve(this, existingAccessory, device, rainbird, irrigationAccessory!.context);
+        this.debugLog(`Zone Valve uuid: ${device.ipaddress}-${model}-${rainbird!.serialNumber}, (${existingAccessory.UUID})`);
+      } else {
+        this.unregisterPlatformAccessories(existingAccessory);
+      }
+    } else if (!this.config.disablePlugin && device.showZoneValve) {
+      // the accessory does not yet exist, so we need to create it
+      this.infoLog(`Adding new accessory: ${model}`);
+
+      // create a new accessory
+      const accessory = new this.api.platformAccessory(name, uuid);
+
+      // store a copy of the device object in the `accessory.context`
+      // the `context` property can be used to store any data about the accessory you may need
+      accessory.context.device = device;
+      accessory.context.deviceID = rainbird!.serialNumber;
+      accessory.context.model = model;
+      accessory.context.FirmwareRevision = rainbird!.version;
+      accessory.context.zoneId = zoneId;
+      // create the accessory handler for the newly create accessory
+      // this is imported from `platformAccessory.ts`
+      new ZoneValve(this, accessory, device, rainbird, irrigationAccessory!.context);
+      this.debugLog(`Valve Zone uuid: ${device.ipaddress}-${model}-${rainbird!.serialNumber}, (${accessory.UUID})`);
+
+      // link the accessory to your platform
+      this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
+      this.accessories.push(accessory);
+    } else {
+      if (this.platformLogging === 'debug' && device.showZoneValve) {
+        this.errorLog(`Unable to Register new device: ${model}`);
+      }
+    }
+  }
+
+  removeZoneValve(device: DevicesConfig, rainbird: RainBirdService, zoneId: number): void {
+    const model = `${rainbird!.model}-valve-${zoneId}`;
+    const uuid = this.api.hap.uuid.generate(`${device.ipaddress}-${model}-${rainbird!.serialNumber}`);
+    const index = this.accessories.findIndex((accessory) => accessory.UUID === uuid);
+    if (index >= 0) {
+      this.unregisterPlatformAccessories(this.accessories[index]);
+      this.accessories.splice(index, 1);
+    }
+  }
+
   createContactSensor(device: DevicesConfig, rainbird: RainBirdService, zoneId: number): void {
     const model = `${rainbird!.model}-${zoneId}`;
     const uuid = this.api.hap.uuid.generate(`${device.ipaddress}-${model}-${rainbird!.serialNumber}`);
@@ -351,6 +419,16 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
       if (this.platformLogging === 'debug' && device.showValveSensor) {
         this.errorLog(`Unable to Register new device: ${rainbird!.model}-${zoneId}`);
       }
+    }
+  }
+
+  removeContactSensor(device: DevicesConfig, rainbird: RainBirdService, zoneId: number): void {
+    const model = `${rainbird!.model}-${zoneId}`;
+    const uuid = this.api.hap.uuid.generate(`${device.ipaddress}-${model}-${rainbird!.serialNumber}`);
+    const index = this.accessories.findIndex((accessory) => accessory.UUID === uuid);
+    if (index >= 0) {
+      this.unregisterPlatformAccessories(this.accessories[index]);
+      this.accessories.splice(index, 1);
     }
   }
 
