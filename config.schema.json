@@ -67,6 +67,12 @@
               "type": "boolean",
               "requried": false
             },
+            "showZoneValve": {
+              "title": "Show Zones as Valve Accessories",
+              "type": "boolean",
+              "required": false,
+              "description": "Show zones as seperate valve accessories (useful to workaround the bug introduced in iOS 15.4/macOS 12.3 that prevents the valves from showing within the Irrigation System accessory)."
+            },
             "showRequestResponse": {
               "title": "Show RainBird requests and responses in the log",
               "type": "boolean",
@@ -182,6 +188,7 @@
                     "devices[].showProgramBSwitch",
                     "devices[].showProgramCSwitch",
                     "devices[].showStopIrrigationSwitch",
+                    "devices[].showZoneValve",
                     "devices[].showRequestResponse",
                     "devices[].refreshRate",
                     "devices[].logging"
