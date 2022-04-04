@@ -74,6 +74,6 @@
     "typescript": "^4.6.3",
     "typescript-axios-wb": "^1.0.3",
     "npm-check-updates": "^12.5.4",
-    "prettier": "2.6.1"
+    "prettier": "2.6.2"
   }
 }
