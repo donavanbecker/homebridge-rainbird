@@ -10,10 +10,6 @@ jobs:
   comment:
     runs-on: ubuntu-18.04
     steps:
-      - uses: actions/checkout@v3
-
-      - name: Label Commenter
-        uses: peaceiris/actions-label-commenter@v1
+      - uses: ahmadnassri/action-dependabot-auto-merge@v2
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          config_file: .github/label-commenter-config.yml
+          github-token: ${{ secrets.GITHUB_TOKEN }}
