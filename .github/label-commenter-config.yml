@@ -1,0 +1,7 @@
+labels:
+  - name: dependencies
+    labeled:
+      issue:
+        body: |
+          @dependabot squash and merge
+        action: open

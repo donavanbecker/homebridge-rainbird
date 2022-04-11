@@ -7,12 +7,13 @@ on:
   pull_request:
 
 jobs:
-  depdendabot:
-    runs-on: ubuntu-latest
-    permissions:
-      pull-requests: write
-      contents: write
+  comment:
+    runs-on: ubuntu-18.04
     steps:
-      - uses: fastify/github-action-merge-dependabot@v3
+      - uses: actions/checkout@v3
+
+      - name: Label Commenter
+        uses: peaceiris/actions-label-commenter@v1
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          config_file: .github/label-commenter-config.yml
