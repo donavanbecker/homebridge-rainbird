@@ -1,7 +1,7 @@
 {
   "displayName": "Homebridge Rainbird",
   "name": "homebridge-rainbird",
-  "version": "1.7.1",
+  "version": "1.7.2",
   "description": "The [Homebridge](https://homebridge.io) Rainbird plugin allows you to access your [Rainbird](https://rainbird.com) device(s) from HomeKit.",
   "author": "donavanbecker",
   "license": "Apache-2.0",
@@ -13,8 +13,8 @@
     "url": "https://github.com/donavanbecker/homebridge-rainbird/issues"
   },
   "engines": {
-    "homebridge": "^1.4.1",
-    "node": "^14.19.1 || ^16.15.0 || ^18.1.0"
+    "homebridge": "^1.5.0",
+    "node": "^14.19.3 || ^16.15.1 || ^18.4.0"
   },
   "main": "dist/index.js",
   "scripts": {
@@ -60,20 +60,20 @@
   "devDependencies": {
     "@types/aes-js": "^3.1.1",
     "@types/better-queue": "^3.8.3",
-    "@types/node": "^17.0.31",
+    "@types/node": "^18.0.0",
     "@types/node-fetch": "^3.0.3",
-    "@typescript-eslint/eslint-plugin": "^5.22.0",
-    "@typescript-eslint/parser": "^5.22.0",
-    "eslint": "^8.14.0",
+    "@typescript-eslint/eslint-plugin": "^5.29.0",
+    "@typescript-eslint/parser": "^5.29.0",
+    "eslint": "^8.18.0",
     "eslint-config-prettier": "8.5.0",
     "eslint-plugin-prettier": "4.0.0",
-    "homebridge": "^1.4.1",
-    "nodemon": "^2.0.16",
+    "homebridge": "^1.5.0",
+    "nodemon": "^2.0.18",
     "rimraf": "^3.0.2",
-    "ts-node": "^10.7.0",
-    "typescript": "^4.6.4",
+    "ts-node": "^10.8.1",
+    "typescript": "^4.7.4",
     "typescript-axios-wb": "^1.0.3",
-    "npm-check-updates": "^12.5.11",
-    "prettier": "2.6.2"
+    "npm-check-updates": "^14.1.1",
+    "prettier": "2.7.1"
   }
 }

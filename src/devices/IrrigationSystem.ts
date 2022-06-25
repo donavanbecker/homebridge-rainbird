@@ -347,7 +347,7 @@ export class IrrigationSystem extends DeviceBase {
   config(device: DevicesConfig) {
     const config: DevicesConfig = device;
     if (Object.entries(config).length !== 0) {
-      this.warnLog(`${this.constructor.name} ${this.accessory.displayName} Config: ${JSON.stringify(config)}`);
+      this.infoLog(`${this.constructor.name} ${this.accessory.displayName} Config: ${JSON.stringify(config)}`);
     }
   }
 }
