@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. This project uses [Semantic Versioning](https://semver.org/)
 
+## [Version 1.7.3](https://github.com/donavanbecker/homebridge-rainbird/releases/tag/v1.7.3) (2022-08-31)
+
+### What's Changed
+
+- Housekeeping and updated dependencies.
+
+**Full Changelog**: https://github.com/donavanbecker/homebridge-rainbird/compare/v1.7.2...v1.7.3
+
 ## [Version 1.7.2](https://github.com/donavanbecker/homebridge-rainbird/releases/tag/v1.7.2) (2022-06-25)
 
 ### What's Changed
