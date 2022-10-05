@@ -5,6 +5,7 @@ import { Subject, fromEvent, interval } from 'rxjs';
 import { debounceTime, skipWhile, tap } from 'rxjs/operators';
 import { DevicesConfig } from '../settings';
 import { DeviceBase } from './DeviceBase';
+import superStringify from 'super-stringify';
 
 /**
  * Platform Accessory
@@ -217,9 +218,9 @@ export class IrrigationSystem extends DeviceBase {
         try {
           await this.pushChanges(zone);
         } catch (e: any) {
-          this.debugLog(`${this.constructor.name} ${this.accessory.displayName} - ${JSON.stringify(e.messsage)}`);
+          this.debugLog(`${this.constructor.name} ${this.accessory.displayName} - ${superStringify(e.messsage)}`);
           if (this.deviceLogging.includes('debug')) {
-            this.debugLog(`${this.constructor.name} ${this.accessory.displayName} - ${JSON.stringify(e)}`);
+            this.debugLog(`${this.constructor.name} ${this.accessory.displayName} - ${superStringify(e)}`);
           }
         }
         this.irrigationSystemUpdateInProgress = false;
@@ -347,7 +348,7 @@ export class IrrigationSystem extends DeviceBase {
   config(device: DevicesConfig) {
     const config: DevicesConfig = device;
     if (Object.entries(config).length !== 0) {
-      this.infoLog(`${this.constructor.name} ${this.accessory.displayName} Config: ${JSON.stringify(config)}`);
+      this.infoLog(`${this.constructor.name} ${this.accessory.displayName} Config: ${superStringify(config)}`);
     }
   }
 }
