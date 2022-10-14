@@ -21,8 +21,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
   // this is used to track restored cached accessories
   public readonly accessories: PlatformAccessory[] = [];
 
-  version = require('../package.json').version; // eslint-disable-line @typescript-eslint/no-var-requires
-
+  version = process.env.npm_package_version!;
   public sensorData = [];
   platformLogging!: string;
   debugMode!: boolean;
