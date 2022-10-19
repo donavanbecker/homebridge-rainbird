@@ -7,6 +7,7 @@ import { LeakSensor } from './devices/LeakSensor';
 import { ProgramSwitch } from './devices/ProgramSwitch';
 import { StopIrrigationSwitch } from './devices/StopIrrigationSwitch';
 import { ZoneValve } from './devices/ZoneValve';
+import superStringify from 'super-stringify';
 
 /**
  * HomebridgePlatform
@@ -20,8 +21,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
   // this is used to track restored cached accessories
   public readonly accessories: PlatformAccessory[] = [];
 
-  version = require('../package.json').version; // eslint-disable-line @typescript-eslint/no-var-requires
-
+  version = process.env.npm_package_version!;
   public sensorData = [];
   platformLogging!: string;
   debugMode!: boolean;
@@ -44,8 +44,8 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
       this.verifyConfig();
       this.debugLog('Config OK');
     } catch (e: any) {
-      this.errorLog(JSON.stringify(e.message));
-      this.debugLog(JSON.stringify(e));
+      this.errorLog(superStringify(e.message));
+      this.debugLog(superStringify(e));
       return;
     }
 
@@ -58,8 +58,8 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
       try {
         await this.discoverDevices();
       } catch (e: any) {
-        this.errorLog(`Failed to Discover Devices, ${JSON.stringify(e.message)}`);
-        this.debugLog(JSON.stringify(e));
+        this.errorLog(`Failed to Discover Devices, ${superStringify(e.message)}`);
+        this.debugLog(superStringify(e));
       }
     });
   }
@@ -154,14 +154,14 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
         showRequestResponse: device.showRequestResponse!,
       });
       const metaData = await rainbird!.init();
-      this.debugLog(JSON.stringify(metaData));
+      this.debugLog(superStringify(metaData));
 
       // Display device details
       this.infoLog(
         `Model: ${metaData.model}, [Version: ${metaData.version}, Serial Number: ${metaData.serialNumber},` +
-          ` Zones: ${JSON.stringify(metaData.zones)}]`,
+          ` Zones: ${superStringify(metaData.zones)}]`,
       );
-      const irrigationAccessory = this.createIrrigationSystem(device, rainbird);
+      const irrigationAccessory: any = this.createIrrigationSystem(device, rainbird);
       this.createLeakSensor(device, rainbird);
       for (const zoneId of metaData.zones) {
         const configured = irrigationAccessory!.context.configured[zoneId] ?? this.Characteristic.IsConfigured.CONFIGURED;
@@ -188,7 +188,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
     }
   }
 
-  private createIrrigationSystem(device: DevicesConfig, rainbird: RainBirdService): PlatformAccessory | undefined {
+  private async createIrrigationSystem(device: DevicesConfig, rainbird: RainBirdService): Promise<PlatformAccessory | undefined> {
     const uuid = this.api.hap.uuid.generate(`${device.ipaddress}-${rainbird!.model}-${rainbird!.serialNumber}`);
     // see if an accessory with the same uuid has already been registered and restored from
     // the cached devices we stored in the `configureAccessory` method above
@@ -204,7 +204,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
         existingAccessory.context.device = device;
         existingAccessory.context.deviceID = rainbird!.serialNumber;
         existingAccessory.context.model = rainbird!.model;
-        existingAccessory.context.FirmwareRevision = rainbird!.version;
+        existingAccessory.context.FirmwareRevision = await this.FirmwareRevision(rainbird, device);
         this.api.updatePlatformAccessories([existingAccessory]);
         // create the accessory handler for the restored accessory
         // this is imported from `platformAccessory.ts`
@@ -226,7 +226,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
       accessory.context.device = device;
       accessory.context.deviceID = rainbird!.serialNumber;
       accessory.context.model = rainbird!.model;
-      accessory.context.FirmwareRevision = rainbird!.version;
+      accessory.context.FirmwareRevision = await this.FirmwareRevision(rainbird, device);
       // create the accessory handler for the newly create accessory
       // this is imported from `platformAccessory.ts`
       new IrrigationSystem(this, accessory, device, rainbird);
@@ -243,7 +243,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
     }
   }
 
-  private createLeakSensor(device: DevicesConfig, rainbird: RainBirdService): void {
+  private async createLeakSensor(device: DevicesConfig, rainbird: RainBirdService): Promise<void> {
     const model = 'WR2';
     const uuid = this.api.hap.uuid.generate(`${device.ipaddress}-${model}-${rainbird!.serialNumber}`);
     // see if an accessory with the same uuid has already been registered and restored from
@@ -260,7 +260,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
         existingAccessory.context.device = device;
         existingAccessory.context.deviceID = rainbird!.serialNumber;
         existingAccessory.context.model = model;
-        existingAccessory.context.FirmwareRevision = rainbird!.version;
+        existingAccessory.context.FirmwareRevision = await this.FirmwareRevision(rainbird, device);
         this.api.updatePlatformAccessories([existingAccessory]);
         // create the accessory handler for the restored accessory
         // this is imported from `platformAccessory.ts`
@@ -281,7 +281,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
       accessory.context.device = device;
       accessory.context.deviceID = rainbird!.serialNumber;
       accessory.context.model = model;
-      accessory.context.FirmwareRevision = rainbird!.version;
+      accessory.context.FirmwareRevision = await this.FirmwareRevision(rainbird, device);
       // create the accessory handler for the newly create accessory
       // this is imported from `platformAccessory.ts`
       new LeakSensor(this, accessory, device, rainbird);
@@ -297,7 +297,17 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
     }
   }
 
-  createZoneValve(device: DevicesConfig, rainbird: RainBirdService, zoneId: number): void {
+  async FirmwareRevision(rainbird: RainBirdService, device: DevicesConfig): Promise<any> {
+    let firmware: any;
+    if (device.firmware) {
+      firmware = device.firmware;
+    } else {
+      firmware = rainbird!.version;
+    }
+    return firmware;
+  }
+
+  async createZoneValve(device: DevicesConfig, rainbird: RainBirdService, zoneId: number): Promise<void> {
     const model = `${rainbird!.model}-valve-${zoneId}`;
     const uuid = this.api.hap.uuid.generate(`${device.ipaddress}-${model}-${rainbird!.serialNumber}`);
     const name = `Zone ${zoneId}`;
@@ -317,7 +327,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
         existingAccessory.context.device = device;
         existingAccessory.context.deviceID = rainbird!.serialNumber;
         existingAccessory.context.model = model;
-        existingAccessory.context.FirmwareRevision = rainbird!.version;
+        existingAccessory.context.FirmwareRevision = await this.FirmwareRevision(rainbird, device);
         existingAccessory.context.zoneId = zoneId;
         this.api.updatePlatformAccessories([existingAccessory]);
         // create the accessory handler for the restored accessory
@@ -339,7 +349,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
       accessory.context.device = device;
       accessory.context.deviceID = rainbird!.serialNumber;
       accessory.context.model = model;
-      accessory.context.FirmwareRevision = rainbird!.version;
+      accessory.context.FirmwareRevision = await this.FirmwareRevision(rainbird, device);
       accessory.context.zoneId = zoneId;
       // create the accessory handler for the newly create accessory
       // this is imported from `platformAccessory.ts`
@@ -366,7 +376,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
     }
   }
 
-  createContactSensor(device: DevicesConfig, rainbird: RainBirdService, zoneId: number): void {
+  async createContactSensor(device: DevicesConfig, rainbird: RainBirdService, zoneId: number): Promise<void> {
     const model = `${rainbird!.model}-${zoneId}`;
     const uuid = this.api.hap.uuid.generate(`${device.ipaddress}-${model}-${rainbird!.serialNumber}`);
     // see if an accessory with the same uuid has already been registered and restored from
@@ -383,7 +393,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
         existingAccessory.context.device = device;
         existingAccessory.context.deviceID = rainbird!.serialNumber;
         existingAccessory.context.model = model;
-        existingAccessory.context.FirmwareRevision = rainbird!.version;
+        existingAccessory.context.FirmwareRevision = await this.FirmwareRevision(rainbird, device);
         existingAccessory.context.zoneId = zoneId;
         this.api.updatePlatformAccessories([existingAccessory]);
         // create the accessory handler for the restored accessory
@@ -405,7 +415,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
       accessory.context.device = device;
       accessory.context.deviceID = rainbird!.serialNumber;
       accessory.context.model = model;
-      accessory.context.FirmwareRevision = rainbird!.version;
+      accessory.context.FirmwareRevision = await this.FirmwareRevision(rainbird, device);
       accessory.context.zoneId = zoneId;
       // create the accessory handler for the newly create accessory
       // this is imported from `platformAccessory.ts`
@@ -432,7 +442,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
     }
   }
 
-  createProgramSwitch(device: DevicesConfig, rainbird: RainBirdService, programId: string): void {
+  async createProgramSwitch(device: DevicesConfig, rainbird: RainBirdService, programId: string): Promise<void> {
     const model = `${rainbird!.model}-pgm-${programId}`;
     const uuid = this.api.hap.uuid.generate(`${device.ipaddress}-${model}-${rainbird!.serialNumber}`);
     // see if an accessory with the same uuid has already been registered and restored from
@@ -450,7 +460,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
         existingAccessory.context.device = device;
         existingAccessory.context.deviceID = rainbird!.serialNumber;
         existingAccessory.context.model = model;
-        existingAccessory.context.FirmwareRevision = rainbird!.version;
+        existingAccessory.context.FirmwareRevision = await this.FirmwareRevision(rainbird, device);
         existingAccessory.context.programId = programId;
         this.api.updatePlatformAccessories([existingAccessory]);
         // create the accessory handler for the restored accessory
@@ -472,7 +482,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
       accessory.context.device = device;
       accessory.context.deviceID = rainbird!.serialNumber;
       accessory.context.model = model;
-      accessory.context.FirmwareRevision = rainbird!.version;
+      accessory.context.FirmwareRevision = await this.FirmwareRevision(rainbird, device);
       accessory.context.programId = programId;
 
       // create the accessory handler for the newly create accessory
@@ -490,7 +500,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
     }
   }
 
-  createStopIrrigationSwitch(device: DevicesConfig, rainbird: RainBirdService): void {
+  async createStopIrrigationSwitch(device: DevicesConfig, rainbird: RainBirdService): Promise<void> {
     const model = `${rainbird!.model}-stop`;
     const uuid = this.api.hap.uuid.generate(`${device.ipaddress}-${model}-${rainbird!.serialNumber}`);
     // see if an accessory with the same uuid has already been registered and restored from
@@ -507,7 +517,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
         existingAccessory.context.device = device;
         existingAccessory.context.deviceID = rainbird!.serialNumber;
         existingAccessory.context.model = model;
-        existingAccessory.context.FirmwareRevision = rainbird!.version;
+        existingAccessory.context.FirmwareRevision = await this.FirmwareRevision(rainbird, device);
         this.api.updatePlatformAccessories([existingAccessory]);
         // create the accessory handler for the restored accessory
         // this is imported from `platformAccessory.ts`
@@ -528,7 +538,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
       accessory.context.device = device;
       accessory.context.deviceID = rainbird!.serialNumber;
       accessory.context.model = model;
-      accessory.context.FirmwareRevision = rainbird!.version;
+      accessory.context.FirmwareRevision = await this.FirmwareRevision(rainbird, device);
 
       // create the accessory handler for the newly create accessory
       // this is imported from `platformAccessory.ts`
@@ -556,25 +566,41 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
    * If device level logging is turned on, log to log.warn
    * Otherwise send debug logs to log.debug
    */
-  infoLog(...log: any[]) {
+  infoLog(...log: any[]): void {
     if (this.enablingPlatfromLogging()) {
       this.log.info(String(...log));
     }
   }
 
-  warnLog(...log: any[]) {
+  warnLog(...log: any[]): void {
     if (this.enablingPlatfromLogging()) {
       this.log.warn(String(...log));
     }
   }
 
-  errorLog(...log: any[]) {
+  debugWarnLog(...log: any[]): void {
+    if (this.enablingPlatfromLogging()) {
+      if (this.platformLogging?.includes('debug')) {
+        this.log.warn('[DEBUG]', String(...log));
+      }
+    }
+  }
+
+  errorLog(...log: any[]): void {
     if (this.enablingPlatfromLogging()) {
       this.log.error(String(...log));
     }
   }
 
-  debugLog(...log: any[]) {
+  debugErrorLog(...log: any[]): void {
+    if (this.enablingPlatfromLogging()) {
+      if (this.platformLogging?.includes('debug')) {
+        this.log.error('[DEBUG]', String(...log));
+      }
+    }
+  }
+
+  debugLog(...log: any[]): void {
     if (this.enablingPlatfromLogging()) {
       if (this.platformLogging === 'debugMode') {
         this.log.debug(String(...log));

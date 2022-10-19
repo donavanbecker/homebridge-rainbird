@@ -25,9 +25,10 @@ export type DevicesConfig = {
   showProgramBSwitch?: boolean;
   showProgramCSwitch?: boolean;
   showStopIrrigationSwitch?: boolean;
-  showZoneValve?: boolean;
-  refreshRate?: number;
   showRequestResponse?: boolean;
+  showZoneValve?: boolean;
+  firmware?: number;
+  refreshRate?: number;
   logging?: string;
 };
 
