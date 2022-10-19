@@ -78,6 +78,11 @@
               "type": "boolean",
               "requried": false
             },
+            "firmware": {
+              "title": "Firmware Override",
+              "type": "string",
+              "placeholder": "1.2.8"
+            },
             "refreshRate": {
               "title": "Device Refresh Rate",
               "type": "number",
@@ -190,6 +195,7 @@
                     "devices[].showStopIrrigationSwitch",
                     "devices[].showZoneValve",
                     "devices[].showRequestResponse",
+                    "devices[].firmware",
                     "devices[].refreshRate",
                     "devices[].logging"
                   ]
