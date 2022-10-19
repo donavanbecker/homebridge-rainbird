@@ -3,7 +3,6 @@ import crypto = require('crypto');
 import encoder = require('text-encoder');
 import aesjs = require('aes-js');
 import cq = require('concurrent-queue');
-import superStringify from 'super-stringify';
 
 import { Logger } from 'homebridge';
 import { Request } from './requests/Request';
@@ -315,7 +314,7 @@ export class RainBirdClient {
 
   private formatRequest(request: Request) {
     const data: Buffer = request.toBuffer();
-    return superStringify({
+    return JSON.stringify({
       'id': 9,
       'jsonrpc': '2.0',
       'method': 'tunnelSip',
