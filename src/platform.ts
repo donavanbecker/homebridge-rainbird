@@ -161,10 +161,10 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
         `Model: ${metaData.model}, [Version: ${metaData.version}, Serial Number: ${metaData.serialNumber},` +
           ` Zones: ${superStringify(metaData.zones)}]`,
       );
-      const irrigationAccessory: any = this.createIrrigationSystem(device, rainbird);
+      const irrigationAccessory = this.createIrrigationSystem(device, rainbird);
       this.createLeakSensor(device, rainbird);
       for (const zoneId of metaData.zones) {
-        const configured = irrigationAccessory!.context.configured[zoneId] ?? this.Characteristic.IsConfigured.CONFIGURED;
+        const configured = (await irrigationAccessory)!.context.configured[zoneId] ?? this.Characteristic.IsConfigured.CONFIGURED;
         if (configured === this.Characteristic.IsConfigured.CONFIGURED) {
           this.createZoneValve(device, rainbird, zoneId);
           this.createContactSensor(device, rainbird, zoneId);
@@ -188,7 +188,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
     }
   }
 
-  private async createIrrigationSystem(device: DevicesConfig, rainbird: RainBirdService): Promise<PlatformAccessory | undefined> {
+  private async createIrrigationSystem(device: DevicesConfig, rainbird: RainBirdService) {
     const uuid = this.api.hap.uuid.generate(`${device.ipaddress}-${rainbird!.model}-${rainbird!.serialNumber}`);
     // see if an accessory with the same uuid has already been registered and restored from
     // the cached devices we stored in the `configureAccessory` method above

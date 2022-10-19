@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. This project uses [Semantic Versioning](https://semver.org/)
 
+## [Version 1.8.1](https://github.com/donavanbecker/homebridge-rainbird/releases/tag/v1.8.1) (2022-10-19)
+
+### What's Changed
+- Fixed Issue where RainBird controller request failed. [#390](https://github.com/donavanbecker/homebridge-rainbird/issues/390)
+- Housekeeping and updated dependencies.
+
+**Full Changelog**: https://github.com/donavanbecker/homebridge-rainbird/compare/v1.8.0...v1.8.1
+
 ## [Version 1.8.0](https://github.com/donavanbecker/homebridge-rainbird/releases/tag/v1.8.0) (2022-10-18)
 
 ### What's Changed
