@@ -1,9 +1,9 @@
-import axios = require('axios');
 import crypto = require('crypto');
 import encoder = require('text-encoder');
 import aesjs = require('aes-js');
 import cq = require('concurrent-queue');
 import superStringify from 'super-stringify';
+import axios, { AxiosRequestConfig } from 'axios';
 
 import { Logger } from 'homebridge';
 import { Request } from './requests/Request';
@@ -205,7 +205,7 @@ export class RainBirdClient {
         const data: Buffer = this.encrypt(request.type);
         const config = this.createRequestConfig();
 
-        const resp = await axios.default.post(url, data, config);
+        const resp = await axios.post(url, data, config);
 
         if (!resp.statusText || resp.status !== 200) {
           throw new Error(`Invalid Response [Status: ${resp.status}, Text: ${resp.statusText}]`);
@@ -326,7 +326,7 @@ export class RainBirdClient {
     });
   }
 
-  private createRequestConfig(): axios.AxiosRequestConfig {
+  private createRequestConfig(): AxiosRequestConfig {
     return {
       responseType: 'arraybuffer',
       headers: {
