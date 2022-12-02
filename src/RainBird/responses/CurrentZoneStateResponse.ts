@@ -26,12 +26,12 @@ export class CurrentZoneStateResponse extends Response {
         this._running = response[3] !== 0;
         break;
       case 7: // ESP-ME3 - page 0
-        this._timeRemaining = response.readUInt16BE(8);
+        this._timeRemaining = 0;
         this._zoneId = 0;
-        this._programNumber = response[2];
+        this._programNumber = (response[2] <= 3) ? response[2] : 0;
         this._running = response[3] !== 0;
         break;
-      case 6: // ESP-ME3 - page 1
+      case 50: // ESP-ME3 - page 1
         this._timeRemaining = response.readUInt16BE(4);
         this._zoneId = response[3];
         this._programNumber = undefined;
