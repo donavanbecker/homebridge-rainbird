@@ -184,9 +184,9 @@ export class RainBirdClient {
     return await this.requestQueue(request) as CurrentZoneResponse;
   }
 
-  public async getCurrentZoneState(): Promise<CurrentZoneStateResponse> {
+  public async getCurrentZoneState(page = 0): Promise<CurrentZoneStateResponse> {
     const request: RainBirdRequest = {
-      type: new CurrentZoneStateRequest(),
+      type: new CurrentZoneStateRequest(page),
       retry: false,
       postDelay: 0,
     };

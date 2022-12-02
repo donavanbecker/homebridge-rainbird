@@ -6,6 +6,7 @@ import { debounceTime, fromEvent, Subject, Subscription, timer } from 'rxjs';
 import { AcknowledgedResponse } from './responses/AcknowledgedResponse';
 
 type RainBirdMetaData = {
+  modelNumber: number,
   model: string,
   version: string,
   serialNumber: string,
@@ -32,6 +33,7 @@ export class RainBirdService extends events.EventEmitter {
   private readonly _client: RainBirdClient;
 
   private _metadata: RainBirdMetaData = {
+    modelNumber: 0,
     model: 'Unknown',
     version: 'Unknown',
     serialNumber: 'Unknown',
@@ -54,6 +56,8 @@ export class RainBirdService extends events.EventEmitter {
     timeout: 3600000,
     autostart: true,
   });
+
+  private readonly ESP_ME3 = 0x0009;
 
   constructor(private readonly options: {
     address: string,
@@ -84,7 +88,8 @@ export class RainBirdService extends events.EventEmitter {
     this._currentZoneStateSupported = respCurrentZoneState.supported;
 
     this._metadata = {
-      model: respModelAndVersion.modelNumber,
+      modelNumber: respModelAndVersion.modelNumber,
+      model: respModelAndVersion.modelName,
       version: respModelAndVersion.version,
       serialNumber: respSerialNumber.serialNumber,
       zones: respZones.zones,
@@ -409,15 +414,18 @@ export class RainBirdService extends events.EventEmitter {
 
     if (this._currentZoneStateSupported) {
       const currentZoneState = await this._client.getCurrentZoneState();
+      const currentZoneStatePage1 = (this._metadata.modelNumber === this.ESP_ME3)
+        ? await this._client.getCurrentZoneState(1)
+        : undefined;
 
       if (currentZoneState === undefined) {
         return undefined;
       }
 
       return {
-        zoneId: currentZoneState.zoneId,
+        zoneId: currentZoneStatePage1?.zoneId ?? currentZoneState.zoneId,
         programId: this.getProgramId(currentZoneState.programNumber),
-        timeRemaining: currentZoneState.timeRemaining,
+        timeRemaining: currentZoneStatePage1?.timeRemaining ?? currentZoneState.timeRemaining,
         running: currentZoneState.running,
         rainSensorSetPointReached: rainSensorState.setPointReached,
       };

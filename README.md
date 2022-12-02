@@ -41,10 +41,9 @@ Any controller that supports the [RainBird LNK WiFi Module](https://www.rainbird
 - ESP-Me
 - ESP-TM2
 - ESP-RZXe
-- ESP-ME3 (see "Known Limitations")
+- ESP-ME3
 
 ## Known Limitations
 - Using the RainBird app while the plugin is running can cause connectivity issues.
 - The RainBird LNK WiFi Module may not support "Band Steering" and WiFi Channel 13. Try not using these on your router if you are having connectivity issues.
-- ESP-ME3: It is not currently possible to show the time remaining for a zone that was not started via the plugin (such as a scheduled program). The time remaining will show as `00:00` in these cases. Also a zone will show as active even though a scheduled program has been suspended (due to rain).
-- iOS 15.4/macOS 12.3 introduced a bug that prevents the valves (zones) from showing within the Irrigation System accessory in the Home app. Try using the "Show Zones as Valve Accessories" option as a workaround.
+- iOS 15.4/macOS 12.3 introduced a bug that prevents the valves (zones) from showing within the Irrigation System accessory in the Home app. Try using the "Show Zones as Valve Accessories" option as a workaround. [NOTE: Fixed in iOS16/macOS 13.0]

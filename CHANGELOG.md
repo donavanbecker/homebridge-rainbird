@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file. This project uses [Semantic Versioning](https://semver.org/)
 
+### What's Changed
+- Added Program state & Zone Time Remaining for ESP-ME3. [#395](https://github.com/donavanbecker/homebridge-rainbird/issues/395) [#396](https://github.com/donavanbecker/homebridge-rainbird/issues/396) [Thanks [dacarson](https://github.com/dacarson) for your help]
+
 ## [Version 1.8.1](https://github.com/donavanbecker/homebridge-rainbird/releases/tag/v1.8.1) (2022-10-19)
 
 ### What's Changed
@@ -15,6 +18,7 @@ All notable changes to this project will be documented in this file. This projec
 ### What's Changed
 - Added Config to allow manually setting firmware version.
 - Housekeeping and updated dependencies.
+
 
 **Full Changelog**: https://github.com/donavanbecker/homebridge-rainbird/compare/v1.7.3...v1.8.0
 
