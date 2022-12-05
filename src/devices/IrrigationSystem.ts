@@ -109,7 +109,7 @@ export class IrrigationSystem extends DeviceBase {
       }
 
       this.valves.set(zone, {
-        service: this.accessory.getService(name) ?? this.accessory.addService(this.platform.Service.Valve, name, zone),
+        service: this.accessory.getService(name) ?? this.accessory.addService(this.platform.Service.Valve, name, `${zone}`),
         Active: this.platform.Characteristic.Active.INACTIVE as CharacteristicValue,
         InUse: this.platform.Characteristic.InUse.NOT_IN_USE as CharacteristicValue,
       });
