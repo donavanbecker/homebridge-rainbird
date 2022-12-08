@@ -4,6 +4,13 @@ export class ModelAndVersionResponse extends Response {
   private readonly _modelNumber: number;
   private readonly _version: string;
 
+  private readonly _models: Map<number, string> = new Map([
+    [0x0003, 'ESP-RZXe'],
+    [0x0007, 'ESP-Me'],
+    [0x0009, 'ESP-ME3'],
+    [0x010A, 'ESP-TM2'],
+  ]);
+
   constructor(private readonly response: Buffer) {
     super();
     this._modelNumber = response.readUInt16BE(1);
@@ -14,19 +21,12 @@ export class ModelAndVersionResponse extends Response {
     return 0x82;
   }
 
-  get modelNumber(): string {
-    switch (this._modelNumber) {
-      case 0x0003:
-        return 'ESP-RZXe';
-      case 0x0007:
-        return 'ESP-Me';
-      case 0x0009:
-        return 'ESP-ME3';
-      case 0x010A:
-        return 'ESP-TM2';
-      default:
-        return this._modelNumber.toString();
-    }
+  get modelNumber(): number {
+    return this._modelNumber;
+  }
+
+  get modelName(): string {
+    return this._models.get(this._modelNumber) ?? this._modelNumber.toString();
   }
 
   get version(): string {
