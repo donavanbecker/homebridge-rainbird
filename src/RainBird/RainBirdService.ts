@@ -238,7 +238,7 @@ export class RainBirdService extends events.EventEmitter {
     if (programNumber === undefined) {
       return undefined;
     }
-    if (programNumber === 255) {
+    if (programNumber === RainBirdClient.NO_PROGRAM) {
       return '';
     }
     return String.fromCharCode(programNumber + 65);

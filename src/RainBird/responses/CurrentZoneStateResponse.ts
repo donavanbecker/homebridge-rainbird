@@ -8,6 +8,8 @@ export class CurrentZoneStateResponse extends Response {
   private readonly _running: boolean;
   private readonly _supported: boolean = true;
 
+  public static NO_PROGRAM = -1;
+
   constructor(private readonly response: Buffer) {
     super();
     this._page = response[1];
@@ -16,7 +18,7 @@ export class CurrentZoneStateResponse extends Response {
       case 12: // ESP-TM2
         this._timeRemaining = response.readUInt16BE(4);
         this._zoneId = response[8];
-        this._programNumber = response[9];
+        this._programNumber = (response[9] <= 2) ? response[9] : CurrentZoneStateResponse.NO_PROGRAM;
         this._running = response[11] !== 0;
         break;
       case 10: // ESP-RZXe & ESP-Me series
@@ -28,7 +30,7 @@ export class CurrentZoneStateResponse extends Response {
       case 7: // ESP-ME3 - page 0
         this._timeRemaining = 0;
         this._zoneId = 0;
-        this._programNumber = (response[2] <= 3) ? response[2] : 0;
+        this._programNumber = (response[2] <= 3) ? response[2] : CurrentZoneStateResponse.NO_PROGRAM;
         this._running = response[3] !== 0;
         break;
       case 50: // ESP-ME3 - page 1

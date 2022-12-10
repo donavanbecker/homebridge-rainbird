@@ -48,6 +48,8 @@ export class RainBirdClient {
     .limit({ concurrency: 1 })
     .process(this.sendRequest.bind(this));
 
+  public static NO_PROGRAM = CurrentZoneStateResponse.NO_PROGRAM;
+
   constructor(
     private readonly address: string,
     private readonly password: string,

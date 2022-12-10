@@ -62,6 +62,11 @@
               "type": "boolean",
               "requried": false
             },
+            "showProgramDSwitch": {
+              "title": "Show Program D Switch (not supported by all models)",
+              "type": "boolean",
+              "requried": false
+            },
             "showStopIrrigationSwitch": {
               "title": "Show Stop Irrigation Switch",
               "type": "boolean",
@@ -192,6 +197,7 @@
                     "devices[].showProgramASwitch",
                     "devices[].showProgramBSwitch",
                     "devices[].showProgramCSwitch",
+                    "devices[].showProgramDSwitch",
                     "devices[].showStopIrrigationSwitch",
                     "devices[].showZoneValve",
                     "devices[].showRequestResponse",
