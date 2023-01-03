@@ -138,6 +138,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
       device.showProgramDSwitch = device.showProgramDSwitch ?? false;
       device.showStopIrrigationSwitch = device.showStopIrrigationSwitch ?? false;
       device.showZoneValve = device.showZoneValve ?? false;
+      device.syncTime = device.syncTime ?? false;
       device.showRequestResponse = device.showRequestResponse ?? false;
     }
   }
@@ -153,6 +154,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
         refreshRate: this.config.options!.refreshRate,
         log: this.log,
         showRequestResponse: device.showRequestResponse!,
+        syncTime: device.syncTime!,
       });
       const metaData = await rainbird!.init();
       this.debugLog(superStringify(metaData));

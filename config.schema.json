@@ -78,6 +78,13 @@
               "required": false,
               "description": "Show zones as seperate valve accessories (useful to workaround the bug introduced in iOS 15.4/macOS 12.3 that prevents the valves from showing within the Irrigation System accessory)."
             },
+            "syncTime": {
+              "title": "Sync date and time of controller with host",
+              "type": "boolean",
+              "default": false,
+              "required": false,
+              "description": "Useful for automatically changing the controller's time when Daylight Savings starts/ends or fixing the time if the controller's internal clock runs fast or slow"
+            },
             "showRequestResponse": {
               "title": "Show RainBird requests and responses in the log",
               "type": "boolean",
@@ -200,6 +207,7 @@
                     "devices[].showProgramDSwitch",
                     "devices[].showStopIrrigationSwitch",
                     "devices[].showZoneValve",
+                    "devices[].syncTime",
                     "devices[].showRequestResponse",
                     "devices[].firmware",
                     "devices[].refreshRate",

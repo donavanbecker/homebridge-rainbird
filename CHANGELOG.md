@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file. This projec
 
 ### What's Changed
 - Added Program state & Zone Time Remaining for ESP-ME3. [#395](https://github.com/donavanbecker/homebridge-rainbird/issues/395) [#396](https://github.com/donavanbecker/homebridge-rainbird/issues/396) [Thanks [dacarson](https://github.com/dacarson) for your help]
+- Added option to sync the Rainbird controllers date & time with the Homebridge host
+
+## [Version 1.9.0](https://github.com/donavanbecker/homebridge-rainbird/releases/tag/v1.9.0) (2022-12-08)
+
+### What's Changed
+- Fixed Issue where RainBird controller request failed. [#390](https://github.com/donavanbecker/homebridge-rainbird/issues/390)
+- Housekeeping and updated dependencies.
+
+**Full Changelog**: https://github.com/donavanbecker/homebridge-rainbird/compare/v1.8.1...v1.9.0
 
 ## [Version 1.8.1](https://github.com/donavanbecker/homebridge-rainbird/releases/tag/v1.8.1) (2022-10-19)
 
