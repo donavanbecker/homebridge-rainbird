@@ -69,11 +69,14 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
     if (this.debugMode) {
       this.warnLog('Using debugMode Logging');
       this.platformLogging = 'debugMode';
-    } else if (this.config.options?.logging === 'debug' || this.config.options?.logging === 'standard') {
+    } else if (this.config.options?.logging === 'debug') {
       this.platformLogging = this.config.options!.logging;
       this.warnLog(`Using Config Logging: ${this.platformLogging}`);
+    } else if (this.config.options?.logging === 'standard') {
+      this.platformLogging = this.config.options!.logging;
+      this.infoLog(`Using Config Logging: ${this.platformLogging}`);
     } else {
-      this.warnLog('Using Standard Logging');
+      this.infoLog('Using Standard Logging');
       this.platformLogging = 'standard';
     }
   }
