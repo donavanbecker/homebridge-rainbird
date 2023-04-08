@@ -46,4 +46,4 @@ Any controller that supports the [RainBird LNK WiFi Module](https://www.rainbird
 ## Known Limitations
 - Using the RainBird app while the plugin is running can cause connectivity issues.
 - The RainBird LNK WiFi Module may not support "Band Steering" and WiFi Channel 13. Try not using these on your router if you are having connectivity issues.
-- iOS 15.4/macOS 12.3 introduced a bug that prevents the valves (zones) from showing within the Irrigation System accessory in the Home app. Try using the "Show Zones as Valve Accessories" option as a workaround. [NOTE: Fixed in iOS16/macOS 13.0]
+- iOS 15.4/macOS 12.3 introduced a bug that prevents the valves (zones) from showing within the Irrigation System accessory in the Home app. Try using the "Show Zones as Valve Accessories" option as a workaround. [NOTE: Fixed in iOS 16.0/macOS 13.0]

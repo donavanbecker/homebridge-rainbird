@@ -1,6 +1,6 @@
 import { Response } from './Response';
 
-export class ControllerDateResponse extends Response {
+export class ControllerDateGetResponse extends Response {
   private readonly _year: number;
   private readonly _month: number;
   private readonly _day: number;

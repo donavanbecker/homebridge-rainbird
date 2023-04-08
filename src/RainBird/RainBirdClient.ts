@@ -21,10 +21,12 @@ import { RunZoneRequest } from './requests/RunZoneRequest';
 import { StopIrrigationRequest } from './requests/StopIrrigationRequest';
 import { ControllerStateResponse } from './responses/ControllerStateResponse';
 import { ControllerStateRequest } from './requests/ControllerStateRequest';
-import { ControllerDateRequest } from './requests/ControllerDateRequest';
-import { ControllerDateResponse } from './responses/ControllerDateResponse';
-import { ControllerTimeRequest } from './requests/ControllerTimeRequest';
-import { ControllerTimeResponse } from './responses/ControllerTimeResponse';
+import { ControllerDateGetRequest } from './requests/ControllerDateGetRequest';
+import { ControllerDateGetResponse } from './responses/ControllerDateGetResponse';
+import { ControllerDateSetRequest } from './requests/ControllerDateSetRequest';
+import { ControllerTimeGetRequest } from './requests/ControllerTimeGetRequest';
+import { ControllerTimeGetResponse } from './responses/ControllerTimeGetResponse';
+import { ControllerTimeSetRequest } from './requests/ControllerTimeSetRequest';
 import { IrrigationStateRequest } from './requests/IrrigationStateRequest';
 import { IrrigationStateResponse } from './responses/IrrigationStateResponse';
 import { RainSensorStateRequest } from './requests/RainSensorStateRequest';
@@ -47,6 +49,8 @@ export class RainBirdClient {
   private requestQueue = cq()
     .limit({ concurrency: 1 })
     .process(this.sendRequest.bind(this));
+
+  public static NO_PROGRAM = CurrentZoneStateResponse.NO_PROGRAM;
 
   constructor(
     private readonly address: string,
@@ -139,22 +143,40 @@ export class RainBirdClient {
     return await this.requestQueue(request) as ControllerStateResponse;
   }
 
-  public async getControllerDate(): Promise<ControllerDateResponse> {
+  public async getControllerDate(): Promise<ControllerDateGetResponse> {
     const request: RainBirdRequest = {
-      type: new ControllerDateRequest(),
+      type: new ControllerDateGetRequest(),
       retry: false,
       postDelay: 0,
     };
-    return await this.requestQueue(request) as ControllerDateResponse;
+    return await this.requestQueue(request) as ControllerDateGetResponse;
   }
 
-  public async getControllerTime(): Promise<ControllerTimeResponse> {
+  public async setControllerDate(day: number, month: number, year: number): Promise<AcknowledgedResponse> {
     const request: RainBirdRequest = {
-      type: new ControllerTimeRequest(),
+      type: new ControllerDateSetRequest(day, month, year),
       retry: false,
       postDelay: 0,
     };
-    return await this.requestQueue(request) as ControllerTimeResponse;
+    return await this.requestQueue(request) as AcknowledgedResponse;
+  }
+
+  public async getControllerTime(): Promise<ControllerTimeGetResponse> {
+    const request: RainBirdRequest = {
+      type: new ControllerTimeGetRequest(),
+      retry: false,
+      postDelay: 0,
+    };
+    return await this.requestQueue(request) as ControllerTimeGetResponse;
+  }
+
+  public async setControllerTime(hour: number, minute: number, second: number): Promise<AcknowledgedResponse> {
+    const request: RainBirdRequest = {
+      type: new ControllerTimeSetRequest(hour, minute, second),
+      retry: false,
+      postDelay: 0,
+    };
+    return await this.requestQueue(request) as AcknowledgedResponse;
   }
 
   public async getIrrigationState(): Promise<IrrigationStateResponse> {
@@ -263,10 +285,10 @@ export class RainBirdClient {
         response = new SerialNumberResponse(data);
         break;
       case 0x90:
-        response = new ControllerTimeResponse(data);
+        response = new ControllerTimeGetResponse(data);
         break;
       case 0x92:
-        response = new ControllerDateResponse(data);
+        response = new ControllerDateGetResponse(data);
         break;
       case 0xBB:
         response = new CurrentZoneStateResponse(data);

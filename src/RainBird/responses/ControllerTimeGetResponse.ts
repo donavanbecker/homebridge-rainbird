@@ -1,6 +1,6 @@
 import { Response } from './Response';
 
-export class ControllerTimeResponse extends Response {
+export class ControllerTimeGetResponse extends Response {
   private readonly _hour: number;
   private readonly _minute: number;
   private readonly _second: number;

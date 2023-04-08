@@ -1,8 +1,8 @@
 import { Request } from './Request';
 
-export class ControllerDateRequest extends Request {
+export class ControllerTimeGetRequest extends Request {
   get type(): number {
-    return 0x12;
+    return 0x10;
   }
 
   toBuffer(): Buffer {

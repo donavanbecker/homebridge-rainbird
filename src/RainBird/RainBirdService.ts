@@ -50,6 +50,7 @@ export class RainBirdService extends events.EventEmitter {
   private _statusObsersable = fromEvent(this, 'status');
   private _statusTimerSubscription?: Subscription;
   private _statusRefreshSubject = new Subject<void>();
+  private _syncTime = false;
 
   private zoneQueue: Queue = new Queue({
     concurrency: 1,
@@ -65,10 +66,12 @@ export class RainBirdService extends events.EventEmitter {
     refreshRate?: number,
     log: Logger,
     showRequestResponse: boolean,
+    syncTime: boolean,
   }) {
     super();
     this.setMaxListeners(50);
     this.log = options.log;
+    this._syncTime = options.syncTime;
     this._client = new RainBirdClient(options.address, options.password, options.log, options.showRequestResponse);
 
     this._statusRefreshSubject
@@ -110,13 +113,12 @@ export class RainBirdService extends events.EventEmitter {
       this.log.warn('RainBird controller is currently OFF. Please turn ON so plugin can control it');
     }
 
-    const controllerDateTime = await this.getControllerDateTime();
-    const timeDiff = controllerDateTime.getTime() - Date.now();
-    if (Math.abs(timeDiff) > 300000) {
-      const slowFast = timeDiff > 0 ? 'fast' : 'slow';
-      this.log.warn(
-        `RainBird clock [${controllerDateTime.toLocaleString()}] is more than 5 minutes ${slowFast}`,
-      );
+    // Sync time
+    if (this._syncTime) {
+      await this.setControllerDateTime();
+      setInterval(async () => {
+        await this.setControllerDateTime();
+      }, 3600000); // every hour
     }
 
     await this.updateStatus();
@@ -238,7 +240,7 @@ export class RainBirdService extends events.EventEmitter {
     if (programNumber === undefined) {
       return undefined;
     }
-    if (programNumber === 255) {
+    if (programNumber === RainBirdClient.NO_PROGRAM) {
       return '';
     }
     return String.fromCharCode(programNumber + 65);
@@ -349,6 +351,19 @@ export class RainBirdService extends events.EventEmitter {
       respTime.minute,
       respTime.second,
     );
+  }
+
+  private async setControllerDateTime(): Promise<void> {
+    const host = new Date();
+    const controller = await this.getControllerDateTime();
+    if (Math.abs(controller.getTime() - host.getTime()) <= 60000) {
+      return;
+    }
+
+    this.log.info(`Adjusting Rainbird Controller Date/Time from ${controller.toLocaleString()} to ${host.toLocaleString()}`);
+
+    await this._client.setControllerDate(host.getDate(), host.getMonth() + 1, host.getFullYear());
+    await this._client.setControllerTime(host.getHours(), host.getMinutes(), host.getSeconds());
   }
 
   private async updateStatus(): Promise<void> {

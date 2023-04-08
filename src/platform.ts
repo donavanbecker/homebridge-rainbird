@@ -138,8 +138,10 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
       device.showProgramASwitch = device.showProgramASwitch ?? false;
       device.showProgramBSwitch = device.showProgramBSwitch ?? false;
       device.showProgramCSwitch = device.showProgramCSwitch ?? false;
+      device.showProgramDSwitch = device.showProgramDSwitch ?? false;
       device.showStopIrrigationSwitch = device.showStopIrrigationSwitch ?? false;
       device.showZoneValve = device.showZoneValve ?? false;
+      device.syncTime = device.syncTime ?? false;
       device.showRequestResponse = device.showRequestResponse ?? false;
     }
   }
@@ -155,6 +157,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
         refreshRate: this.config.options!.refreshRate,
         log: this.log,
         showRequestResponse: device.showRequestResponse!,
+        syncTime: device.syncTime!,
       });
       const metaData = await rainbird!.init();
       this.debugLog(superStringify(metaData));
@@ -173,7 +176,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
           this.createContactSensor(device, rainbird, zoneId);
         }
       }
-      for (const programId of ['A', 'B', 'C']) {
+      for (const programId of ['A', 'B', 'C', 'D']) {
         this.createProgramSwitch(device, rainbird, programId);
       }
       this.createStopIrrigationSwitch(device, rainbird);

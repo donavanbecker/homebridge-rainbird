@@ -2,8 +2,15 @@
 
 All notable changes to this project will be documented in this file. This project uses [Semantic Versioning](https://semver.org/)
 
+## [Version 1.10.0](https://github.com/donavanbecker/homebridge-rainbird/releases/tag/v1.10.0) (2023-04-07)
+
 ### What's Changed
 - Added Program state & Zone Time Remaining for ESP-ME3. [#395](https://github.com/donavanbecker/homebridge-rainbird/issues/395) [#396](https://github.com/donavanbecker/homebridge-rainbird/issues/396) [Thanks [dacarson](https://github.com/dacarson) for your help]
+- Added option to sync the Rainbird controllers date & time with the Homebridge host.
+- Housekeeping and updated dependencies.
+  - This release will end support for Node v14.
+
+**Full Changelog**: https://github.com/donavanbecker/homebridge-rainbird/compare/v1.9.0...v1.10.0
 
 ## [Version 1.9.0](https://github.com/donavanbecker/homebridge-rainbird/releases/tag/v1.9.0) (2022-12-08)
 
