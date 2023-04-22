@@ -239,7 +239,8 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
       this.debugLog(`Irrigation System uuid: ${device.ipaddress}-${rainbird!.model}-${rainbird!.serialNumber}, (${accessory.UUID})`);
 
       // link the accessory to your platform
-      this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
+      this.externalOrPlatform(device, accessory);
+      //this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
       this.accessories.push(accessory);
       return accessory;
     } else {
@@ -561,6 +562,19 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
     }
   }
 
+  public async externalOrPlatform(device: DevicesConfig, accessory: PlatformAccessory) {
+    if (device.external) {
+      this.debugWarnLog(`${accessory.displayName} External Accessory Mode`);
+      this.externalAccessory(accessory);
+    } else {
+      this.debugLog(`${accessory.displayName} External Accessory Mode: ${device.external}`);
+      this.api.registerPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [accessory]);
+    }
+  }
+
+  public async externalAccessory(accessory: PlatformAccessory) {
+    this.api.publishExternalAccessories(PLUGIN_NAME, [accessory]);
+  }
 
   public unregisterPlatformAccessories(existingAccessory: PlatformAccessory) {
     // remove platform accessories when no longer present
