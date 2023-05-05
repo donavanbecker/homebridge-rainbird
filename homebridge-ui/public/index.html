@@ -55,6 +55,7 @@
             </tr>
          </tbody>
       </table>
+      <p class="text-center">External Accessories Will Not Display Here.</p>
    </div>
 </div>
 <div id="pageSupport" class="mt-4" style="display: none;">
@@ -205,14 +206,6 @@
          showDisabledBanner = () => {
             document.getElementById('disabledBanner').style.display = 'block'
          }
-         enablePlugin = async () => {
-            homebridge.showSpinner()
-            document.getElementById('disabledBanner').style.display = 'none'
-            currentConfig[0].disablePlugin = false
-            await homebridge.updatePluginConfig(currentConfig)
-            await homebridge.savePluginConfig()
-            homebridge.hideSpinner()
-         }
          menuHome.addEventListener('click', () => showSupport())
          menuDevices.addEventListener('click', () => showDevices())
          menuSettings.addEventListener('click', () => showSettings())
@@ -220,9 +213,6 @@
          if (currentConfig.length) {
             document.getElementById('menuWrapper').style.display = 'inline-flex'
             showSettings()
-            if (currentConfig[0].disablePlugin) {
-               showDisabledBanner()
-            }
          } else {
             currentConfig.push({ name: 'RainBird' })
             await homebridge.updatePluginConfig(currentConfig)
