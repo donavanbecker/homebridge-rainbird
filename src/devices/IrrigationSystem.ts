@@ -78,23 +78,35 @@ export class IrrigationSystem extends DeviceBase {
       })
       .onSet(this.setActive.bind(this));
 
-    this.irrigation.service.getCharacteristic(this.platform.Characteristic.ProgramMode).onGet(() => {
-      return this.irrigation.service.getCharacteristic(this.platform.Characteristic.ProgramMode).value;
-    });
+    this.irrigation.service
+      .getCharacteristic(this.platform.Characteristic.ProgramMode)
+      .onGet(() => {
+        return this.irrigation.service.getCharacteristic(this.platform.Characteristic.ProgramMode).value;
+      });
 
-    this.irrigation.service.getCharacteristic(this.platform.Characteristic.InUse).onGet(() => {
-      this.rainbird!.refreshStatus();
-      return this.irrigation.InUse;
-    });
+    this.irrigation.service
+      .getCharacteristic(this.platform.Characteristic.InUse)
+      .onGet(() => {
+        this.rainbird!.refreshStatus();
+        return this.irrigation.InUse;
+      });
 
-    this.irrigation.service.getCharacteristic(this.platform.Characteristic.StatusFault).onGet(() => {
-      return this.irrigation.service.getCharacteristic(this.platform.Characteristic.StatusFault).value;
-    });
+    this.irrigation.service
+      .getCharacteristic(this.platform.Characteristic.StatusFault)
+      .onGet(() => {
+        return this.irrigation.service.getCharacteristic(this.platform.Characteristic.StatusFault).value;
+      });
 
-    this.irrigation.service.getCharacteristic(this.platform.Characteristic.RemainingDuration).onGet(() => {
-      this.rainbird!.refreshStatus();
-      return this.rainbird!.RemainingDuration();
-    });
+    this.irrigation.service
+      .getCharacteristic(this.platform.Characteristic.RemainingDuration)
+      .setProps({
+        minValue: device.RemainingDuration?.minValueOverride ?? 0,
+        maxValue: device.RemainingDuration?.maxValueOverride ?? 3600,
+      })
+      .onGet(() => {
+        this.rainbird!.refreshStatus();
+        return this.rainbird!.RemainingDuration();
+      });
 
     // Valves for zones
     for (const zone of rainbird!.zones) {
@@ -183,8 +195,8 @@ export class IrrigationSystem extends DeviceBase {
         .get(zone)!
         .service.getCharacteristic(this.platform.Characteristic.RemainingDuration)
         .setProps({
-          minValue: device.RemainingDuration?.minValueOverride || 0,
-          maxValue: device.RemainingDuration?.maxValueOverride || 3600,
+          minValue: device.RemainingDuration?.minValueOverride ?? 0,
+          maxValue: device.RemainingDuration?.maxValueOverride ?? 3600,
         })
         .onGet(() => {
           this.rainbird!.refreshStatus();

@@ -79,6 +79,10 @@ export class ZoneValve extends DeviceBase {
 
     this.zoneValve.service
       .getCharacteristic(this.platform.Characteristic.RemainingDuration)
+      .setProps({
+        minValue: device.RemainingDuration?.minValueOverride ?? 0,
+        maxValue: device.RemainingDuration?.maxValueOverride ?? 3600,
+      })
       .onGet(() => {
         this.rainbird!.refreshStatus();
         return this.rainbird!.RemainingDuration(this.zoneId);
