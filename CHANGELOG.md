@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. This project uses [Semantic Versioning](https://semver.org/)
 
+## [Version 1.11.0](https://github.com/donavanbecker/homebridge-rainbird/releases/tag/v1.11.0) (2023-XX-XX)
+
+### What's Changed
+- Added `minValueOverride` and `maxValueOverride` for Remaining Duration Characteristic.
+- Housekeeping and updated dependencies.
+
+**Full Changelog**: https://github.com/donavanbecker/homebridge-rainbird/compare/v1.10.0...v1.11.0
+
 ## [Version 1.10.0](https://github.com/donavanbecker/homebridge-rainbird/releases/tag/v1.10.0) (2023-04-07)
 
 ### What's Changed

@@ -25,6 +25,7 @@ export type DevicesConfig = {
   showProgramCSwitch?: boolean;
   showProgramDSwitch?: boolean;
   showStopIrrigationSwitch?: boolean;
+  RemainingDuration?: RemainingDuration;
   syncTime?: boolean;
   showRequestResponse?: boolean;
   showZoneValve?: boolean;
@@ -33,6 +34,11 @@ export type DevicesConfig = {
   refreshRate?: number;
   logging?: string;
   delete?: boolean;
+};
+
+export type RemainingDuration = {
+  minValueOverride?: number;
+  maxValueOverride?: number;
 };
 
 export type options = {

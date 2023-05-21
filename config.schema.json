@@ -113,6 +113,27 @@
                 "functionBody": "return (model.devices && model.devices[arrayIndices].ipaddress);"
               }
             },
+            "RemainingDuration": {
+              "title": "Remaining Duration Override",
+              "type": "Object",
+              "properties": {
+                "minValueOverride": {
+                  "title": "Min Value",
+                  "type": "number",
+                  "placeholder": 0,
+                  "required": false
+                },
+                "maxValueOverride": {
+                  "title": "Max Value",
+                  "type": "number",
+                  "placeholder": 3600,
+                  "required": false
+                }
+              },
+              "condition": {
+                "functionBody": "return (model.devices && model.devices[arrayIndices].ipaddress);"
+              }
+            },
             "syncTime": {
               "title": "Sync date and time of controller with host",
               "type": "boolean",
@@ -261,6 +282,16 @@
                     "devices[].showProgramDSwitch",
                     "devices[].showStopIrrigationSwitch",
                     "devices[].showZoneValve",
+                    {
+                      "type": "fieldset",
+                      "title": "Remaining Duration Override",
+                      "expandable": true,
+                      "expanded": false,
+                      "items": [
+                    "devices[].RemainingDuration.minValueOverride",
+                    "devices[].RemainingDuration.maxValueOverride"
+                      ]
+                    },
                     "devices[].syncTime",
                     "devices[].showRequestResponse",
                     "devices[].firmware",
