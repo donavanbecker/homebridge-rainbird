@@ -28,6 +28,10 @@ export class IrrigationSystem extends DeviceBase {
     }
   > = new Map();
 
+  // Config
+  maxValueOverride!: number;
+  minValueOverride!: number;
+
   // Irrigation System Updates
   private irrigationSystemUpdateInProgress!: boolean;
   private doIrrigationSystemUpdate: Subject<number>;
@@ -39,6 +43,7 @@ export class IrrigationSystem extends DeviceBase {
     rainbird: RainBirdService,
   ) {
     super(platform, accessory, device, rainbird);
+    this.override(device);
     this.config(device);
 
     // this is subject we use to track when we need to send changes to Rainbird Client
@@ -100,8 +105,8 @@ export class IrrigationSystem extends DeviceBase {
     this.irrigation.service
       .getCharacteristic(this.platform.Characteristic.RemainingDuration)
       .setProps({
-        minValue: device.RemainingDuration?.minValueOverride ?? 0,
-        maxValue: device.RemainingDuration?.maxValueOverride ?? 3600,
+        minValue: this.minValueOverride,
+        maxValue: this.maxValueOverride,
       })
       .onGet(() => {
         this.rainbird!.refreshStatus();
@@ -195,8 +200,8 @@ export class IrrigationSystem extends DeviceBase {
         .get(zone)!
         .service.getCharacteristic(this.platform.Characteristic.RemainingDuration)
         .setProps({
-          minValue: device.RemainingDuration?.minValueOverride ?? 0,
-          maxValue: device.RemainingDuration?.maxValueOverride ?? 3600,
+          minValue: this.minValueOverride,
+          maxValue: this.maxValueOverride,
         })
         .onGet(() => {
           this.rainbird!.refreshStatus();
@@ -359,6 +364,26 @@ export class IrrigationSystem extends DeviceBase {
   private setValveSetDuration(zone: number, value: CharacteristicValue) {
     this.debugLog(`${this.constructor.name} ${this.accessory.displayName}, Valve: ${zone}, Set SetDuration: ${value}`);
     this.accessory.context.duration[zone] = value;
+  }
+
+  override(device: DevicesConfig) {
+    if (device.RemainingDuration) {
+      if (device.RemainingDuration.minValueOverride) {
+        this.minValueOverride = device.RemainingDuration?.minValueOverride;
+      } else {
+        this.minValueOverride = 0;
+      }
+      if (device.RemainingDuration.maxValueOverride) {
+        this.maxValueOverride = device.RemainingDuration?.maxValueOverride;
+      } else {
+        this.maxValueOverride = 3600;
+      }
+    } else {
+      this.minValueOverride = 0;
+      this.maxValueOverride = 3600;
+    }
+    this.warnLog(`${this.constructor.name} ${this.accessory.displayName}, RemainingDuration, minValueOverride: ${this.minValueOverride}`
+    + `, maxValueOverride: ${this.maxValueOverride}`);
   }
 
   config(device: DevicesConfig) {
