@@ -183,8 +183,8 @@ export class IrrigationSystem extends DeviceBase {
         .get(zone)!
         .service.getCharacteristic(this.platform.Characteristic.RemainingDuration)
         .setProps({
-          minValue: device.RemainingDuration?.maxValueOverride || 0,
-          maxValue: device.RemainingDuration?.minValueOverride || 3600,
+          minValue: device.RemainingDuration?.minValueOverride || 0,
+          maxValue: device.RemainingDuration?.maxValueOverride || 3600,
         })
         .onGet(() => {
           this.rainbird!.refreshStatus();
