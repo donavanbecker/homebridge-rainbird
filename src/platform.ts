@@ -138,6 +138,8 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
       device.showZoneValve = device.showZoneValve ?? false;
       device.syncTime = device.syncTime ?? false;
       device.showRequestResponse = device.showRequestResponse ?? false;
+      device.minValueRemainingDuration = device.minValueRemainingDuration ?? 0;
+      device.maxValueRemainingDuration = device.maxValueRemainingDuration ?? 3600;
     }
   }
 

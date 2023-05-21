@@ -113,23 +113,20 @@
                 "functionBody": "return (model.devices && model.devices[arrayIndices].ipaddress);"
               }
             },
-            "RemainingDuration": {
-              "title": "Remaining Duration Override",
-              "type": "Object",
-              "properties": {
-                "minValueOverride": {
-                  "title": "Min Value",
-                  "type": "number",
-                  "placeholder": 0,
-                  "required": false
-                },
-                "maxValueOverride": {
-                  "title": "Max Value",
-                  "type": "number",
-                  "placeholder": 3600,
-                  "required": false
-                }
-              },
+            "minValueRemainingDuration": {
+              "title": "Min Value",
+              "type": "number",
+              "placeholder": 0,
+              "required": false,
+              "condition": {
+                "functionBody": "return (model.devices && model.devices[arrayIndices].ipaddress);"
+              }
+            },
+            "maxValueRemainingDuration": {
+              "title": "Max Value",
+              "type": "number",
+              "placeholder": 3600,
+              "required": false,
               "condition": {
                 "functionBody": "return (model.devices && model.devices[arrayIndices].ipaddress);"
               }
@@ -287,10 +284,7 @@
                       "title": "Remaining Duration Override",
                       "expandable": true,
                       "expanded": false,
-                      "items": [
-                    "devices[].RemainingDuration.minValueOverride",
-                    "devices[].RemainingDuration.maxValueOverride"
-                      ]
+                      "items": ["devices[].minValueRemainingDuration", "devices[].maxValueRemainingDuration"]
                     },
                     "devices[].syncTime",
                     "devices[].showRequestResponse",
