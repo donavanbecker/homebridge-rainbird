@@ -39,7 +39,6 @@ export class IrrigationSystem extends DeviceBase {
     rainbird: RainBirdService,
   ) {
     super(platform, accessory, device, rainbird);
-    this.override(device);
     this.config(device);
 
     // this is subject we use to track when we need to send changes to Rainbird Client
@@ -360,11 +359,6 @@ export class IrrigationSystem extends DeviceBase {
   private setValveSetDuration(zone: number, value: CharacteristicValue) {
     this.debugLog(`${this.constructor.name} ${this.accessory.displayName}, Valve: ${zone}, Set SetDuration: ${value}`);
     this.accessory.context.duration[zone] = value;
-  }
-
-  override(device: DevicesConfig) {
-    this.warnLog(`${this.constructor.name} ${this.accessory.displayName}, minValueRemainingDuration: ${device.minValueRemainingDuration}`
-    + `, maxValueRemainingDuration: ${device.maxValueRemainingDuration}`);
   }
 
   config(device: DevicesConfig) {
