@@ -390,7 +390,7 @@ export class RainBirdService extends events.EventEmitter {
     }
 
     if (status.zoneId !== 0 && status.running && previousZoneId !== status.zoneId) {
-      this.log.info(`Zone ${status.zoneId}: Running`);
+      this.log.info(`Zone ${status.zoneId}: Running (${this.formatTime(status.timeRemaining)} remaining)`);
     }
 
     for (const [id, zone] of Object.entries(this._zones)) {
@@ -422,6 +422,11 @@ export class RainBirdService extends events.EventEmitter {
       this.emit('rain_sensor_state');
       this.log.info(`Rain Sensor: ${status.rainSensorSetPointReached ? 'SetPoint reached': 'Clear'}`);
     }
+  }
+
+  private formatTime(seconds: number): string {
+    const date = new Date(seconds * 1000);
+    return date.toISOString().substring(11, 19);
   }
 
   private async getRainBirdStatus(): Promise<RainBirdStatus | undefined> {

@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file. This projec
 
 ### What's Changed
 - Added `minValueOverride` and `maxValueOverride` for Remaining Duration Characteristic.
+- Added time remaining to Zone Running log messages
 - Housekeeping and updated dependencies.
 
 **Full Changelog**: https://github.com/donavanbecker/homebridge-rainbird/compare/v1.10.0...v1.11.0
