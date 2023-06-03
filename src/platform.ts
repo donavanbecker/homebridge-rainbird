@@ -136,6 +136,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
       device.showProgramDSwitch = device.showProgramDSwitch ?? false;
       device.showStopIrrigationSwitch = device.showStopIrrigationSwitch ?? false;
       device.showZoneValve = device.showZoneValve ?? false;
+      device.includeZones = device.includeZones ?? '';
       device.syncTime = device.syncTime ?? false;
       device.showRequestResponse = device.showRequestResponse ?? false;
       device.minValueRemainingDuration = device.minValueRemainingDuration ?? 0;
@@ -182,10 +183,10 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
       rainbird.on('zone_enable', (zoneId, enabled) => {
         if (enabled) {
           this.createContactSensor(device, rainbird, zoneId);
-          this.createZoneValve(device, rainbird, zoneId);
+          // this.createZoneValve(device, rainbird, zoneId);
         } else {
           this.removeContactSensor(device, rainbird, zoneId);
-          this.removeZoneValve(device, rainbird, zoneId);
+          // this.removeZoneValve(device, rainbird, zoneId);
         }
       });
     }
@@ -321,9 +322,14 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
     const irrigationUuid = this.api.hap.uuid.generate(`${device.ipaddress}-${rainbird!.model}-${rainbird!.serialNumber}`);
     const irrigationAccessory = this.accessories.find((accessory) => accessory.UUID === irrigationUuid);
 
+    const includeZones = device.includeZones!.split(',').map(Number);
+    const registerZoneValve = !device.delete
+      && device.showZoneValve
+      && (includeZones.includes(0) || includeZones.includes(zoneId));
+
     if (existingAccessory) {
       // the accessory already exists
-      if (!device.delete && device.showZoneValve) {
+      if (registerZoneValve) {
         this.infoLog(`Restoring existing accessory from cache: ${existingAccessory.displayName}`);
 
         // if you need to update the accessory.context then you should run `api.updatePlatformAccessories`. eg.:
@@ -340,7 +346,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
       } else {
         this.unregisterPlatformAccessories(existingAccessory);
       }
-    } else if (!device.delete && device.showZoneValve) {
+    } else if (registerZoneValve) {
       // the accessory does not yet exist, so we need to create it
       this.infoLog(`Adding new accessory: ${model}`);
 

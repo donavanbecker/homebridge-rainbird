@@ -108,7 +108,16 @@
               "title": "Show Zones as Valve Accessories",
               "type": "boolean",
               "required": false,
-              "description": "Show zones as seperate valve accessories (useful to workaround the bug introduced in iOS 15.4/macOS 12.3 that prevents the valves from showing within the Irrigation System accessory).",
+              "condition": {
+                "functionBody": "return (model.devices && model.devices[arrayIndices].ipaddress);"
+              }
+            },
+            "includeZones": {
+              "title": "Zones to Include",
+              "type": "string",
+              "requried": false,
+              "description": "comma seperated list of zone numbers to create valve accessories for (leave blank for all)",
+              "pattern": "^[0-9]{1,3}(,[0-9]{1,3})*$",
               "condition": {
                 "functionBody": "return (model.devices && model.devices[arrayIndices].ipaddress);"
               }
@@ -279,6 +288,7 @@
                     "devices[].showProgramDSwitch",
                     "devices[].showStopIrrigationSwitch",
                     "devices[].showZoneValve",
+                    "devices[].includeZones",
                     {
                       "type": "fieldset",
                       "title": "Remaining Duration Override",

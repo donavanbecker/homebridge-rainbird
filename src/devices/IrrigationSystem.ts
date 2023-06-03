@@ -101,7 +101,7 @@ export class IrrigationSystem extends DeviceBase {
       .getCharacteristic(this.platform.Characteristic.RemainingDuration)
       .setProps({
         minValue: device.minValueRemainingDuration,
-        maxValue: device.maxValueRemainingDuration,
+        maxValue: device.maxValueRemainingDuration! * rainbird!.zones.length,
       })
       .onGet(() => {
         this.rainbird!.refreshStatus();

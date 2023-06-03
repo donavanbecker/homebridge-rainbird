@@ -5,8 +5,9 @@ All notable changes to this project will be documented in this file. This projec
 ## [Version 1.11.0](https://github.com/donavanbecker/homebridge-rainbird/releases/tag/v1.11.0) (2023-XX-XX)
 
 ### What's Changed
-- Added `minValueOverride` and `maxValueOverride` for Remaining Duration Characteristic.
-- Added time remaining to Zone Running log messages
+- Added `minValueRemainingDuration` and `maxValueRemainingDuration` for Remaining Duration Characteristic. [#485](https://github.com/donavanbecker/homebridge-rainbird/issues/485)
+- Added time remaining to Zone Running log messages. [#486](https://github.com/donavanbecker/homebridge-rainbird/issues/486)
+- Added `includeZones` to allow only specified zones to be created as Valve accessories. [#488](https://github.com/donavanbecker/homebridge-rainbird/issues/488)
 - Housekeeping and updated dependencies.
 
 **Full Changelog**: https://github.com/donavanbecker/homebridge-rainbird/compare/v1.10.0...v1.11.0

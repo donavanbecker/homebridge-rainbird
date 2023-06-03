@@ -291,7 +291,7 @@ export class RainBirdService extends events.EventEmitter {
         return;
       }
 
-      this.log.info(`Zone ${zone}: Start [Duration: ${duration} seconds]`);
+      this.log.info(`Zone ${zone}: Start [Duration: ${this.formatTime(duration)}]`);
 
       await this._client.runZone(zone, duration);
 
@@ -390,7 +390,7 @@ export class RainBirdService extends events.EventEmitter {
     }
 
     if (status.zoneId !== 0 && status.running && previousZoneId !== status.zoneId) {
-      this.log.info(`Zone ${status.zoneId}: Running (${this.formatTime(status.timeRemaining)} remaining)`);
+      this.log.info(`Zone ${status.zoneId}: Running [Time Remaining: ${this.formatTime(status.timeRemaining)}]`);
     }
 
     for (const [id, zone] of Object.entries(this._zones)) {
@@ -424,7 +424,10 @@ export class RainBirdService extends events.EventEmitter {
     }
   }
 
-  private formatTime(seconds: number): string {
+  private formatTime(seconds?: number): string {
+    if (seconds === undefined) {
+      return 'unknown';
+    }
     const date = new Date(seconds * 1000);
     return date.toISOString().substring(11, 19);
   }

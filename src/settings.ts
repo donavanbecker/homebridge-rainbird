@@ -30,6 +30,7 @@ export type DevicesConfig = {
   syncTime?: boolean;
   showRequestResponse?: boolean;
   showZoneValve?: boolean;
+  includeZones?: string,
   external: boolean;
   firmware?: number;
   refreshRate?: number;
