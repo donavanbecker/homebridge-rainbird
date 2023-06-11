@@ -33,8 +33,10 @@ import { RainSensorStateRequest } from './requests/RainSensorStateRequest';
 import { RainSensorStateResponse } from './responses/RainSensorStateResponse';
 import { CurrentZoneRequest } from './requests/CurrentZoneRequest';
 import { CurrentZoneResponse } from './responses/CurrentZoneResponse';
-import { CurrentZoneStateRequest } from './requests/CurrentZoneStateRequest';
-import { CurrentZoneStateResponse } from './responses/CurrentZoneStateResponse';
+import { ProgramZoneStateRequest } from './requests/ProgramZoneStateRequest';
+import { ProgramZoneStateResponse } from './responses/ProgramZoneStateResponse';
+import { RawRequest } from './requests/RawRequest';
+import { RawResponse } from './responses/RawResponse';
 import { AdvanceZoneRequest } from './requests/AdvanceZoneRequest';
 
 type RainBirdRequest = {
@@ -49,8 +51,6 @@ export class RainBirdClient {
   private requestQueue = cq()
     .limit({ concurrency: 1 })
     .process(this.sendRequest.bind(this));
-
-  public static NO_PROGRAM = CurrentZoneStateResponse.NO_PROGRAM;
 
   constructor(
     private readonly address: string,
@@ -206,13 +206,22 @@ export class RainBirdClient {
     return await this.requestQueue(request) as CurrentZoneResponse;
   }
 
-  public async getCurrentZoneState(page = 0): Promise<CurrentZoneStateResponse> {
+  public async getProgramZoneState(page = 0): Promise<ProgramZoneStateResponse> {
     const request: RainBirdRequest = {
-      type: new CurrentZoneStateRequest(page),
+      type: new ProgramZoneStateRequest(page),
       retry: false,
       postDelay: 0,
     };
-    return await this.requestQueue(request) as CurrentZoneStateResponse;
+    return await this.requestQueue(request) as ProgramZoneStateResponse;
+  }
+
+  public async getRaw(type: number, page = 0): Promise<RawResponse> {
+    const request: RainBirdRequest = {
+      type: new RawRequest(type, page),
+      retry: false,
+      postDelay: 0,
+    };
+    return await this.requestQueue(request) as RawResponse;
   }
 
   private async sendRequest(request: RainBirdRequest): Promise<Response | undefined> {
@@ -291,7 +300,7 @@ export class RainBirdClient {
         response = new ControllerDateGetResponse(data);
         break;
       case 0xBB:
-        response = new CurrentZoneStateResponse(data);
+        response = new ProgramZoneStateResponse(data);
         break;
       case 0xBE:
         response = new RainSensorStateResponse(data);
@@ -305,6 +314,8 @@ export class RainBirdClient {
       case 0xCC:
         response = new ControllerStateResponse(data);
         break;
+      default:
+        response = new RawResponse(data);
     }
 
     if (this.showRequestResponse) {

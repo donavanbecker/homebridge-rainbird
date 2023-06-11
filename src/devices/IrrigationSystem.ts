@@ -105,7 +105,7 @@ export class IrrigationSystem extends DeviceBase {
       })
       .onGet(() => {
         this.rainbird!.refreshStatus();
-        return this.rainbird!.RemainingDuration();
+        return this.rainbird!.remainingDuration();
       });
 
     // Valves for zones
@@ -200,7 +200,7 @@ export class IrrigationSystem extends DeviceBase {
         })
         .onGet(() => {
           this.rainbird!.refreshStatus();
-          return this.rainbird!.RemainingDuration(zone);
+          return this.rainbird!.remainingDuration(zone);
         });
     }
 
@@ -280,12 +280,12 @@ export class IrrigationSystem extends DeviceBase {
       this.irrigation.service.updateCharacteristic(this.platform.Characteristic.InUse, this.irrigation.InUse);
       this.debugLog(`${this.constructor.name} ${this.accessory.displayName} updateCharacteristic InUse: ${this.irrigation.InUse}`);
     }
-    if (this.rainbird!.RemainingDuration() === undefined) {
-      this.debugLog(`${this.constructor.name} ${this.accessory.displayName} RemainingDuration: ${this.rainbird!.RemainingDuration()}`);
+    if (this.rainbird!.remainingDuration() === undefined) {
+      this.debugLog(`${this.constructor.name} ${this.accessory.displayName} RemainingDuration: ${this.rainbird!.remainingDuration()}`);
     } else {
-      this.irrigation.service.updateCharacteristic(this.platform.Characteristic.RemainingDuration, this.rainbird!.RemainingDuration());
+      this.irrigation.service.updateCharacteristic(this.platform.Characteristic.RemainingDuration, this.rainbird!.remainingDuration());
       this.debugLog(
-        `${this.constructor.name} ${this.accessory.displayName} updateCharacteristic RemainingDuration: ${this.rainbird!.RemainingDuration()}`);
+        `${this.constructor.name} ${this.accessory.displayName} updateCharacteristic RemainingDuration: ${this.rainbird!.remainingDuration()}`);
     }
 
     // Valves
@@ -314,11 +314,11 @@ export class IrrigationSystem extends DeviceBase {
         valve.service.updateCharacteristic(this.platform.Characteristic.IsConfigured, this.accessory.context.configured[zone]);
         this.debugLog(`${this.constructor.name} Valve ${zone} updateCharacteristic IsConfigured: ${this.accessory.context.configured[zone]}`);
       }
-      if (this.rainbird!.RemainingDuration(zone) === undefined) {
-        this.debugLog(`${this.constructor.name} Valve ${zone} RemainingDuration: ${this.rainbird!.RemainingDuration(zone)}`);
+      if (this.rainbird!.remainingDuration(zone) === undefined) {
+        this.debugLog(`${this.constructor.name} Valve ${zone} RemainingDuration: ${this.rainbird!.remainingDuration(zone)}`);
       } else {
-        valve.service.updateCharacteristic(this.platform.Characteristic.RemainingDuration, this.rainbird!.RemainingDuration(zone));
-        this.debugLog(`${this.constructor.name} Valve ${zone} updateCharacteristic RemainingDuration: ${this.rainbird!.RemainingDuration(zone)}`);
+        valve.service.updateCharacteristic(this.platform.Characteristic.RemainingDuration, this.rainbird!.remainingDuration(zone));
+        this.debugLog(`${this.constructor.name} Valve ${zone} updateCharacteristic RemainingDuration: ${this.rainbird!.remainingDuration(zone)}`);
       }
     }
   }

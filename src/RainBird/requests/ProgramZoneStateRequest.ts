@@ -1,6 +1,6 @@
 import { Request } from './Request';
 
-export class CurrentZoneStateRequest extends Request {
+export class ProgramZoneStateRequest extends Request {
   private _page: number;
 
   constructor(page: number) {

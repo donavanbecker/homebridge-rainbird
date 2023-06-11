@@ -8,6 +8,8 @@ All notable changes to this project will be documented in this file. This projec
 - Added `minValueRemainingDuration` and `maxValueRemainingDuration` for Remaining Duration Characteristic. [#485](https://github.com/donavanbecker/homebridge-rainbird/issues/485)
 - Added time remaining to Zone Running log messages. [#486](https://github.com/donavanbecker/homebridge-rainbird/issues/486)
 - Added `includeZones` to allow only specified zones to be created as Valve accessories. [#488](https://github.com/donavanbecker/homebridge-rainbird/issues/488)
+- Added showing Idle/Waiting state for zones queued by scheduled programs (only for ESP-TM2 & ESP-ME3 at this stage)
+- Added support warning for other models about limited zone state details
 - Housekeeping and updated dependencies.
 
 **Full Changelog**: https://github.com/donavanbecker/homebridge-rainbird/compare/v1.10.0...v1.11.0
