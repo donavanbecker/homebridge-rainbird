@@ -372,6 +372,16 @@ export class RainBirdService extends events.EventEmitter {
     await this._client.setControllerTime(host.getHours(), host.getMinutes(), host.getSeconds());
   }
 
+  public async getIrrigatinDelay(): Promise<number> {
+    const response = await this._client.getIrrigationDelay();
+    return response.days;
+  }
+
+  public async setIrrigationDelay(days: number): Promise<void> {
+    this.log.info(`Set Irrigation Delay: ${days} days`);
+    await this._client.setIrrigstionDelay(days);
+  }
+
   private async updateStatus(): Promise<void> {
     const status = await this.getRainBirdState();
 

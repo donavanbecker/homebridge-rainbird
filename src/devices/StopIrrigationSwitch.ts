@@ -27,7 +27,7 @@ export class StopIrrigationSwitch extends DeviceBase {
       state: false,
     };
 
-    // Add Contact Sensor's Characteristics
+    // Add Switch's Characteristics
     this.stopIrrigationSwitch.service
       .setCharacteristic(this.platform.Characteristic.On, false)
       .setCharacteristic(this.platform.Characteristic.Name, name);

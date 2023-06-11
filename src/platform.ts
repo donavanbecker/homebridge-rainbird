@@ -6,6 +6,7 @@ import { ContactSensor } from './devices/ContactSensor';
 import { LeakSensor } from './devices/LeakSensor';
 import { ProgramSwitch } from './devices/ProgramSwitch';
 import { StopIrrigationSwitch } from './devices/StopIrrigationSwitch';
+import { DelayIrrigationSwitch } from './devices/DelayIrrigationSwitch';
 import { ZoneValve } from './devices/ZoneValve';
 import superStringify from 'super-stringify';
 
@@ -137,6 +138,8 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
       device.showStopIrrigationSwitch = device.showStopIrrigationSwitch ?? false;
       device.showZoneValve = device.showZoneValve ?? false;
       device.includeZones = device.includeZones ?? '';
+      device.showDelayIrrigationSwitch = device.showDelayIrrigationSwitch ?? false;
+      device.irrigationDelay = device.irrigationDelay ?? 1;
       device.syncTime = device.syncTime ?? false;
       device.showRequestResponse = device.showRequestResponse ?? false;
       device.minValueRemainingDuration = device.minValueRemainingDuration ?? 0;
@@ -178,6 +181,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
         this.createProgramSwitch(device, rainbird, programId);
       }
       this.createStopIrrigationSwitch(device, rainbird);
+      this.createDelayIrrigationSwitch(device, rainbird);
 
       // Handle zone enable/disable
       rainbird.on('zone_enable', (zoneId, enabled) => {
@@ -559,6 +563,61 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
       this.accessories.push(accessory);
     } else {
       if (this.platformLogging.includes('debug') && device.showStopIrrigationSwitch) {
+        this.errorLog(`Unable to Register new device: ${model}`);
+      }
+    }
+  }
+
+  async createDelayIrrigationSwitch(device: DevicesConfig, rainbird: RainBirdService): Promise<void> {
+    const model = `${rainbird!.model}-delay`;
+    const uuid = this.api.hap.uuid.generate(`${device.ipaddress}-${model}-${rainbird!.serialNumber}`);
+    // see if an accessory with the same uuid has already been registered and restored from
+    // the cached devices we stored in the `configureAccessory` method above
+    const existingAccessory = this.accessories.find((accessory) => accessory.UUID === uuid);
+
+    if (existingAccessory) {
+      // the accessory already exists
+      if (!device.delete && device.showDelayIrrigationSwitch) {
+        this.infoLog(`Restoring existing accessory from cache: ${existingAccessory.displayName}`);
+
+        // if you need to update the accessory.context then you should run `api.updatePlatformAccessories`. eg.:
+        existingAccessory.displayName = model;
+        existingAccessory.context.device = device;
+        existingAccessory.context.deviceID = rainbird!.serialNumber;
+        existingAccessory.context.model = model;
+        existingAccessory.context.FirmwareRevision = await this.FirmwareRevision(rainbird, device);
+        this.api.updatePlatformAccessories([existingAccessory]);
+        // create the accessory handler for the restored accessory
+        // this is imported from `platformAccessory.ts`
+        new DelayIrrigationSwitch(this, existingAccessory, device, rainbird);
+        this.debugLog(`Delay Irrigation Switch uuid: ${device.ipaddress}-${model}-${rainbird!.serialNumber}, (${existingAccessory.UUID})`);
+      } else {
+        this.unregisterPlatformAccessories(existingAccessory);
+      }
+    } else if (!device.delete && device.showDelayIrrigationSwitch) {
+      // the accessory does not yet exist, so we need to create it
+      this.infoLog(`Adding new accessory: ${model}`);
+
+      // create a new accessory
+      const accessory = new this.api.platformAccessory(model, uuid);
+
+      // store a copy of the device object in the `accessory.context`
+      // the `context` property can be used to store any data about the accessory you may need
+      accessory.context.device = device;
+      accessory.context.deviceID = rainbird!.serialNumber;
+      accessory.context.model = model;
+      accessory.context.FirmwareRevision = await this.FirmwareRevision(rainbird, device);
+
+      // create the accessory handler for the newly create accessory
+      // this is imported from `platformAccessory.ts`
+      new DelayIrrigationSwitch(this, accessory, device, rainbird);
+      this.debugLog(`Delay Irrigation Switch uuid: ${device.ipaddress}-${model}-${rainbird!.serialNumber}, (${accessory.UUID})`);
+
+      // link the accessory to your platform
+      this.externalOrPlatform(device, accessory);
+      this.accessories.push(accessory);
+    } else {
+      if (this.platformLogging.includes('debug') && device.showDelayIrrigationSwitch) {
         this.errorLog(`Unable to Register new device: ${model}`);
       }
     }

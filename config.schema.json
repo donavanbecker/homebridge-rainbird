@@ -122,6 +122,25 @@
                 "functionBody": "return (model.devices && model.devices[arrayIndices].ipaddress);"
               }
             },
+            "showDelayIrrigationSwitch": {
+              "title": "Show Delay Irrigation Switch",
+              "type": "boolean",
+              "required": false,
+              "condition": {
+                "functionBody": "return (model.devices && model.devices[arrayIndices].ipaddress);"
+              }
+            },
+            "irrigationDelay": {
+              "title": "Irrigation Delay (days)",
+              "type": "number",
+              "minimum": 1,
+              "maximum": 14,
+              "placeholder": 1,
+              "required": false,
+              "condition": {
+                "functionBody": "return (model.devices && model.devices[arrayIndices].ipaddress);"
+              }
+            },
             "minValueRemainingDuration": {
               "title": "Min Value",
               "type": "number",
@@ -289,6 +308,8 @@
                     "devices[].showStopIrrigationSwitch",
                     "devices[].showZoneValve",
                     "devices[].includeZones",
+                    "devices[].showDelayIrrigationSwitch",
+                    "devices[].irrigationDelay",
                     {
                       "type": "fieldset",
                       "title": "Remaining Duration Override",

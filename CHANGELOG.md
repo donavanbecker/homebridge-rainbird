@@ -10,6 +10,7 @@ All notable changes to this project will be documented in this file. This projec
 - Added `includeZones` to allow only specified zones to be created as Valve accessories. [#488](https://github.com/donavanbecker/homebridge-rainbird/issues/488)
 - Added showing Idle/Waiting state for zones queued by scheduled programs (only for ESP-TM2 & ESP-ME3 at this stage)
 - Added support warning for other models about limited zone state details
+- Added Delay Irrigation Switch [#489](https://github.com/donavanbecker/homebridge-rainbird/issues/489)
 - Housekeeping and updated dependencies.
 
 **Full Changelog**: https://github.com/donavanbecker/homebridge-rainbird/compare/v1.10.0...v1.11.0

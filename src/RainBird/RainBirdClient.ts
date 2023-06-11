@@ -38,6 +38,9 @@ import { ProgramZoneStateResponse } from './responses/ProgramZoneStateResponse';
 import { RawRequest } from './requests/RawRequest';
 import { RawResponse } from './responses/RawResponse';
 import { AdvanceZoneRequest } from './requests/AdvanceZoneRequest';
+import { IrrigationDelaySetRequest } from './requests/IrrigationDelaySetRequest';
+import { IrrigationDelayGetRequest } from './requests/IrrigationDelayGetRequest';
+import { IrrigationDelayGetResponse } from './responses/IrrigationDelayGetResponse';
 
 type RainBirdRequest = {
   type: Request,
@@ -224,6 +227,25 @@ export class RainBirdClient {
     return await this.requestQueue(request) as RawResponse;
   }
 
+  public async getIrrigationDelay(): Promise<IrrigationDelayGetResponse> {
+    const request: RainBirdRequest = {
+      type: new IrrigationDelayGetRequest(),
+      retry: false,
+      postDelay: 0,
+    };
+    return await this.requestQueue(request) as IrrigationDelayGetResponse;
+  }
+
+  public async setIrrigstionDelay(days: number): Promise<AcknowledgedResponse> {
+    days = Math.max(Math.min(Math.round(days), 14), 0);
+    const request: RainBirdRequest = {
+      type: new IrrigationDelaySetRequest(days),
+      retry: false,
+      postDelay: 0,
+    };
+    return await this.requestQueue(request) as AcknowledgedResponse;
+  }
+
   private async sendRequest(request: RainBirdRequest): Promise<Response | undefined> {
     if (this.showRequestResponse) {
       this.log.warn(`[${this.address}] Request:  ${request.type}`);
@@ -298,6 +320,9 @@ export class RainBirdClient {
         break;
       case 0x92:
         response = new ControllerDateGetResponse(data);
+        break;
+      case 0xB6:
+        response = new IrrigationDelayGetResponse(data);
         break;
       case 0xBB:
         response = new ProgramZoneStateResponse(data);

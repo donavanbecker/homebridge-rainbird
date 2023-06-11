@@ -31,6 +31,8 @@ export type DevicesConfig = {
   showRequestResponse?: boolean;
   showZoneValve?: boolean;
   includeZones?: string,
+  showDelayIrrigationSwitch?: boolean;
+  irrigationDelay?: number;
   external: boolean;
   firmware?: number;
   refreshRate?: number;
