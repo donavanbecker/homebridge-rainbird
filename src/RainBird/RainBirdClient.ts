@@ -140,7 +140,7 @@ export class RainBirdClient {
   public async getControllerState(): Promise<ControllerStateResponse> {
     const request: RainBirdRequest = {
       type: new ControllerStateRequest(),
-      retry: false,
+      retry: true,
       postDelay: 0,
     };
     return await this.requestQueue(request) as ControllerStateResponse;
@@ -149,7 +149,7 @@ export class RainBirdClient {
   public async getControllerDate(): Promise<ControllerDateGetResponse> {
     const request: RainBirdRequest = {
       type: new ControllerDateGetRequest(),
-      retry: false,
+      retry: true,
       postDelay: 0,
     };
     return await this.requestQueue(request) as ControllerDateGetResponse;
@@ -158,7 +158,7 @@ export class RainBirdClient {
   public async setControllerDate(day: number, month: number, year: number): Promise<AcknowledgedResponse> {
     const request: RainBirdRequest = {
       type: new ControllerDateSetRequest(day, month, year),
-      retry: false,
+      retry: true,
       postDelay: 0,
     };
     return await this.requestQueue(request) as AcknowledgedResponse;
@@ -167,7 +167,7 @@ export class RainBirdClient {
   public async getControllerTime(): Promise<ControllerTimeGetResponse> {
     const request: RainBirdRequest = {
       type: new ControllerTimeGetRequest(),
-      retry: false,
+      retry: true,
       postDelay: 0,
     };
     return await this.requestQueue(request) as ControllerTimeGetResponse;
@@ -176,7 +176,7 @@ export class RainBirdClient {
   public async setControllerTime(hour: number, minute: number, second: number): Promise<AcknowledgedResponse> {
     const request: RainBirdRequest = {
       type: new ControllerTimeSetRequest(hour, minute, second),
-      retry: false,
+      retry: true,
       postDelay: 0,
     };
     return await this.requestQueue(request) as AcknowledgedResponse;
@@ -185,7 +185,7 @@ export class RainBirdClient {
   public async getIrrigationState(): Promise<IrrigationStateResponse> {
     const request: RainBirdRequest = {
       type: new IrrigationStateRequest(),
-      retry: false,
+      retry: true,
       postDelay: 0,
     };
     return await this.requestQueue(request) as IrrigationStateResponse;
@@ -270,6 +270,7 @@ export class RainBirdClient {
         return response;
       } catch (error) {
         this.log.warn(`RainBird controller request failed. [${error}]`);
+        this.log.warn(`Failed Request: ${request.type}`);
         if (!request.retry) {
           break;
         }
