@@ -6,9 +6,18 @@ export class ModelAndVersionResponse extends Response {
 
   private readonly _models: Map<number, string> = new Map([
     [0x0003, 'ESP-RZXe'],
+    [0x0005, 'ESP-TM2'],
+    [0x0006, 'ST8x-WiFi'],
     [0x0007, 'ESP-Me'],
+    [0x0008, 'ST8x-WiFi2'],
     [0x0009, 'ESP-ME3'],
+    [0x000A, 'ESP-TM2'],
+    [0x0010, 'ESP-Me2'],
+    [0x0099, 'TBOS-BT'],
+    [0x0103, 'ESP-RZXe2'],
+    [0x0107, 'ESP-Me'],
     [0x010A, 'ESP-TM2'],
+    [0x0812, 'ARC8'],
   ]);
 
   constructor(private readonly response: Buffer) {

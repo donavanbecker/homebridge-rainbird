@@ -34,97 +34,201 @@
               "required": true,
               "x-schema-form": {
                 "type": "password"
+              },
+              "condition": {
+                "functionBody": "return (model.devices && model.devices[arrayIndices].ipaddress);"
+              }
+            },
+            "external": {
+              "title": "External Accessory",
+              "description": "This will make all device under this acessory be displayed as an external accesory and will not be added to cache or be added with child bridge of this plugin. Each device will have to be added seperately.",
+              "type": "boolean",
+              "condition": {
+                "functionBody": "return (model.devices && model.devices[arrayIndices].ipaddress);"
               }
             },
             "showRainSensor": {
               "title": "Show Rain Sensor (as Leak Sensor)",
               "type": "boolean",
-              "required": false
+              "required": false,
+              "condition": {
+                "functionBody": "return (model.devices && model.devices[arrayIndices].ipaddress);"
+              }
             },
             "showValveSensor": {
               "title": "Enable Valve Notifications (as Contact Sensors)",
               "type": "boolean",
               "required": false,
-              "description": "If enabled, whichever zone runs the contact sensors will go off as detected so you know that it is running."
+              "description": "If enabled, whichever zone runs the contact sensors will go off as detected so you know that it is running.",
+              "condition": {
+                "functionBody": "return (model.devices && model.devices[arrayIndices].ipaddress);"
+              }
             },
             "showProgramASwitch": {
               "title": "Show Program A Switch",
               "type": "boolean",
-              "requried": false
+              "requried": false,
+              "condition": {
+                "functionBody": "return (model.devices && model.devices[arrayIndices].ipaddress);"
+              }
             },
             "showProgramBSwitch": {
               "title": "Show Program B Switch",
               "type": "boolean",
-              "requried": false
+              "requried": false,
+              "condition": {
+                "functionBody": "return (model.devices && model.devices[arrayIndices].ipaddress);"
+              }
             },
             "showProgramCSwitch": {
               "title": "Show Program C Switch",
               "type": "boolean",
-              "requried": false
+              "requried": false,
+              "condition": {
+                "functionBody": "return (model.devices && model.devices[arrayIndices].ipaddress);"
+              }
             },
             "showProgramDSwitch": {
               "title": "Show Program D Switch (not supported by all models)",
               "type": "boolean",
-              "requried": false
+              "requried": false,
+              "condition": {
+                "functionBody": "return (model.devices && model.devices[arrayIndices].ipaddress);"
+              }
             },
             "showStopIrrigationSwitch": {
               "title": "Show Stop Irrigation Switch",
               "type": "boolean",
-              "requried": false
+              "requried": false,
+              "condition": {
+                "functionBody": "return (model.devices && model.devices[arrayIndices].ipaddress);"
+              }
             },
             "showZoneValve": {
               "title": "Show Zones as Valve Accessories",
               "type": "boolean",
               "required": false,
-              "description": "Show zones as seperate valve accessories (useful to workaround the bug introduced in iOS 15.4/macOS 12.3 that prevents the valves from showing within the Irrigation System accessory)."
+              "condition": {
+                "functionBody": "return (model.devices && model.devices[arrayIndices].ipaddress);"
+              }
+            },
+            "includeZones": {
+              "title": "Zones to Include",
+              "type": "string",
+              "requried": false,
+              "description": "comma seperated list of zone numbers to create valve accessories for (leave blank for all)",
+              "pattern": "^[0-9]{1,3}(,[0-9]{1,3})*$",
+              "condition": {
+                "functionBody": "return (model.devices && model.devices[arrayIndices].ipaddress);"
+              }
+            },
+            "showDelayIrrigationSwitch": {
+              "title": "Show Delay Irrigation Switch",
+              "type": "boolean",
+              "required": false,
+              "condition": {
+                "functionBody": "return (model.devices && model.devices[arrayIndices].ipaddress);"
+              }
+            },
+            "irrigationDelay": {
+              "title": "Irrigation Delay (days)",
+              "type": "number",
+              "minimum": 1,
+              "maximum": 14,
+              "placeholder": 1,
+              "required": false,
+              "condition": {
+                "functionBody": "return (model.devices && model.devices[arrayIndices].ipaddress);"
+              }
+            },
+            "minValueRemainingDuration": {
+              "title": "Min Value",
+              "type": "number",
+              "placeholder": 0,
+              "required": false,
+              "condition": {
+                "functionBody": "return (model.devices && model.devices[arrayIndices].ipaddress);"
+              }
+            },
+            "maxValueRemainingDuration": {
+              "title": "Max Value",
+              "type": "number",
+              "placeholder": 3600,
+              "required": false,
+              "condition": {
+                "functionBody": "return (model.devices && model.devices[arrayIndices].ipaddress);"
+              }
             },
             "syncTime": {
               "title": "Sync date and time of controller with host",
               "type": "boolean",
               "default": false,
               "required": false,
-              "description": "Useful for automatically changing the controller's time when Daylight Savings starts/ends or fixing the time if the controller's internal clock runs fast or slow"
+              "description": "Useful for automatically changing the controller's time when Daylight Savings starts/ends or fixing the time if the controller's internal clock runs fast or slow",
+              "condition": {
+                "functionBody": "return (model.devices && model.devices[arrayIndices].ipaddress);"
+              }
             },
             "showRequestResponse": {
               "title": "Show RainBird requests and responses in the log",
               "type": "boolean",
-              "requried": false
+              "requried": false,
+              "condition": {
+                "functionBody": "return (model.devices && model.devices[arrayIndices].ipaddress);"
+              }
             },
             "firmware": {
               "title": "Firmware Override",
               "type": "string",
-              "placeholder": "1.2.8"
+              "placeholder": "1.2.8",
+              "condition": {
+                "functionBody": "return (model.devices && model.devices[arrayIndices].ipaddress);"
+              }
             },
             "refreshRate": {
               "title": "Device Refresh Rate",
               "type": "number",
               "minimum": 120,
               "placeholder": 900,
-              "description": "Indicates the number of seconds between refreshes of the Rainbird Client."
+              "description": "Indicates the number of seconds between refreshes of the Rainbird Client.",
+              "condition": {
+                "functionBody": "return (model.devices && model.devices[arrayIndices].ipaddress);"
+              }
+            },
+            "delete": {
+              "title": "Delete Device",
+              "type": "boolean",
+              "description": "DO NOT USE, UNLESS YOU WANT TO DELETE THIS DEVICE FROM CACHE.",
+              "condition": {
+                "functionBody": "return (model.devices && model.devices[arrayIndices].ipaddress);"
+              }
             },
             "logging": {
               "title": "Device Logging Override Setting",
               "type": "string",
+              "required": true,
+              "default": "",
               "oneOf": [
                 {
+                  "title": "Default Logging",
+                  "enum": [""]
+                },
+                {
                   "title": "Standard Logging",
-                  "enum": [
-                    "standard"
-                  ]
+                  "enum": ["standard"]
                 },
                 {
                   "title": "No Logging",
-                  "enum": [
-                    "none"
-                  ]
+                  "enum": ["none"]
                 },
                 {
                   "title": "Debug Logging",
-                  "enum": [
-                    "debug"
-                  ]
+                  "enum": ["debug"]
                 }
-              ]
+              ],
+              "condition": {
+                "functionBody": "return (model.devices && model.devices[arrayIndices].ipaddress);"
+              }
             }
           }
         }
@@ -142,33 +246,28 @@
           "logging": {
             "title": "Logging Setting",
             "type": "string",
+            "required": true,
+            "default": "",
             "oneOf": [
               {
+                "title": "Default Logging",
+                "enum": [""]
+              },
+              {
                 "title": "Standard Logging",
-                "enum": [
-                  "standard"
-                ]
+                "enum": ["standard"]
               },
               {
                 "title": "No Logging",
-                "enum": [
-                  "none"
-                ]
+                "enum": ["none"]
               },
               {
                 "title": "Debug Logging",
-                "enum": [
-                  "debug"
-                ]
+                "enum": ["debug"]
               }
             ]
           }
         }
-      },
-      "disablePlugin": {
-        "title": "Disable Plugin",
-        "type": "boolean",
-        "description": "DO NOT USE, UNLESS YOU WANT TO REMOVE ACCESSORIES FROM CACHE."
       }
     }
   },
@@ -197,8 +296,9 @@
                   "type": "fieldset",
                   "title": "Device Settings",
                   "expandable": true,
-                  "expanded": false,
+                  "expanded": true,
                   "items": [
+                    "devices[].external",
                     "devices[].showRainSensor",
                     "devices[].showValveSensor",
                     "devices[].showProgramASwitch",
@@ -207,11 +307,22 @@
                     "devices[].showProgramDSwitch",
                     "devices[].showStopIrrigationSwitch",
                     "devices[].showZoneValve",
+                    "devices[].includeZones",
+                    "devices[].showDelayIrrigationSwitch",
+                    "devices[].irrigationDelay",
+                    {
+                      "type": "fieldset",
+                      "title": "Remaining Duration Override",
+                      "expandable": true,
+                      "expanded": false,
+                      "items": ["devices[].minValueRemainingDuration", "devices[].maxValueRemainingDuration"]
+                    },
                     "devices[].syncTime",
                     "devices[].showRequestResponse",
                     "devices[].firmware",
                     "devices[].refreshRate",
-                    "devices[].logging"
+                    "devices[].logging",
+                    "devices[].delete"
                   ]
                 }
               ]
@@ -242,8 +353,7 @@
           "key": "options.pushRate",
           "notitle": true
         },
-        "options.logging",
-        "disablePlugin"
+        "options.logging"
       ]
     }
   ]

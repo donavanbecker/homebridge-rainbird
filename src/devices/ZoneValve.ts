@@ -79,9 +79,13 @@ export class ZoneValve extends DeviceBase {
 
     this.zoneValve.service
       .getCharacteristic(this.platform.Characteristic.RemainingDuration)
+      .setProps({
+        minValue: device.minValueRemainingDuration,
+        maxValue: device.maxValueRemainingDuration,
+      })
       .onGet(() => {
         this.rainbird!.refreshStatus();
-        return this.rainbird!.RemainingDuration(this.zoneId);
+        return this.rainbird!.remainingDuration(this.zoneId);
       });
 
     this.zoneValve.service
@@ -191,7 +195,7 @@ export class ZoneValve extends DeviceBase {
       this.zoneValve.service.updateCharacteristic(this.platform.Characteristic.InUse, this.zoneValve.InUse);
       this.debugLog(`${this.constructor.name}: ${this.accessory.displayName} updateCharacteristic InUse: ${this.zoneValve.InUse}`);
     }
-    const remainingDuration = this.rainbird!.RemainingDuration(this.zoneId);
+    const remainingDuration = this.rainbird!.remainingDuration(this.zoneId);
     if (remainingDuration === undefined) {
       this.debugLog(`${this.constructor.name}: ${this.accessory.displayName} RemainingDuration: ${remainingDuration}`);
     } else {

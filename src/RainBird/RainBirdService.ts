@@ -15,16 +15,22 @@ type RainBirdMetaData = {
 
 type ZoneStatus = {
   active: boolean,
+  queued: boolean,
   running: boolean,
-  RemainingDuration: number,
+  remainingDuration: number,
   durationTime?: Date
 }
 
-type RainBirdStatus = {
-  zoneId: number,
-  programId?: string,
-  timeRemaining: number,
-  running: boolean,
+type ProgramZoneState = {
+  id: number,
+  timeRemaining?: number,
+  running: boolean
+}
+
+type RainBirdState = {
+  program?: ProgramZoneState,
+  zones: ProgramZoneState[],
+  runningZoneIndex?: number;
   rainSensorSetPointReached: boolean
 }
 
@@ -51,6 +57,7 @@ export class RainBirdService extends events.EventEmitter {
   private _statusTimerSubscription?: Subscription;
   private _statusRefreshSubject = new Subject<void>();
   private _syncTime = false;
+  private _lastSupportWarning = 0;
 
   private zoneQueue: Queue = new Queue({
     concurrency: 1,
@@ -86,9 +93,6 @@ export class RainBirdService extends events.EventEmitter {
     const respModelAndVersion = await this._client.getModelAndVersion();
     const respSerialNumber = await this._client.getSerialNumber();
     const respZones = await this._client.getAvailableZones();
-    const respCurrentZoneState = await this._client.getCurrentZoneState();
-
-    this._currentZoneStateSupported = respCurrentZoneState.supported;
 
     this._metadata = {
       modelNumber: respModelAndVersion.modelNumber,
@@ -102,8 +106,9 @@ export class RainBirdService extends events.EventEmitter {
     for (const zone of respZones.zones) {
       this._zones[zone] = {
         active: false,
+        queued: false,
         running: false,
-        RemainingDuration: 0,
+        remainingDuration: 0,
         durationTime: undefined,
       };
     }
@@ -150,17 +155,17 @@ export class RainBirdService extends events.EventEmitter {
 
   isActive(zone?: number): boolean {
     return zone === undefined
-      ? Object.values(this._zones).some((z) => z.active)
-      : this._zones[zone].active;
+      ? Object.values(this._zones).some((z) => z.active || z.queued)
+      : this._zones[zone].active || this._zones[zone].queued;
   }
 
   isInUse(zone?: number): boolean {
     return zone === undefined
-      ? Object.values(this._zones).some((z) => z.durationTime !== undefined)
-      : this._zones[zone].durationTime !== undefined;
+      ? Object.values(this._zones).some((z) => z.running)
+      : this._zones[zone].running;
   }
 
-  RemainingDuration(zone?: number): number {
+  remainingDuration(zone?: number): number {
     if (zone === undefined) {
       let remaining = 0;
       for (const zone of this.zones) {
@@ -172,12 +177,12 @@ export class RainBirdService extends events.EventEmitter {
   }
 
   private calcRemainingDuration(zone: number): number {
-    if (!this._zones[zone].active) {
+    if (!this._zones[zone].active && !this._zones[zone].queued) {
       return 0;
     }
     const remaining = this._zones[zone].durationTime === undefined
-      ? this._zones[zone].RemainingDuration
-      : this._zones[zone].RemainingDuration - Math.round(
+      ? this._zones[zone].remainingDuration
+      : this._zones[zone].remainingDuration - Math.round(
         ((new Date()).getTime() - this._zones[zone].durationTime!.getTime()) / 1000);
 
     return Math.max(remaining, 0);
@@ -186,7 +191,8 @@ export class RainBirdService extends events.EventEmitter {
   activateZone(zone: number, duration: number): void {
     this.log.debug(`Zone ${zone}: Activate for ${duration} seconds`);
 
-    this._zones[zone].active = true;
+    this._zones[zone].queued = true;
+    this._zones[zone].remainingDuration = duration;
     this.zoneQueue.push(this.startZone.bind(this, zone, duration));
   }
 
@@ -194,6 +200,7 @@ export class RainBirdService extends events.EventEmitter {
     this.log.debug(`Zone ${zone}: Deactivate`);
 
     this._zones[zone].active = false;
+    this._zones[zone].queued = false;
 
     if (this.isInUse(zone)) {
       if (this._advanceZoneSupported) {
@@ -210,6 +217,7 @@ export class RainBirdService extends events.EventEmitter {
   deactivateAllZones(): void {
     for(const zone of this.zones) {
       this._zones[zone].active = false;
+      this._zones[zone].queued = false;
     }
   }
 
@@ -239,9 +247,6 @@ export class RainBirdService extends events.EventEmitter {
   private getProgramId(programNumber?: number): string | undefined {
     if (programNumber === undefined) {
       return undefined;
-    }
-    if (programNumber === RainBirdClient.NO_PROGRAM) {
-      return '';
     }
     return String.fromCharCode(programNumber + 65);
   }
@@ -291,12 +296,13 @@ export class RainBirdService extends events.EventEmitter {
         return;
       }
 
-      this.log.info(`Zone ${zone}: Start [Duration: ${duration} seconds]`);
+      this.log.info(`Zone ${zone}: Start [Duration: ${this.formatTime(duration)}]`);
 
       await this._client.runZone(zone, duration);
+      this._zones[zone].queued = false;
 
       if (!this._currentZoneStateSupported) {
-        this._zones[zone].RemainingDuration = duration;
+        this._zones[zone].remainingDuration = duration;
         this._zones[zone].durationTime = new Date();
       }
 
@@ -312,11 +318,11 @@ export class RainBirdService extends events.EventEmitter {
 
     let timerDuration = this.options.refreshRate ?? 0;
     if (this._currentZoneId !== 0) {
-      const RemainingDuration = this._zones[this._currentZoneId].RemainingDuration;
-      if (RemainingDuration > 0) {
+      const remainingDuration = this._zones[this._currentZoneId].remainingDuration;
+      if (remainingDuration > 0) {
         timerDuration = timerDuration === 0
-          ? RemainingDuration
-          : Math.min(timerDuration, RemainingDuration);
+          ? remainingDuration
+          : Math.min(timerDuration, remainingDuration);
       }
     }
 
@@ -366,53 +372,57 @@ export class RainBirdService extends events.EventEmitter {
     await this._client.setControllerTime(host.getHours(), host.getMinutes(), host.getSeconds());
   }
 
-  private async updateStatus(): Promise<void> {
-    const status = await this.getRainBirdStatus();
+  public async getIrrigatinDelay(): Promise<number> {
+    const response = await this._client.getIrrigationDelay();
+    return response.days;
+  }
 
-    if (status === undefined) {
-      return;
-    }
+  public async setIrrigationDelay(days: number): Promise<void> {
+    this.log.info(`Set Irrigation Delay: ${days} days`);
+    await this._client.setIrrigstionDelay(days);
+  }
+
+  private async updateStatus(): Promise<void> {
+    const status = await this.getRainBirdState();
+
+    const currentZone = status.runningZoneIndex !== undefined ? status.zones[status.runningZoneIndex] : undefined;
 
     const previousZoneId = this._currentZoneId;
-    this._currentZoneId = status.zoneId;
-    if (previousZoneId !== 0 && this._zones[previousZoneId].running && previousZoneId !== status.zoneId) {
+    this._currentZoneId = currentZone?.id ?? 0;
+    if (previousZoneId !== 0 && this._zones[previousZoneId].running && previousZoneId !== currentZone?.id) {
       this.log.info(`Zone ${previousZoneId}: Complete`);
     }
 
     const previousProgramId = this._currentProgramId;
-    this._currentProgramId = status.running ? status.programId : undefined;
+    this._currentProgramId = status.program !== undefined ? this.getProgramId(status.program.id) : undefined;
     if (previousProgramId !== undefined && previousProgramId !== '' && previousProgramId !== this._currentProgramId) {
       this.log.info(`Program ${previousProgramId}: Complete`);
     }
 
     if (this._currentProgramId !== undefined && this._currentProgramId !== '' && previousProgramId !== this._currentProgramId) {
-      this.log.info(`Program ${this._currentProgramId}: Running`);
+      this.log.info(`Program ${this._currentProgramId}: Running [Time Remaining: ${this.formatTime(status.program?.timeRemaining)}]`);
     }
 
-    if (status.zoneId !== 0 && status.running && previousZoneId !== status.zoneId) {
-      this.log.info(`Zone ${status.zoneId}: Running`);
+    if (currentZone !== undefined && currentZone.running && previousZoneId !== currentZone.id) {
+      this.log.info(`Zone ${currentZone.id}: Running [Time Remaining: ${this.formatTime(currentZone.timeRemaining)}]`);
     }
 
     for (const [id, zone] of Object.entries(this._zones)) {
-      if (Number(id) === status.zoneId && status.running) {
-        zone.active = true;
-        zone.running = true;
-        if (this._currentZoneStateSupported) {
-          zone.RemainingDuration = status.timeRemaining;
-          zone.durationTime = new Date();
-        } else if (zone.durationTime === undefined) {
-          zone.RemainingDuration = 0;
-          zone.durationTime = new Date();
-        }
+      const statusZoneIndex = status.zones.findIndex((zone) => zone.id === Number(id));
+
+      if (statusZoneIndex < 0) {
+        zone.running = false;
+        zone.remainingDuration = 0;
+        zone.durationTime = undefined;
+        zone.active = false;
         continue;
       }
 
-      if (Number(id) === previousZoneId) {
-        zone.active = false;
-      }
-      zone.running = false;
-      zone.RemainingDuration = 0;
-      zone.durationTime = undefined;
+      zone.running = status.zones[statusZoneIndex].running;
+      zone.remainingDuration = status.zones[statusZoneIndex].timeRemaining ?? 0;
+      zone.durationTime = zone.running ? new Date() : undefined;
+      zone.active = zone.remainingDuration > 0;
+      zone.queued = false;
     }
 
     this.emit('status');
@@ -424,40 +434,212 @@ export class RainBirdService extends events.EventEmitter {
     }
   }
 
-  private async getRainBirdStatus(): Promise<RainBirdStatus | undefined> {
+  private formatTime(seconds?: number): string {
+    if (seconds === undefined) {
+      return 'unknown';
+    }
+    const date = new Date(seconds * 1000);
+    return date.toISOString().substring(11, 19);
+  }
+
+  private async getRainBirdState(): Promise<RainBirdState> {
+    const page0 = await this._client.getProgramZoneState(0);
     const rainSensorState = await this._client.getRainSensorState();
 
-    if (this._currentZoneStateSupported) {
-      const currentZoneState = await this._client.getCurrentZoneState();
-      const currentZoneStatePage1 = (this._metadata.modelNumber === this.ESP_ME3)
-        ? await this._client.getCurrentZoneState(1)
-        : undefined;
+    if (page0.toBuffer().length === 12) { // ESP-TM2
+      return await this.getRainBirdStateTM2(
+        page0.toBuffer(), rainSensorState.setPointReached,
+      );
+    }
+    if (page0.toBuffer().length === 7) { // ESP-ME3
+      return await this.getRainBirdStateME3(
+        page0.toBuffer(), rainSensorState.setPointReached,
+      );
+    }
+    if (page0.toBuffer().length === 10) { // ESP-RZXe & ESP-Me series
+      return this.getRainBirdStateRZXe(
+        page0.toBuffer(), rainSensorState.setPointReached,
+      );
+    }
+    // Other models
+    this._currentZoneStateSupported = false;
+    return await this.getRainBirdStateDefault(
+      page0.toBuffer(),
+      rainSensorState.setPointReached,
+    );
+  }
 
-      if (currentZoneState === undefined) {
-        return undefined;
+  private async getRainBirdStateTM2(page0: Buffer, setPointReached: boolean): Promise<RainBirdState> {
+
+    const state: RainBirdState = {
+      program: undefined,
+      zones: [],
+      runningZoneIndex: undefined,
+      rainSensorSetPointReached: setPointReached,
+    };
+
+    const isRunning = page0[11] !== 0;
+    if (!isRunning) {
+      return state;
+    }
+
+    const page1 = (await this._client.getProgramZoneState(1)).toBuffer();
+
+    let offset = 2;
+    let index = 0;
+    while (page1[offset] > 0) {
+      const zoneId = page1[offset] & 31;
+      const zoneRunning = zoneId === page0[8];
+      state.zones.push({
+        id: zoneId,
+        timeRemaining: page1.readUInt16BE(offset + 1),
+        running: zoneRunning,
+      });
+      if (zoneRunning) {
+        state.runningZoneIndex = index;
       }
 
-      return {
-        zoneId: currentZoneStatePage1?.zoneId ?? currentZoneState.zoneId,
-        programId: this.getProgramId(currentZoneState.programNumber),
-        timeRemaining: currentZoneStatePage1?.timeRemaining ?? currentZoneState.timeRemaining,
-        running: currentZoneState.running,
-        rainSensorSetPointReached: rainSensorState.setPointReached,
-      };
+      index++;
+      offset += 3;
     }
+
+    if (page0[9] > 2) {
+      return state;
+    }
+
+    const totalTimeRemaining = state.zones.reduce(
+      (total, zone) => total + zone.timeRemaining!, 0,
+    );
+    state.program = {
+      id: page0[9],
+      timeRemaining: totalTimeRemaining,
+      running: page0[11] !== 0,
+    };
+
+    return state;
+  }
+
+  private async getRainBirdStateME3(page0: Buffer, setPointReached: boolean): Promise<RainBirdState> {
+    const state: RainBirdState = {
+      program: undefined,
+      zones: [],
+      runningZoneIndex: undefined,
+      rainSensorSetPointReached: setPointReached,
+    };
+
+    const isRunning = page0[3] !== 0;
+    if (!isRunning) {
+      return state;
+    }
+
+    const page1 = (await this._client.getProgramZoneState(1)).toBuffer();
+
+    state.zones.push({
+      id: page1[3],
+      timeRemaining: page1.readUInt16LE(4),
+      running: true,
+    });
+    state.runningZoneIndex = 0;
+
+    const remainingZones = page0[4];
+    if (remainingZones > 0) {
+      const page2 = (await this._client.getProgramZoneState(2)).toBuffer();
+
+      let offset = 2;
+      for (let i = 0; i < remainingZones; i++) {
+        state.zones.push({
+          id: page2[offset + 1],
+          timeRemaining: page2.readUInt16LE(offset + 2),
+          running: false,
+        });
+        offset += 6;
+      }
+    }
+
+    if (page0[2] > 3) {
+      return state;
+    }
+
+    const totalTimeRemaining = state.zones.reduce(
+      (total, zone) => total + zone.timeRemaining!, 0,
+    );
+    state.program = {
+      id: page0[2],
+      timeRemaining: totalTimeRemaining,
+      running: isRunning,
+    };
+
+    return state;
+  }
+
+  private async getRainBirdStateRZXe(page0: Buffer, setPointReached: boolean): Promise<RainBirdState> {
+    const state: RainBirdState = {
+      program: undefined,
+      zones: [],
+      runningZoneIndex: undefined,
+      rainSensorSetPointReached: setPointReached,
+    };
+
+    if (page0[6] === 0) {
+      return state;
+    }
+
+    state.zones.push({
+      id: page0[6],
+      timeRemaining: page0.readUInt16BE(8),
+      running: page0[3] !== 0,
+    });
+    state.runningZoneIndex = 0;
+
+    await this.displaySupportWarning(page0);
+
+    return state;
+  }
+
+  private async getRainBirdStateDefault(page0: Buffer, setPointReached: boolean): Promise<RainBirdState> {
+    const state: RainBirdState = {
+      program: undefined,
+      zones: [],
+      runningZoneIndex: undefined,
+      rainSensorSetPointReached: setPointReached,
+    };
 
     const currentZone = await this._client.getCurrentZone();
-    if (currentZone === undefined) {
-      return undefined;
+    if (currentZone.zoneId === 0) {
+      return state;
     }
 
-    return {
-      zoneId: currentZone.zoneId,
-      programId: undefined,
+    state.zones.push({
+      id: currentZone.zoneId,
       timeRemaining: 0,
       running: true,
-      rainSensorSetPointReached: rainSensorState.setPointReached,
-    };
+    });
+    state.runningZoneIndex = 0;
+
+    await this.displaySupportWarning(page0);
+
+    return state;
+  }
+
+  private async displaySupportWarning(page0: Buffer): Promise<void> {
+    const now = (new Date()).getTime();
+    if (now - this._lastSupportWarning < 24 * 60 * 60 * 1000) {
+      return;
+    }
+    this._lastSupportWarning = now;
+
+    const page1 = (await this._client.getProgramZoneState(1)).toBuffer();
+    const page2 = (await this._client.getProgramZoneState(2)).toBuffer();
+
+    this.log.warn('This plugin does not fully support your RainBird model and may not not correctly show the zone\'s state such as time remaining');
+    this.log.warn('If you would like better support please create a GitHub issue [https://github.com/donavanbecker/homebridge-rainbird/issues]');
+    this.log.warn('and supply the following details:');
+    this.log.warn(`  Model: ${this.model}, Zones: ${[...this.zones.keys()]}`);
+    this.log.warn(`  ProgramZoneState Page 0: ${[...page0.values()]}`);
+    this.log.warn(`  ProgramZoneState Page 1: ${[...page1.values()]}`);
+    this.log.warn(`  ProgramZoneState Page 2: ${[...page2.values()]}`);
+    this.log.warn('Also include your model (if different to the one above), which program is running and');
+    this.log.warn('the time remaining for the currently running zone as well as for the other idle/waiting zones');
   }
 
   refreshStatus(): void {

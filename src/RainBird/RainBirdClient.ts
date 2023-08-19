@@ -33,9 +33,14 @@ import { RainSensorStateRequest } from './requests/RainSensorStateRequest';
 import { RainSensorStateResponse } from './responses/RainSensorStateResponse';
 import { CurrentZoneRequest } from './requests/CurrentZoneRequest';
 import { CurrentZoneResponse } from './responses/CurrentZoneResponse';
-import { CurrentZoneStateRequest } from './requests/CurrentZoneStateRequest';
-import { CurrentZoneStateResponse } from './responses/CurrentZoneStateResponse';
+import { ProgramZoneStateRequest } from './requests/ProgramZoneStateRequest';
+import { ProgramZoneStateResponse } from './responses/ProgramZoneStateResponse';
+import { RawRequest } from './requests/RawRequest';
+import { RawResponse } from './responses/RawResponse';
 import { AdvanceZoneRequest } from './requests/AdvanceZoneRequest';
+import { IrrigationDelaySetRequest } from './requests/IrrigationDelaySetRequest';
+import { IrrigationDelayGetRequest } from './requests/IrrigationDelayGetRequest';
+import { IrrigationDelayGetResponse } from './responses/IrrigationDelayGetResponse';
 
 type RainBirdRequest = {
   type: Request,
@@ -49,8 +54,6 @@ export class RainBirdClient {
   private requestQueue = cq()
     .limit({ concurrency: 1 })
     .process(this.sendRequest.bind(this));
-
-  public static NO_PROGRAM = CurrentZoneStateResponse.NO_PROGRAM;
 
   constructor(
     private readonly address: string,
@@ -137,7 +140,7 @@ export class RainBirdClient {
   public async getControllerState(): Promise<ControllerStateResponse> {
     const request: RainBirdRequest = {
       type: new ControllerStateRequest(),
-      retry: false,
+      retry: true,
       postDelay: 0,
     };
     return await this.requestQueue(request) as ControllerStateResponse;
@@ -146,7 +149,7 @@ export class RainBirdClient {
   public async getControllerDate(): Promise<ControllerDateGetResponse> {
     const request: RainBirdRequest = {
       type: new ControllerDateGetRequest(),
-      retry: false,
+      retry: true,
       postDelay: 0,
     };
     return await this.requestQueue(request) as ControllerDateGetResponse;
@@ -155,7 +158,7 @@ export class RainBirdClient {
   public async setControllerDate(day: number, month: number, year: number): Promise<AcknowledgedResponse> {
     const request: RainBirdRequest = {
       type: new ControllerDateSetRequest(day, month, year),
-      retry: false,
+      retry: true,
       postDelay: 0,
     };
     return await this.requestQueue(request) as AcknowledgedResponse;
@@ -164,7 +167,7 @@ export class RainBirdClient {
   public async getControllerTime(): Promise<ControllerTimeGetResponse> {
     const request: RainBirdRequest = {
       type: new ControllerTimeGetRequest(),
-      retry: false,
+      retry: true,
       postDelay: 0,
     };
     return await this.requestQueue(request) as ControllerTimeGetResponse;
@@ -173,7 +176,7 @@ export class RainBirdClient {
   public async setControllerTime(hour: number, minute: number, second: number): Promise<AcknowledgedResponse> {
     const request: RainBirdRequest = {
       type: new ControllerTimeSetRequest(hour, minute, second),
-      retry: false,
+      retry: true,
       postDelay: 0,
     };
     return await this.requestQueue(request) as AcknowledgedResponse;
@@ -182,7 +185,7 @@ export class RainBirdClient {
   public async getIrrigationState(): Promise<IrrigationStateResponse> {
     const request: RainBirdRequest = {
       type: new IrrigationStateRequest(),
-      retry: false,
+      retry: true,
       postDelay: 0,
     };
     return await this.requestQueue(request) as IrrigationStateResponse;
@@ -206,13 +209,41 @@ export class RainBirdClient {
     return await this.requestQueue(request) as CurrentZoneResponse;
   }
 
-  public async getCurrentZoneState(page = 0): Promise<CurrentZoneStateResponse> {
+  public async getProgramZoneState(page = 0): Promise<ProgramZoneStateResponse> {
     const request: RainBirdRequest = {
-      type: new CurrentZoneStateRequest(page),
+      type: new ProgramZoneStateRequest(page),
       retry: false,
       postDelay: 0,
     };
-    return await this.requestQueue(request) as CurrentZoneStateResponse;
+    return await this.requestQueue(request) as ProgramZoneStateResponse;
+  }
+
+  public async getRaw(type: number, page = 0): Promise<RawResponse> {
+    const request: RainBirdRequest = {
+      type: new RawRequest(type, page),
+      retry: false,
+      postDelay: 0,
+    };
+    return await this.requestQueue(request) as RawResponse;
+  }
+
+  public async getIrrigationDelay(): Promise<IrrigationDelayGetResponse> {
+    const request: RainBirdRequest = {
+      type: new IrrigationDelayGetRequest(),
+      retry: false,
+      postDelay: 0,
+    };
+    return await this.requestQueue(request) as IrrigationDelayGetResponse;
+  }
+
+  public async setIrrigstionDelay(days: number): Promise<AcknowledgedResponse> {
+    days = Math.max(Math.min(Math.round(days), 14), 0);
+    const request: RainBirdRequest = {
+      type: new IrrigationDelaySetRequest(days),
+      retry: false,
+      postDelay: 0,
+    };
+    return await this.requestQueue(request) as AcknowledgedResponse;
   }
 
   private async sendRequest(request: RainBirdRequest): Promise<Response | undefined> {
@@ -239,6 +270,7 @@ export class RainBirdClient {
         return response;
       } catch (error) {
         this.log.warn(`RainBird controller request failed. [${error}]`);
+        this.log.warn(`Failed Request: ${request.type}`);
         if (!request.retry) {
           break;
         }
@@ -290,8 +322,11 @@ export class RainBirdClient {
       case 0x92:
         response = new ControllerDateGetResponse(data);
         break;
+      case 0xB6:
+        response = new IrrigationDelayGetResponse(data);
+        break;
       case 0xBB:
-        response = new CurrentZoneStateResponse(data);
+        response = new ProgramZoneStateResponse(data);
         break;
       case 0xBE:
         response = new RainSensorStateResponse(data);
@@ -305,6 +340,8 @@ export class RainBirdClient {
       case 0xCC:
         response = new ControllerStateResponse(data);
         break;
+      default:
+        response = new RawResponse(data);
     }
 
     if (this.showRequestResponse) {
