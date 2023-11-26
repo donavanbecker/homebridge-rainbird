@@ -1,7 +1,7 @@
 {
   "displayName": "Rainbird",
   "name": "homebridge-rainbird",
-  "version": "24.1.0",
+  "version": "1.11.2",
   "description": "The [Homebridge](https://homebridge.io) Rainbird plugin allows you to access your [Rainbird](https://rainbird.com) device(s) from HomeKit.",
   "author": "donavanbecker",
   "license": "Apache-2.0",
@@ -14,7 +14,7 @@
     "url": "https://github.com/donavanbecker/homebridge-rainbird/issues"
   },
   "engines": {
-    "homebridge": "^1.6.1",
+    "homebridge": "^1.7.0",
     "node": "^16.20.2 || ^18.17.1 || ^20.5.1"
   },
   "main": "dist/index.js",
