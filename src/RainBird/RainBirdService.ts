@@ -541,19 +541,13 @@ export class RainBirdService extends events.EventEmitter {
     });
     state.runningZoneIndex = 0;
 
-    const remainingZones = page0[4];
-    if (remainingZones > 0) {
-      const page2 = (await this._client.getProgramZoneState(2)).toBuffer();
-
-      let offset = 2;
-      for (let i = 0; i < remainingZones; i++) {
-        state.zones.push({
-          id: page2[offset + 1],
-          timeRemaining: page2.readUInt16LE(offset + 2),
-          running: false,
-        });
-        offset += 6;
-      }
+    const pendingZones = await this.getRainBirdStateME3PendingZones(page0[4]);
+    for (const pendingZone of pendingZones) {
+      state.zones.push({
+        id: pendingZone[1],
+        timeRemaining: pendingZone.readUInt16LE(2),
+        running: false,
+      });
     }
 
     if (page0[2] > 3) {
@@ -564,12 +558,39 @@ export class RainBirdService extends events.EventEmitter {
       (total, zone) => total + zone.timeRemaining!, 0,
     );
     state.program = {
-      id: page0[2],
+      id: page1[2],
       timeRemaining: totalTimeRemaining,
       running: isRunning,
     };
 
     return state;
+  }
+
+  private async getRainBirdStateME3PendingZones(pendingZones: number): Promise<Buffer[]> {
+    const zones: Buffer[] = [];
+    if (pendingZones === 0) {
+      return zones;
+    }
+
+    let pageId = 2;
+    while (pageId >= 2) {
+      const page = (await this._client.getProgramZoneState(pageId)).toBuffer();
+      const pageZones = Math.min(pendingZones, 8);
+      let offset = 2;
+      for (let i = 0; i < pageZones; i++) {
+        const zone = Buffer.from(page.subarray(offset, offset + 6));
+        zones.push(zone);
+        offset += 6;
+      }
+
+      pendingZones -= 8;
+      if (pendingZones > 0) {
+        pageId++;
+      } else {
+        pageId = 0;
+      }
+    }
+    return zones;
   }
 
   private async getRainBirdStateRZXe(page0: Buffer, setPointReached: boolean): Promise<RainBirdState> {
