@@ -558,7 +558,7 @@ export class RainBirdService extends events.EventEmitter {
       (total, zone) => total + zone.timeRemaining!, 0,
     );
     state.program = {
-      id: page1[2],
+      id: page1[2] - 1,
       timeRemaining: totalTimeRemaining,
       running: isRunning,
     };
