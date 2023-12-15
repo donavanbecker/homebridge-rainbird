@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. This project uses [Semantic Versioning](https://semver.org/)
 
+## [Version 1.11.3](https://github.com/donavanbecker/homebridge-rainbird/releases/tag/v1.11.3) (2023-12-15)
+
+### What's Changed
+- Fixed Programs are not aligned between Homebridge and the Rainbird, [#502](https://github.com/donavanbecker/homebridge-rainbird/issues/502)
+- Fix Program ID for ME3
+- Fix issue with determining available zones, [#510](https://github.com/donavanbecker/homebridge-rainbird/issues/510)
+- Housekeeping and updated dependencies.
+
+**Full Changelog**: https://github.com/donavanbecker/homebridge-rainbird/compare/v1.11.2...v1.11.3
+
 ## [Version 1.11.2](https://github.com/donavanbecker/homebridge-rainbird/releases/tag/v1.11.2) (2023-11-26)
 
 ### What's Changed

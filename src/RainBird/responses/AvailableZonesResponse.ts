@@ -12,8 +12,8 @@ export class AvailableZonesResponse extends Response {
     for (let i = 0; i < 32; i++) {
       if ((zones & 1) === 1) {
         this._zones.push(i + 1);
-        zones = zones >>> 1;
       }
+      zones = zones >>> 1;
     }
   }
 
