@@ -1,23 +1,16 @@
-
-/* eslint-disable no-undef */
-/* eslint-disable @typescript-eslint/no-var-requires */
-'use strict';
-
-const { HomebridgePluginUiServer } = require('@homebridge/plugin-ui-utils');
-const fs = require('fs');
+/* eslint-disable no-console */
+import { HomebridgePluginUiServer } from '@homebridge/plugin-ui-utils';
+import fs from 'fs';
 
 class PluginUiServer extends HomebridgePluginUiServer {
   constructor() {
     super();
-
     /*
       A native method getCachedAccessories() was introduced in config-ui-x v4.37.0
       The following is for users who have a lower version of config-ui-x
     */
-
-    this.onRequest('/getCachedAccessories', async () => {
+    this.onRequest('getCachedAccessories', () => {
       try {
-        // Define the plugin and create the array to return
         const plugin = 'homebridge-rainbird';
         const devicesToReturn = [];
 
@@ -26,18 +19,17 @@ class PluginUiServer extends HomebridgePluginUiServer {
 
         // Check the file exists
         if (fs.existsSync(accFile)) {
-          // Read the cached accessories file
-          let cachedAccessories = await fs.promises.readFile(accFile);
+          // read the cached accessories file
+          const cachedAccessories: any[] = JSON.parse(fs.readFileSync(accFile, 'utf8'));
 
-          // Parse the JSON
-          cachedAccessories = JSON.parse(cachedAccessories);
-
-          // We only want the accessories for this plugin
-          cachedAccessories
-            .filter(accessory => accessory.plugin === plugin)
-            .forEach(accessory => devicesToReturn.push(accessory));
+          cachedAccessories.forEach((accessory: any) => {
+            // Check the accessory is from this plugin
+            if (accessory.plugin === plugin) {
+              // Add the cached accessory to the array
+              devicesToReturn.push(accessory.accessory as never);
+            }
+          });
         }
-
         // Return the array
         return devicesToReturn;
       } catch (err) {
@@ -49,4 +41,8 @@ class PluginUiServer extends HomebridgePluginUiServer {
   }
 }
 
-(() => new PluginUiServer())();
+function startPluginUiServer(): PluginUiServer {
+  return new PluginUiServer();
+}
+
+startPluginUiServer();

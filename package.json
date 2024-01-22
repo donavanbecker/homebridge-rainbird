@@ -15,16 +15,19 @@
   },
   "engines": {
     "homebridge": "^1.7.0",
-    "node": "^16.20.2 || ^18.17.1 || ^20.5.1"
+    "node": "^18 || ^20"
   },
   "main": "dist/index.js",
   "scripts": {
     "check": "npm install && npm outdated",
     "update": "ncu -u && npm update && npm install",
+    "update dependencies": "npm run check && npm run update",
     "lint": "eslint src/**.ts",
-    "watch": "npm run build && npm link && nodemon",
+    "jlint": "eslint homebridge-ui/public/**.mjs",
+    "watch": "npm run build && npm run plugin-ui && npm link && nodemon",
+    "plugin-ui": "rsync ./src/homebridge-ui/public/index.html ./dist/homebridge-ui/public/",
     "build": "rimraf ./dist && tsc",
-    "prepublishOnly": "npm run lint && npm run build",
+    "prepublishOnly": "npm run lint && npm run build && npm run plugin-ui ",
     "postpublish": "npm run clean",
     "clean": "rimraf ./dist",
     "test": "eslint src/**.ts"
