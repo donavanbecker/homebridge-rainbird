@@ -23,17 +23,17 @@ export class StopIrrigationSwitch extends DeviceBase {
     const name = 'Stop Irrigation';
     this.debugLog(`Load Switch Service for ${name}`);
     this.stopIrrigationSwitch = {
-      service: this.accessory.getService(this.platform.Service.Switch) ?? this.accessory.addService(this.platform.Service.Switch),
+      service: this.accessory.getService(this.hap.Service.Switch) ?? this.accessory.addService(this.hap.Service.Switch),
       state: false,
     };
 
     // Add Switch's Characteristics
     this.stopIrrigationSwitch.service
-      .setCharacteristic(this.platform.Characteristic.On, false)
-      .setCharacteristic(this.platform.Characteristic.Name, name);
+      .setCharacteristic(this.hap.Characteristic.On, false)
+      .setCharacteristic(this.hap.Characteristic.Name, name);
 
     this.stopIrrigationSwitch.service
-      .getCharacteristic(this.platform.Characteristic.On)
+      .getCharacteristic(this.hap.Characteristic.On)
       .onGet(() => {
         this.rainbird!.refreshStatus();
         return this.stopIrrigationSwitch.state;
@@ -78,7 +78,7 @@ export class StopIrrigationSwitch extends DeviceBase {
     if (this.stopIrrigationSwitch.state === undefined) {
       this.debugLog(`${this.constructor.name}: ${this.accessory.displayName} On: ${this.stopIrrigationSwitch.state}`);
     } else {
-      this.stopIrrigationSwitch.service.updateCharacteristic(this.platform.Characteristic.On, this.stopIrrigationSwitch.state);
+      this.stopIrrigationSwitch.service.updateCharacteristic(this.hap.Characteristic.On, this.stopIrrigationSwitch.state);
       this.debugLog(`${this.constructor.name}: ${this.accessory.displayName} updateCharacteristic On: ${this.stopIrrigationSwitch.state}`);
     }
   }

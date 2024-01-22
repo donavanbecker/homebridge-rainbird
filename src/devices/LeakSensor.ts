@@ -6,6 +6,7 @@ import { DevicesConfig } from '../settings';
 import { DeviceBase } from './DeviceBase';
 
 export class LeakSensor extends DeviceBase {
+  // Service
   private leakSensor!: {
     service: Service;
     LeakDetected: CharacteristicValue;
@@ -24,17 +25,17 @@ export class LeakSensor extends DeviceBase {
     // Leak Sensor Service
     this.debugLog('Configure Leak Sensor Service');
     this.leakSensor = {
-      service: this.accessory.getService(this.platform.Service.LeakSensor) ?? this.accessory.addService(this.platform.Service.LeakSensor),
-      LeakDetected: this.platform.Characteristic.LeakDetected.LEAK_NOT_DETECTED,
+      service: this.accessory.getService(this.hap.Service.LeakSensor) ?? this.accessory.addService(this.hap.Service.LeakSensor),
+      LeakDetected: this.hap.Characteristic.LeakDetected.LEAK_NOT_DETECTED,
     };
 
     // Add Leak Sensor's Characteristics
     this.leakSensor.service
-      .setCharacteristic(this.platform.Characteristic.LeakDetected, this.platform.Characteristic.LeakDetected.LEAK_NOT_DETECTED)
-      .setCharacteristic(this.platform.Characteristic.Name, `${model} Leak Sensor`)
-      .setCharacteristic(this.platform.Characteristic.StatusFault, this.platform.Characteristic.StatusFault.NO_FAULT);
+      .setCharacteristic(this.hap.Characteristic.LeakDetected, this.hap.Characteristic.LeakDetected.LEAK_NOT_DETECTED)
+      .setCharacteristic(this.hap.Characteristic.Name, `${model} Leak Sensor`)
+      .setCharacteristic(this.hap.Characteristic.StatusFault, this.hap.Characteristic.StatusFault.NO_FAULT);
 
-    this.leakSensor.service.getCharacteristic(this.platform.Characteristic.LeakDetected).onGet(() => {
+    this.leakSensor.service.getCharacteristic(this.hap.Characteristic.LeakDetected).onGet(() => {
       this.rainbird!.refreshStatus();
       return this.leakSensor.LeakDetected;
     });
@@ -54,15 +55,15 @@ export class LeakSensor extends DeviceBase {
 
   parseStatus() {
     this.leakSensor.LeakDetected = this.rainbird!.rainSetPointReached
-      ? this.platform.Characteristic.LeakDetected.LEAK_DETECTED
-      : this.platform.Characteristic.LeakDetected.LEAK_NOT_DETECTED;
+      ? this.hap.Characteristic.LeakDetected.LEAK_DETECTED
+      : this.hap.Characteristic.LeakDetected.LEAK_NOT_DETECTED;
   }
 
   updateHomeKitCharacteristics() {
     if (this.leakSensor.LeakDetected === undefined) {
       this.debugLog(`${this.constructor.name}: ${this.accessory.displayName} LeakDetected: ${this.leakSensor.LeakDetected}`);
     } else {
-      this.leakSensor.service.updateCharacteristic(this.platform.Characteristic.LeakDetected, this.leakSensor.LeakDetected);
+      this.leakSensor.service.updateCharacteristic(this.hap.Characteristic.LeakDetected, this.leakSensor.LeakDetected);
       this.debugLog(`${this.constructor.name}: ${this.accessory.displayName} updateCharacteristic LeakDetected: ${this.leakSensor.LeakDetected}`);
     }
   }

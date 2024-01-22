@@ -5,6 +5,7 @@ import { DevicesConfig } from '../settings';
 import { DeviceBase } from './DeviceBase';
 
 export class DelayIrrigationSwitch extends DeviceBase {
+  // Service
   private service: Service;
 
   constructor(
@@ -18,15 +19,15 @@ export class DelayIrrigationSwitch extends DeviceBase {
     // Delay Irrigation Switch Service
     const name = 'Delay Irrigation';
     this.debugLog(`Load Switch Service for ${name}`);
-    this.service = this.accessory.getService(this.platform.Service.Switch) ?? this.accessory.addService(this.platform.Service.Switch);
+    this.service = this.accessory.getService(this.hap.Service.Switch) ?? this.accessory.addService(this.hap.Service.Switch);
 
     // Add Switch's Characteristics
     this.service
-      .setCharacteristic(this.platform.Characteristic.On, false)
-      .setCharacteristic(this.platform.Characteristic.Name, name);
+      .setCharacteristic(this.hap.Characteristic.On, false)
+      .setCharacteristic(this.hap.Characteristic.Name, name);
 
     this.service
-      .getCharacteristic(this.platform.Characteristic.On)
+      .getCharacteristic(this.hap.Characteristic.On)
       .onGet(async () => {
         const state = await this.rainbird!.getIrrigatinDelay() > 0;
         this.debugLog(`${this.constructor.name}: ${this.accessory.displayName} On: ${state}`);
@@ -51,7 +52,7 @@ export class DelayIrrigationSwitch extends DeviceBase {
    */
   private async updateHomeKitCharacteristics(): Promise<void> {
     const state = await this.rainbird!.getIrrigatinDelay() > 0;
-    this.service.updateCharacteristic(this.platform.Characteristic.On, state);
+    this.service.updateCharacteristic(this.hap.Characteristic.On, state);
     this.debugLog(`${this.constructor.name}: ${this.accessory.displayName} updateCharacteristic On: ${state}`);
   }
 }

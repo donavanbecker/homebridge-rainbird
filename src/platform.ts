@@ -1,4 +1,4 @@
-import { API, DynamicPlatformPlugin, Logger, PlatformAccessory, Service, Characteristic } from 'homebridge';
+import { API, DynamicPlatformPlugin, PlatformAccessory, Logging } from 'homebridge';
 import { RainBirdService } from 'rainbird';
 import { PLATFORM_NAME, PLUGIN_NAME, RainbirdPlatformConfig, DevicesConfig } from './settings';
 import { IrrigationSystem } from './devices/IrrigationSystem';
@@ -8,6 +8,7 @@ import { ProgramSwitch } from './devices/ProgramSwitch';
 import { StopIrrigationSwitch } from './devices/StopIrrigationSwitch';
 import { DelayIrrigationSwitch } from './devices/DelayIrrigationSwitch';
 import { ZoneValve } from './devices/ZoneValve';
+import { HAP } from 'homebridge/lib/api';
 
 /**
  * HomebridgePlatform
@@ -15,29 +16,34 @@ import { ZoneValve } from './devices/ZoneValve';
  * parse the user config and discover/register accessories with Homebridge.
  */
 export class RainbirdPlatform implements DynamicPlatformPlugin {
-  public readonly Service: typeof Service = this.api.hap.Service;
-  public readonly Characteristic: typeof Characteristic = this.api.hap.Characteristic;
+  public accessories: PlatformAccessory[];
+  public readonly api: API;
+  public readonly log: Logging;
+  protected readonly hap: HAP;
 
-  // this is used to track restored cached accessories
-  public readonly accessories: PlatformAccessory[] = [];
-
-  version = process.env.npm_package_version!;
   public sensorData = [];
+  config!: RainbirdPlatformConfig;
   platformLogging!: string;
   debugMode!: boolean;
 
-  constructor(public readonly log: Logger, public readonly config: RainbirdPlatformConfig, public readonly api: API) {
-    this.logs();
-    this.debugLog(`Finished initializing platform: ${this.config.name}`);
+  constructor(log: Logging, config: RainbirdPlatformConfig, api: API) {
+    this.accessories = [];
+    this.api = api;
+    this.hap = this.api.hap;
+    this.log = log;
     // only load if configured
-    if (!this.config) {
+    if (!config) {
       return;
     }
 
-    // HOOBS notice
-    if (__dirname.includes('hoobs')) {
-      this.warnLog('This plugin has not been tested under HOOBS, it is highly recommended that ' + 'you switch to Homebridge: https://git.io/Jtxb0');
-    }
+    // Plugin options into our config variables.
+    this.config = {
+      platform: 'RainbirdPlatform',
+      devices: config.devices as Array<DevicesConfig>,
+      options: config.options as Record<string, never>,
+    };
+    this.logs();
+    this.debugLog(`Finished initializing platform: ${this.config.name}`);
 
     // verify the config
     try {
@@ -170,8 +176,8 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
       const irrigationAccessory = this.createIrrigationSystem(device, rainbird);
       this.createLeakSensor(device, rainbird);
       for (const zoneId of metaData.zones) {
-        const configured = (await irrigationAccessory)!.context.configured[zoneId] ?? this.Characteristic.IsConfigured.CONFIGURED;
-        if (configured === this.Characteristic.IsConfigured.CONFIGURED) {
+        const configured = (await irrigationAccessory)!.context.configured[zoneId] ?? this.hap.Characteristic.IsConfigured.CONFIGURED;
+        if (configured === this.hap.Characteristic.IsConfigured.CONFIGURED) {
           this.createZoneValve(device, rainbird, zoneId);
           this.createContactSensor(device, rainbird, zoneId);
         }

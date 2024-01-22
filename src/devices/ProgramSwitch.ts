@@ -23,15 +23,15 @@ export class ProgramSwitch extends DeviceBase {
     const name = `Program ${accessory.context.programId}`;
     this.debugLog(`Load Switch Service for ${name}`);
     this.programSwitch = {
-      service: this.accessory.getService(this.platform.Service.Switch) ?? this.accessory.addService(this.platform.Service.Switch),
+      service: this.accessory.getService(this.hap.Service.Switch) ?? this.accessory.addService(this.hap.Service.Switch),
       state: false,
     };
 
     // Add Contact Sensor's Characteristics
-    this.programSwitch.service.setCharacteristic(this.platform.Characteristic.On, false).setCharacteristic(this.platform.Characteristic.Name, name);
+    this.programSwitch.service.setCharacteristic(this.hap.Characteristic.On, false).setCharacteristic(this.hap.Characteristic.Name, name);
 
     this.programSwitch.service
-      .getCharacteristic(this.platform.Characteristic.On)
+      .getCharacteristic(this.hap.Characteristic.On)
       .onGet(() => {
         this.rainbird!.refreshStatus();
         return this.programSwitch.state;
@@ -83,7 +83,7 @@ export class ProgramSwitch extends DeviceBase {
     if (this.programSwitch.state === undefined) {
       this.debugLog(`${this.constructor.name}: ${this.accessory.displayName} On: ${this.programSwitch.state}`);
     } else {
-      this.programSwitch.service.updateCharacteristic(this.platform.Characteristic.On, this.programSwitch.state);
+      this.programSwitch.service.updateCharacteristic(this.hap.Characteristic.On, this.programSwitch.state);
       this.debugLog(`${this.constructor.name}: ${this.accessory.displayName} updateCharacteristic On: ${this.programSwitch.state}`);
     }
   }
