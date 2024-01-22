@@ -1,6 +1,6 @@
 <span align="center">
 
-<a href="https://github.com/homebridge/verified/blob/master/verified-plugins.json"><img alt="homebridge-verified" src="https://raw.githubusercontent.com/donavanbecker/homebridge-rainbird/latest/rainbird/Homebridge_x_Rainbird.svg?sanitize=true" width="500px"></a>
+<a href="https://github.com/homebridge/verified/blob/master/verified-plugins.json"><img alt="homebridge-verified" src="https://raw.githubusercontent.com/donavanbecker/homebridge-rainbird/latest/branding/Homebridge_x_Rainbird.svg?sanitize=true" width="500px"></a>
 
 # Homebridge Rainbird
 
