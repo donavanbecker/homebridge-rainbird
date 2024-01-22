@@ -1,14 +1,13 @@
-import { API, DynamicPlatformPlugin, PlatformAccessory, Logging } from 'homebridge';
+import { API, DynamicPlatformPlugin, PlatformAccessory, Logging, HAP } from 'homebridge';
 import { RainBirdService } from 'rainbird';
-import { PLATFORM_NAME, PLUGIN_NAME, RainbirdPlatformConfig, DevicesConfig } from './settings';
-import { IrrigationSystem } from './devices/IrrigationSystem';
-import { ContactSensor } from './devices/ContactSensor';
-import { LeakSensor } from './devices/LeakSensor';
-import { ProgramSwitch } from './devices/ProgramSwitch';
-import { StopIrrigationSwitch } from './devices/StopIrrigationSwitch';
-import { DelayIrrigationSwitch } from './devices/DelayIrrigationSwitch';
-import { ZoneValve } from './devices/ZoneValve';
-import { HAP } from 'homebridge/lib/api';
+import { PLATFORM_NAME, PLUGIN_NAME, RainbirdPlatformConfig, DevicesConfig } from './settings.js';
+import { IrrigationSystem } from './devices/IrrigationSystem.js';
+import { ContactSensor } from './devices/ContactSensor.js';
+import { LeakSensor } from './devices/LeakSensor.js';
+import { ProgramSwitch } from './devices/ProgramSwitch.js';
+import { StopIrrigationSwitch } from './devices/StopIrrigationSwitch.js';
+import { DelayIrrigationSwitch } from './devices/DelayIrrigationSwitch.js';
+import { ZoneValve } from './devices/ZoneValve.js';
 
 /**
  * HomebridgePlatform
