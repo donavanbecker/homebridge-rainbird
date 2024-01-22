@@ -8,7 +8,6 @@ import { ProgramSwitch } from './devices/ProgramSwitch';
 import { StopIrrigationSwitch } from './devices/StopIrrigationSwitch';
 import { DelayIrrigationSwitch } from './devices/DelayIrrigationSwitch';
 import { ZoneValve } from './devices/ZoneValve';
-import superStringify from 'super-stringify';
 
 /**
  * HomebridgePlatform
@@ -45,8 +44,8 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
       this.verifyConfig();
       this.debugLog('Config OK');
     } catch (e: any) {
-      this.errorLog(superStringify(e.message));
-      this.debugLog(superStringify(e));
+      this.errorLog(JSON.stringify(e.message));
+      this.debugLog(JSON.stringify(e));
       return;
     }
 
@@ -59,8 +58,8 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
       try {
         await this.discoverDevices();
       } catch (e: any) {
-        this.errorLog(`Failed to Discover Devices, ${superStringify(e.message)}`);
-        this.debugLog(superStringify(e));
+        this.errorLog(`Failed to Discover Devices, ${JSON.stringify(e.message)}`);
+        this.debugLog(JSON.stringify(e));
       }
     });
   }
@@ -161,12 +160,12 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
         syncTime: device.syncTime!,
       });
       const metaData = await rainbird!.init();
-      this.debugLog(superStringify(metaData));
+      this.debugLog(JSON.stringify(metaData));
 
       // Display device details
       this.infoLog(
         `Model: ${metaData.model}, [Version: ${metaData.version}, Serial Number: ${metaData.serialNumber},` +
-          ` Zones: ${superStringify(metaData.zones)}]`,
+          ` Zones: ${JSON.stringify(metaData.zones)}]`,
       );
       const irrigationAccessory = this.createIrrigationSystem(device, rainbird);
       this.createLeakSensor(device, rainbird);

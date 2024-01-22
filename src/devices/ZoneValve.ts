@@ -1,7 +1,6 @@
 import { Service, PlatformAccessory, CharacteristicValue, UnknownContext } from 'homebridge';
 import { RainbirdPlatform } from '../platform';
 import { RainBirdService } from '../RainBird/RainBirdService';
-import superStringify from 'super-stringify';
 import { fromEvent, interval, Subject } from 'rxjs';
 import { debounceTime, skipWhile, tap } from 'rxjs/operators';
 import { DevicesConfig } from '../settings';
@@ -131,9 +130,9 @@ export class ZoneValve extends DeviceBase {
         try {
           await this.pushChanges(zone);
         } catch (e: any) {
-          this.debugLog(`${this.constructor.name}: ${this.accessory.displayName} - ${superStringify(e.messsage)}`);
+          this.debugLog(`${this.constructor.name}: ${this.accessory.displayName} - ${JSON.stringify(e.messsage)}`);
           if (this.deviceLogging.includes('debug')) {
-            this.debugLog(`${this.constructor.name}: ${this.accessory.displayName} - ${superStringify(e)}`);
+            this.debugLog(`${this.constructor.name}: ${this.accessory.displayName} - ${JSON.stringify(e)}`);
           }
         }
         this.zoneUpdateInProgress = false;
