@@ -3,7 +3,7 @@ import { RainbirdPlatform } from '../platform.js';
 import { RainBirdService } from 'rainbird';
 import { fromEvent } from 'rxjs';
 import { DevicesConfig } from '../settings.js';
-import { DeviceBase } from './DeviceBase';
+import { DeviceBase } from './DeviceBase.js';
 
 /**
  * Platform Accessory
