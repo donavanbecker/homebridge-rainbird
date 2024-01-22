@@ -3,10 +3,21 @@
   "name": "homebridge-rainbird",
   "version": "1.11.3",
   "description": "The Rainbird plugin allows you to access your Rainbird device(s) from HomeKit.",
+  "homepage": "https://github.com/donavanbecker/homebridge-rainbird#readme",
   "author": {
-    "name": "donavanbecker",
-    "url": "https://github.com/donavanbecker"
+      "name": "donavanbecker",
+      "url": "https://github.com/donavanbecker"
   },
+  "contributors":[
+    {
+      "name": "donavanbecker",
+      "url": "https://github.com/donavanbecker"
+    },
+    {
+      "name": "mantorok1",
+      "url": "https://github.com/mantorok1"
+    }
+  ],
   "type": "module",
   "license": "ISC",
   "icon": "https://raw.githubusercontent.com/donavanbecker/homebridge-rainbird/beta-1.11.3/branding/icon.png",
@@ -50,10 +61,6 @@
       "url": "https://paypal.me/Mantorok1"
     }
   ],
-  "publishConfig": {
-    "access": "public",
-    "@donavanbecker:registry": "https://npm.pkg.github.com/"
-  },
   "keywords": [
     "homebridge-plugin",
     "irrigation",
@@ -62,14 +69,13 @@
   ],
   "dependencies": {
     "@homebridge/plugin-ui-utils": "^1.0.1",
-    "rainbird": "^0.2.0",
-    "axios": "1.6.5",
+    "rainbird": "^1.0.0-beta.3",
     "rxjs": "^7.8.1"
   },
   "devDependencies": {
     "@types/node": "^20.11.5",
-    "@typescript-eslint/eslint-plugin": "^6.19.0",
-    "@typescript-eslint/parser": "^6.19.0",
+    "@typescript-eslint/eslint-plugin": "^6.19.1",
+    "@typescript-eslint/parser": "^6.19.1",
     "eslint": "^8.56.0",
     "homebridge": "^1.7.0",
     "nodemon": "^3.0.3",

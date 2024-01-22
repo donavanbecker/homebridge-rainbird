@@ -160,7 +160,6 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
         address: device.ipaddress!,
         password: device.password!,
         refreshRate: this.config.options!.refreshRate,
-        log: this.log,
         showRequestResponse: device.showRequestResponse!,
         syncTime: device.syncTime!,
       });
