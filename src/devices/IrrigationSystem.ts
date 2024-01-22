@@ -1,10 +1,10 @@
 import { Service, PlatformAccessory, CharacteristicValue } from 'homebridge';
-import { RainbirdPlatform } from '../platform';
+import { RainbirdPlatform } from '../platform.js';
 import { RainBirdService } from 'rainbird';
 import { Subject, fromEvent, interval } from 'rxjs';
 import { debounceTime, skipWhile, tap } from 'rxjs/operators';
-import { DevicesConfig } from '../settings';
-import { DeviceBase } from './DeviceBase';
+import { DevicesConfig } from '../settings.js';
+import { DeviceBase } from './DeviceBase.js';
 
 /**
  * Platform Accessory

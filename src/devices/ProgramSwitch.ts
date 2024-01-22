@@ -1,9 +1,9 @@
 import { Service, PlatformAccessory, CharacteristicValue } from 'homebridge';
-import { RainbirdPlatform } from '../platform';
+import { RainbirdPlatform } from '../platform.js';
 import { RainBirdService } from 'rainbird';
 import { fromEvent } from 'rxjs';
-import { DevicesConfig } from '../settings';
-import { DeviceBase } from './DeviceBase';
+import { DevicesConfig } from '../settings.js';
+import { DeviceBase } from './DeviceBase.js';
 
 export class ProgramSwitch extends DeviceBase {
   private programSwitch!: {

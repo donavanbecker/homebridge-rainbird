@@ -1,7 +1,7 @@
 import { API, HAP, Logging, PlatformAccessory } from 'homebridge';
-import { RainbirdPlatform } from '../platform';
+import { RainbirdPlatform } from '../platform.js';
 import { RainBirdService } from 'rainbird';
-import { DevicesConfig, RainbirdPlatformConfig } from '../settings';
+import { DevicesConfig, RainbirdPlatformConfig } from '../settings.js';
 
 export abstract class DeviceBase {
   public readonly api: API;

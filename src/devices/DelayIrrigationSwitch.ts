@@ -1,8 +1,8 @@
 import { Service, PlatformAccessory, CharacteristicValue } from 'homebridge';
-import { RainbirdPlatform } from '../platform';
+import { RainbirdPlatform } from '../platform.js';
 import { RainBirdService } from 'rainbird';
-import { DevicesConfig } from '../settings';
-import { DeviceBase } from './DeviceBase';
+import { DevicesConfig } from '../settings.js';
+import { DeviceBase } from './DeviceBase.js';
 
 export class DelayIrrigationSwitch extends DeviceBase {
   // Service

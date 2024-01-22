@@ -1,10 +1,10 @@
 import { Service, PlatformAccessory, CharacteristicValue, UnknownContext } from 'homebridge';
-import { RainbirdPlatform } from '../platform';
+import { RainbirdPlatform } from '../platform.js';
 import { RainBirdService } from 'rainbird';
 import { fromEvent, interval, Subject } from 'rxjs';
 import { debounceTime, skipWhile, tap } from 'rxjs/operators';
-import { DevicesConfig } from '../settings';
-import { DeviceBase } from './DeviceBase';
+import { DevicesConfig } from '../settings.js';
+import { DeviceBase } from './DeviceBase.js';
 
 export class ZoneValve extends DeviceBase {
   private zoneId: number;
