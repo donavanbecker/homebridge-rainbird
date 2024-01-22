@@ -1,5 +1,5 @@
 import { API, DynamicPlatformPlugin, Logger, PlatformAccessory, Service, Characteristic } from 'homebridge';
-import { RainBirdService } from './RainBird/RainBirdService';
+import { RainBirdService } from 'rainbird';
 import { PLATFORM_NAME, PLUGIN_NAME, RainbirdPlatformConfig, DevicesConfig } from './settings';
 import { IrrigationSystem } from './devices/IrrigationSystem';
 import { ContactSensor } from './devices/ContactSensor';

@@ -1,6 +1,6 @@
 import { Service, PlatformAccessory, CharacteristicValue } from 'homebridge';
 import { RainbirdPlatform } from '../platform';
-import { RainBirdService } from '../RainBird/RainBirdService';
+import { RainBirdService } from 'rainbird';
 import { DevicesConfig } from '../settings';
 import { DeviceBase } from './DeviceBase';
 

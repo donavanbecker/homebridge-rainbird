@@ -1,6 +1,6 @@
 import { PlatformAccessory } from 'homebridge';
 import { RainbirdPlatform } from '../platform';
-import { RainBirdService } from '../RainBird/RainBirdService';
+import { RainBirdService } from 'rainbird';
 import { DevicesConfig } from '../settings';
 
 export abstract class DeviceBase {
