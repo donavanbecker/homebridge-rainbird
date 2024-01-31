@@ -1,7 +1,7 @@
 {
   "displayName": "Rainbird",
   "name": "homebridge-rainbird",
-  "version": "1.11.3",
+  "version": "2.0.0",
   "description": "The Rainbird plugin allows you to access your Rainbird device(s) from HomeKit.",
   "homepage": "https://github.com/donavanbecker/homebridge-rainbird#readme",
   "author": {
@@ -69,17 +69,17 @@
   ],
   "dependencies": {
     "@homebridge/plugin-ui-utils": "^1.0.1",
-    "rainbird": "^1.0.0-beta.6",
+    "rainbird": "^1.0.0",
     "rxjs": "^7.8.1"
   },
   "devDependencies": {
-    "@types/node": "^20.11.5",
-    "@typescript-eslint/eslint-plugin": "^6.19.1",
-    "@typescript-eslint/parser": "^6.19.1",
+    "@types/node": "^20.11.13",
+    "@typescript-eslint/eslint-plugin": "^6.20.0",
+    "@typescript-eslint/parser": "^6.20.0",
     "eslint": "^8.56.0",
     "homebridge": "^1.7.0",
     "nodemon": "^3.0.3",
-    "npm-check-updates": "^16.14.12",
+    "npm-check-updates": "^16.14.14",
     "rimraf": "^5.0.5",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3",
