@@ -1,9 +1,14 @@
-import { PlatformAccessory } from 'homebridge';
-import { RainbirdPlatform } from '../platform';
-import { RainBirdService } from '../RainBird/RainBirdService';
-import { DevicesConfig } from '../settings';
+import { API, HAP, Logging, PlatformAccessory } from 'homebridge';
+import { RainbirdPlatform } from '../platform.js';
+import { RainBirdService } from 'rainbird';
+import { DevicesConfig, RainbirdPlatformConfig } from '../settings.js';
 
 export abstract class DeviceBase {
+  public readonly api: API;
+  public readonly log: Logging;
+  public readonly config!: RainbirdPlatformConfig;
+  protected readonly hap: HAP;
+  // Service
 
   // Config
   protected deviceLogging!: string;
@@ -15,17 +20,22 @@ export abstract class DeviceBase {
     protected device: DevicesConfig,
     protected rainbird: RainBirdService,
   ) {
+    this.api = this.platform.api;
+    this.log = this.platform.log;
+    this.config = this.platform.config;
+    this.hap = this.api.hap;
+
     this.logs(device);
     this.refreshRate(device);
 
     // Set accessory information
     accessory
-      .getService(this.platform.Service.AccessoryInformation)!
-      .setCharacteristic(this.platform.Characteristic.Manufacturer, 'RainBird')
-      .setCharacteristic(this.platform.Characteristic.Model, accessory.context.model ?? rainbird!.model)
-      .setCharacteristic(this.platform.Characteristic.SerialNumber, accessory.context.deviceID ?? rainbird!.serialNumber)
-      .setCharacteristic(this.platform.Characteristic.FirmwareRevision, accessory.context.FirmwareRevision ?? rainbird!.version)
-      .getCharacteristic(this.platform.Characteristic.FirmwareRevision)
+      .getService(this.hap.Service.AccessoryInformation)!
+      .setCharacteristic(this.hap.Characteristic.Manufacturer, 'RainBird')
+      .setCharacteristic(this.hap.Characteristic.Model, accessory.context.model ?? rainbird!.model)
+      .setCharacteristic(this.hap.Characteristic.SerialNumber, accessory.context.deviceID ?? rainbird!.serialNumber)
+      .setCharacteristic(this.hap.Characteristic.FirmwareRevision, accessory.context.FirmwareRevision ?? rainbird!.version)
+      .getCharacteristic(this.hap.Characteristic.FirmwareRevision)
       .updateValue(accessory.context.FirmwareRevision);
   }
 

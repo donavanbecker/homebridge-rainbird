@@ -3,6 +3,7 @@
   "pluginType": "platform",
   "singular": true,
   "customUi": true,
+  "customUiPath": "./dist/homebridge-ui",
   "headerDisplay": "The Homebridge [RainBird](https://rainbird.com) plugin allows you to access your RainBird Controller from HomeKit with [Homebridge](https://homebridge.io).",
   "footerDisplay": "Your RainBird account has been linked. Please raise any issues on our [project page](https://github.com/donavanbecker/homebridge-rainbird/issues).\n\nIf you would like to have other features added to this plugin fill out [Feature Request Form](https://github.com/donavanbecker/homebridge-rainbird/issues/new?assignees=&labels=&template=feature_request.md).",
   "schema": {

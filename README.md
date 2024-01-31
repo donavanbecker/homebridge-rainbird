@@ -1,6 +1,6 @@
 <span align="center">
 
-<a href="https://github.com/homebridge/verified/blob/master/verified-plugins.json"><img alt="homebridge-verified" src="https://raw.githubusercontent.com/donavanbecker/homebridge-rainbird/latest/rainbird/Homebridge_x_Rainbird.svg?sanitize=true" width="500px"></a>
+<a href="https://github.com/homebridge/verified/blob/master/verified-plugins.json"><img alt="homebridge-verified" src="https://raw.githubusercontent.com/donavanbecker/homebridge-rainbird/latest/branding/Homebridge_x_Rainbird.svg?sanitize=true" width="500px"></a>
 
 # Homebridge Rainbird
 
@@ -32,8 +32,8 @@ plugin allows you to access your RainBird Controller from HomeKit with
 
 ## Collaborators
 
- - [mantorok1](https://github.com/mantorok1)
-    - ##### Thanks for all your help!
+ - Main developer of the RaindBird API:
+      - [mantorok1](https://github.com/mantorok1)
 
 ## Compatiable Controllers
 
@@ -47,3 +47,7 @@ Any controller that supports the [RainBird LNK WiFi Module](https://www.rainbird
 - Using the RainBird app while the plugin is running can cause connectivity issues.
 - The RainBird LNK WiFi Module may not support "Band Steering" and WiFi Channel 13. Try not using these on your router if you are having connectivity issues.
 - Some models do not yet have support for displaying the time remaining. If its not working for your model please log a GitHub issue and we will try to add it with your help.
+
+## Libraries
+- [RainBird](https://github.com/donavanbecker/rainbird)
+  - Library used to comunicate with Rainbird Controllers.

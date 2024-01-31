@@ -1,9 +1,9 @@
-import { Service, PlatformAccessory, CharacteristicValue } from 'homebridge';
-import { RainbirdPlatform } from '../platform';
-import { RainBirdService } from '../RainBird/RainBirdService';
+import { Service, CharacteristicValue, PlatformAccessory } from 'homebridge';
+import { RainbirdPlatform } from '../platform.js';
+import { RainBirdService } from 'rainbird';
 import { fromEvent } from 'rxjs';
-import { DevicesConfig } from '../settings';
-import { DeviceBase } from './DeviceBase';
+import { DevicesConfig } from '../settings.js';
+import { DeviceBase } from './DeviceBase.js';
 
 /**
  * Platform Accessory
@@ -11,6 +11,7 @@ import { DeviceBase } from './DeviceBase';
  * Each accessory may expose multiple services of different service types.
  */
 export class ContactSensor extends DeviceBase {
+  // Service
   private contactSensor!: {
     service: Service;
     state: CharacteristicValue;
@@ -28,17 +29,17 @@ export class ContactSensor extends DeviceBase {
     const name = `Zone ${accessory.context.zoneId}`;
     this.debugLog(`Load Contact Sensor Service for ${name}`);
     this.contactSensor = {
-      service: this.accessory.getService(this.platform.Service.ContactSensor) ?? this.accessory.addService(this.platform.Service.ContactSensor),
-      state: this.platform.Characteristic.ContactSensorState.CONTACT_DETECTED,
+      service: this.accessory.getService(this.hap.Service.ContactSensor) ?? this.accessory.addService(this.hap.Service.ContactSensor),
+      state: this.hap.Characteristic.ContactSensorState.CONTACT_DETECTED,
     };
 
     // Add Contact Sensor's Characteristics
     this.contactSensor.service
-      .setCharacteristic(this.platform.Characteristic.ContactSensorState, this.platform.Characteristic.ContactSensorState.CONTACT_DETECTED)
-      .setCharacteristic(this.platform.Characteristic.Name, name)
-      .setCharacteristic(this.platform.Characteristic.StatusFault, this.platform.Characteristic.StatusFault.NO_FAULT);
+      .setCharacteristic(this.hap.Characteristic.ContactSensorState, this.hap.Characteristic.ContactSensorState.CONTACT_DETECTED)
+      .setCharacteristic(this.hap.Characteristic.Name, name)
+      .setCharacteristic(this.hap.Characteristic.StatusFault, this.hap.Characteristic.StatusFault.NO_FAULT);
 
-    this.contactSensor.service.getCharacteristic(this.platform.Characteristic.ContactSensorState).onGet(() => {
+    this.contactSensor.service.getCharacteristic(this.hap.Characteristic.ContactSensorState).onGet(() => {
       this.rainbird!.refreshStatus();
       return this.contactSensor.state;
     });
@@ -61,8 +62,8 @@ export class ContactSensor extends DeviceBase {
    */
   parseStatus() {
     this.contactSensor.state = this.rainbird!.isInUse(this.accessory.context.zoneId)
-      ? this.platform.Characteristic.ContactSensorState.CONTACT_NOT_DETECTED
-      : this.platform.Characteristic.ContactSensorState.CONTACT_DETECTED;
+      ? this.hap.Characteristic.ContactSensorState.CONTACT_NOT_DETECTED
+      : this.hap.Characteristic.ContactSensorState.CONTACT_DETECTED;
     this.debugLog(`${this.constructor.name}: ${this.accessory.displayName}, ContactSensorState: ${this.contactSensor.state}`);
   }
 
@@ -75,7 +76,7 @@ export class ContactSensor extends DeviceBase {
       this.debugLog(
         `${this.constructor.name} ${this.accessory.displayName} ContactSensorState: ${this.contactSensor.state}, ${this.accessory.context.zoneId}`);
     } else {
-      this.contactSensor.service.updateCharacteristic(this.platform.Characteristic.ContactSensorState, this.contactSensor.state);
+      this.contactSensor.service.updateCharacteristic(this.hap.Characteristic.ContactSensorState, this.contactSensor.state);
       this.debugLog(
         `${this.constructor.name} ${this.accessory.displayName} ContactSensorState: ${this.contactSensor.state}, ${this.accessory.context.zoneId}`);
     }

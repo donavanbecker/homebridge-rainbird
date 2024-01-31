@@ -26,5 +26,6 @@
   ],
   "[json]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"
-  }
+  },
+  "codeQL.githubDatabase.update": "never"
 }

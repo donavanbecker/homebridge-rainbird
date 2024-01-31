@@ -1,14 +1,13 @@
-import { API, DynamicPlatformPlugin, Logger, PlatformAccessory, Service, Characteristic } from 'homebridge';
-import { RainBirdService } from './RainBird/RainBirdService';
-import { PLATFORM_NAME, PLUGIN_NAME, RainbirdPlatformConfig, DevicesConfig } from './settings';
-import { IrrigationSystem } from './devices/IrrigationSystem';
-import { ContactSensor } from './devices/ContactSensor';
-import { LeakSensor } from './devices/LeakSensor';
-import { ProgramSwitch } from './devices/ProgramSwitch';
-import { StopIrrigationSwitch } from './devices/StopIrrigationSwitch';
-import { DelayIrrigationSwitch } from './devices/DelayIrrigationSwitch';
-import { ZoneValve } from './devices/ZoneValve';
-import superStringify from 'super-stringify';
+import { API, DynamicPlatformPlugin, PlatformAccessory, Logging, HAP } from 'homebridge';
+import { RainBirdService } from 'rainbird';
+import { PLATFORM_NAME, PLUGIN_NAME, RainbirdPlatformConfig, DevicesConfig } from './settings.js';
+import { IrrigationSystem } from './devices/IrrigationSystem.js';
+import { ContactSensor } from './devices/ContactSensor.js';
+import { LeakSensor } from './devices/LeakSensor.js';
+import { ProgramSwitch } from './devices/ProgramSwitch.js';
+import { StopIrrigationSwitch } from './devices/StopIrrigationSwitch.js';
+import { DelayIrrigationSwitch } from './devices/DelayIrrigationSwitch.js';
+import { ZoneValve } from './devices/ZoneValve.js';
 
 /**
  * HomebridgePlatform
@@ -16,37 +15,42 @@ import superStringify from 'super-stringify';
  * parse the user config and discover/register accessories with Homebridge.
  */
 export class RainbirdPlatform implements DynamicPlatformPlugin {
-  public readonly Service: typeof Service = this.api.hap.Service;
-  public readonly Characteristic: typeof Characteristic = this.api.hap.Characteristic;
+  public accessories: PlatformAccessory[];
+  public readonly api: API;
+  public readonly log: Logging;
+  protected readonly hap: HAP;
 
-  // this is used to track restored cached accessories
-  public readonly accessories: PlatformAccessory[] = [];
-
-  version = process.env.npm_package_version!;
   public sensorData = [];
+  config!: RainbirdPlatformConfig;
   platformLogging!: string;
   debugMode!: boolean;
 
-  constructor(public readonly log: Logger, public readonly config: RainbirdPlatformConfig, public readonly api: API) {
-    this.logs();
-    this.debugLog(`Finished initializing platform: ${this.config.name}`);
+  constructor(log: Logging, config: RainbirdPlatformConfig, api: API) {
+    this.accessories = [];
+    this.api = api;
+    this.hap = this.api.hap;
+    this.log = log;
     // only load if configured
-    if (!this.config) {
+    if (!config) {
       return;
     }
 
-    // HOOBS notice
-    if (__dirname.includes('hoobs')) {
-      this.warnLog('This plugin has not been tested under HOOBS, it is highly recommended that ' + 'you switch to Homebridge: https://git.io/Jtxb0');
-    }
+    // Plugin options into our config variables.
+    this.config = {
+      platform: 'RainbirdPlatform',
+      devices: config.devices as Array<DevicesConfig>,
+      options: config.options as Record<string, never>,
+    };
+    this.logs();
+    this.debugLog(`Finished initializing platform: ${this.config.name}`);
 
     // verify the config
     try {
       this.verifyConfig();
       this.debugLog('Config OK');
     } catch (e: any) {
-      this.errorLog(superStringify(e.message));
-      this.debugLog(superStringify(e));
+      this.errorLog(JSON.stringify(e.message));
+      this.debugLog(JSON.stringify(e));
       return;
     }
 
@@ -59,8 +63,8 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
       try {
         await this.discoverDevices();
       } catch (e: any) {
-        this.errorLog(`Failed to Discover Devices, ${superStringify(e.message)}`);
-        this.debugLog(superStringify(e));
+        this.errorLog(`Failed to Discover Devices, ${JSON.stringify(e.message)}`);
+        this.debugLog(JSON.stringify(e));
       }
     });
   }
@@ -156,23 +160,22 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
         address: device.ipaddress!,
         password: device.password!,
         refreshRate: this.config.options!.refreshRate,
-        log: this.log,
         showRequestResponse: device.showRequestResponse!,
         syncTime: device.syncTime!,
       });
       const metaData = await rainbird!.init();
-      this.debugLog(superStringify(metaData));
+      this.debugLog(JSON.stringify(metaData));
 
       // Display device details
       this.infoLog(
         `Model: ${metaData.model}, [Version: ${metaData.version}, Serial Number: ${metaData.serialNumber},` +
-          ` Zones: ${superStringify(metaData.zones)}]`,
+          ` Zones: ${JSON.stringify(metaData.zones)}]`,
       );
       const irrigationAccessory = this.createIrrigationSystem(device, rainbird);
       this.createLeakSensor(device, rainbird);
       for (const zoneId of metaData.zones) {
-        const configured = (await irrigationAccessory)!.context.configured[zoneId] ?? this.Characteristic.IsConfigured.CONFIGURED;
-        if (configured === this.Characteristic.IsConfigured.CONFIGURED) {
+        const configured = (await irrigationAccessory)!.context.configured[zoneId] ?? this.hap.Characteristic.IsConfigured.CONFIGURED;
+        if (configured === this.hap.Characteristic.IsConfigured.CONFIGURED) {
           this.createZoneValve(device, rainbird, zoneId);
           this.createContactSensor(device, rainbird, zoneId);
         }
