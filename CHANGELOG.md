@@ -2,12 +2,17 @@
 
 All notable changes to this project will be documented in this file. This project uses [Semantic Versioning](https://semver.org/)
 
+## [2.0.1](https://github.com/donavanbecker/homebridge-rainbird/releases/tag/v2.0.1) (2024-02-13)
+
+### What's Changed
+- Housekeeping and updated dependencies.
+
+**Full Changelog**: https://github.com/donavanbecker/homebridge-rainbird/compare/v2.0.0...v2.0.1
+
 ## [2.0.0](https://github.com/donavanbecker/homebridge-rainbird/releases/tag/v1.11.3) (2024-01-31)
 
 ### What's Changed
-#### Major Changes
 - Moved rainbird module components into a seperate repo: https://github.com/donavanbecker/rainbird
-#### Other Changes
 - Housekeeping and updated dependencies.
 
 **Full Changelog**: https://github.com/donavanbecker/homebridge-rainbird/compare/v1.11.3...v2.0.0

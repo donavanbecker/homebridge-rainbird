@@ -36,16 +36,13 @@
   "scripts": {
     "check": "npm install && npm outdated",
     "update": "ncu -u && npm update && npm install",
-    "update dependencies": "npm run check && npm run update",
-    "lint": "eslint src/**.ts",
-    "jlint": "eslint homebridge-ui/public/**.mjs",
+    "lint": "eslint src/**/*.ts",
     "watch": "npm run build && npm run plugin-ui && npm link && nodemon",
     "plugin-ui": "rsync ./src/homebridge-ui/public/index.html ./dist/homebridge-ui/public/",
     "build": "rimraf ./dist && tsc",
     "prepublishOnly": "npm run lint && npm run build && npm run plugin-ui ",
     "postpublish": "npm run clean",
-    "clean": "rimraf ./dist",
-    "test": "eslint src/**.ts"
+    "clean": "rimraf ./dist"
   },
   "funding": [
     {
@@ -73,13 +70,14 @@
     "rxjs": "^7.8.1"
   },
   "devDependencies": {
-    "@types/node": "^20.11.13",
-    "@typescript-eslint/eslint-plugin": "^6.20.0",
-    "@typescript-eslint/parser": "^6.20.0",
+    "@types/node": "^20.11.17",
+    "@typescript-eslint/eslint-plugin": "^7.0.1",
+    "@typescript-eslint/parser": "^7.0.1",
     "eslint": "^8.56.0",
     "homebridge": "^1.7.0",
+    "homebridge-config-ui-x": "^4.55.1",
     "nodemon": "^3.0.3",
-    "npm-check-updates": "^16.14.14",
+    "npm-check-updates": "^16.14.15",
     "rimraf": "^5.0.5",
     "ts-node": "^10.9.2",
     "typescript": "^5.3.3",

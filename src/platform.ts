@@ -8,6 +8,7 @@ import { ProgramSwitch } from './devices/ProgramSwitch.js';
 import { StopIrrigationSwitch } from './devices/StopIrrigationSwitch.js';
 import { DelayIrrigationSwitch } from './devices/DelayIrrigationSwitch.js';
 import { ZoneValve } from './devices/ZoneValve.js';
+import { readFileSync } from 'fs';
 
 /**
  * HomebridgePlatform
@@ -19,13 +20,20 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
   public readonly api: API;
   public readonly log: Logging;
   protected readonly hap: HAP;
+  public config!: RainbirdPlatformConfig;
 
   public sensorData = [];
-  config!: RainbirdPlatformConfig;
-  platformLogging!: string;
-  debugMode!: boolean;
 
-  constructor(log: Logging, config: RainbirdPlatformConfig, api: API) {
+  platformConfig!: RainbirdPlatformConfig['options'];
+  platformLogging!: RainbirdPlatformConfig['logging'];
+  debugMode!: boolean;
+  version!: string;
+
+  constructor(
+    log: Logging,
+    config: RainbirdPlatformConfig,
+    api: API,
+  ) {
     this.accessories = [];
     this.api = api;
     this.hap = this.api.hap;
@@ -38,21 +46,27 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
     // Plugin options into our config variables.
     this.config = {
       platform: 'RainbirdPlatform',
-      devices: config.devices as Array<DevicesConfig>,
-      options: config.options as Record<string, never>,
+      name: config.name,
+      devices: config.devices,
+      options: config.options,
     };
-    this.logs();
-    this.debugLog(`Finished initializing platform: ${this.config.name}`);
+    this.platformLogging = this.config.options?.logging ?? 'standard';
+    this.platformConfigOptions();
+    this.platformLogs();
+    this.getVersion();
+    this.debugLog(`Finished initializing platform: ${config.name}`);
 
     // verify the config
-    try {
-      this.verifyConfig();
-      this.debugLog('Config OK');
-    } catch (e: any) {
-      this.errorLog(JSON.stringify(e.message));
-      this.debugLog(JSON.stringify(e));
-      return;
-    }
+    (async () => {
+      try {
+        await this.verifyConfig();
+        this.debugLog('Config OK');
+      } catch (e: any) {
+        this.errorLog(`Verify Config, Error Message: ${e.message}, Submit Bugs Here: https://bit.ly/homebridge-rainbird-bug-report`);
+        this.debugErrorLog(`Verify Config, Error: ${e}`);
+        return;
+      }
+    })();
 
     // When this event is fired it means Homebridge has restored all cached accessories from disk.
     // Dynamic Platform plugins should only register new accessories after this event was fired,
@@ -67,23 +81,6 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
         this.debugLog(JSON.stringify(e));
       }
     });
-  }
-
-  logs() {
-    this.debugMode = process.argv.includes('-D') || process.argv.includes('--debug');
-    if (this.debugMode) {
-      this.warnLog('Using debugMode Logging');
-      this.platformLogging = 'debugMode';
-    } else if (this.config.options?.logging === 'debug') {
-      this.platformLogging = this.config.options!.logging;
-      this.warnLog(`Using Config Logging: ${this.platformLogging}`);
-    } else if (this.config.options?.logging === 'standard') {
-      this.platformLogging = this.config.options!.logging;
-      this.infoLog(`Using Config Logging: ${this.platformLogging}`);
-    } else {
-      this.infoLog('Using Standard Logging');
-      this.platformLogging = 'standard';
-    }
   }
 
   /**
@@ -644,6 +641,62 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
     // remove platform accessories when no longer present
     this.api.unregisterPlatformAccessories(PLUGIN_NAME, PLATFORM_NAME, [existingAccessory]);
     this.warnLog(`Removing existing accessory from cache: ${existingAccessory.displayName}`);
+  }
+
+  async platformConfigOptions() {
+    const platformConfig: RainbirdPlatformConfig['options'] = {};
+    if (this.config.options) {
+      if (this.config.options.logging) {
+        platformConfig.logging = this.config.options.logging;
+      }
+      if (this.config.options.refreshRate) {
+        platformConfig.refreshRate = this.config.options.refreshRate;
+      }
+      if (this.config.options.pushRate) {
+        platformConfig.pushRate = this.config.options.pushRate;
+      }
+      if (this.config.options?.hide_device) {
+        platformConfig.hide_device = this.config.options.hide_device;
+      }
+      if (Object.entries(platformConfig).length !== 0) {
+        this.debugLog(`Platform Config: ${JSON.stringify(platformConfig)}`);
+      }
+      this.platformConfig = platformConfig;
+    }
+  }
+
+  async platformLogs() {
+    this.debugMode = process.argv.includes('-D') || process.argv.includes('--debug');
+    if (this.config.options?.logging === 'debug' || this.config.options?.logging === 'standard' || this.config.options?.logging === 'none') {
+      this.platformLogging = this.config.options.logging;
+      if (this.platformLogging?.includes('debug')) {
+        this.debugWarnLog(`Using Config Logging: ${this.platformLogging}`);
+      }
+    } else if (this.debugMode) {
+      this.platformLogging = 'debugMode';
+      if (this.platformLogging?.includes('debug')) {
+        this.debugWarnLog(`Using ${this.platformLogging} Logging`);
+      }
+    } else {
+      this.platformLogging = 'standard';
+      if (this.platformLogging?.includes('debug')) {
+        this.debugWarnLog(`Using ${this.platformLogging} Logging`);
+      }
+    }
+    if (this.debugMode) {
+      this.platformLogging = 'debugMode';
+    }
+  }
+
+  async getVersion() {
+    const json = JSON.parse(
+      readFileSync(
+        new URL('../package.json', import.meta.url),
+        'utf-8',
+      ),
+    );
+    this.debugLog(`Plugin Version: ${json.version}`);
+    this.version = json.version;
   }
 
   /**

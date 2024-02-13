@@ -44,6 +44,7 @@ Any controller that supports the [RainBird LNK WiFi Module](https://www.rainbird
 - ESP-ME3
 
 ## Known Limitations
+- The Home app will default all sprinkler zone names to the Irrigation System's name which means it's not obvious which zone is which. The first one in the list may not necessarily be Zone 1. You'll need to use trial and error to figure out the zone and rename them appropriately.
 - Using the RainBird app while the plugin is running can cause connectivity issues.
 - The RainBird LNK WiFi Module may not support "Band Steering" and WiFi Channel 13. Try not using these on your router if you are having connectivity issues.
 - Some models do not yet have support for displaying the time remaining. If its not working for your model please log a GitHub issue and we will try to add it with your help.
