@@ -1,10 +1,15 @@
+/* Copyright(C) 2021-2024, donavanbecker (https://github.com/donavanbecker) & mantorok1 (https://github.com/mantorok1). All rights reserved.
+ *
+ * ZoneValue.ts: homebridge-rainbird.
+ */
 import { Service, PlatformAccessory, CharacteristicValue, UnknownContext } from 'homebridge';
-import { RainbirdPlatform } from '../platform.js';
 import { RainBirdService } from 'rainbird';
 import { fromEvent, interval, Subject } from 'rxjs';
 import { debounceTime, skipWhile, tap } from 'rxjs/operators';
-import { DevicesConfig } from '../settings.js';
+
 import { DeviceBase } from './DeviceBase.js';
+import { DevicesConfig } from '../settings.js';
+import { RainbirdPlatform } from '../platform.js';
 
 export class ZoneValve extends DeviceBase {
   private zoneId: number;

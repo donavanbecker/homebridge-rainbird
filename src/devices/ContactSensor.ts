@@ -1,9 +1,14 @@
+/* Copyright(C) 2021-2024, donavanbecker (https://github.com/donavanbecker) & mantorok1 (https://github.com/mantorok1). All rights reserved.
+ *
+ * ContactSensor.ts: homebridge-rainbird.
+ */
 import { Service, CharacteristicValue, PlatformAccessory } from 'homebridge';
-import { RainbirdPlatform } from '../platform.js';
 import { RainBirdService } from 'rainbird';
 import { fromEvent } from 'rxjs';
-import { DevicesConfig } from '../settings.js';
+
 import { DeviceBase } from './DeviceBase.js';
+import { DevicesConfig } from '../settings.js';
+import { RainbirdPlatform } from '../platform.js';
 
 /**
  * Platform Accessory

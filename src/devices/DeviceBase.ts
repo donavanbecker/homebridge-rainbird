@@ -1,6 +1,11 @@
+/* Copyright(C) 2021-2024, donavanbecker (https://github.com/donavanbecker) & mantorok1 (https://github.com/mantorok1). All rights reserved.
+ *
+ * DeviceBase.ts: homebridge-rainbird.
+ */
 import { API, HAP, Logging, PlatformAccessory } from 'homebridge';
-import { RainbirdPlatform } from '../platform.js';
 import { RainBirdService } from 'rainbird';
+
+import { RainbirdPlatform } from '../platform.js';
 import { DevicesConfig, RainbirdPlatformConfig } from '../settings.js';
 
 export abstract class DeviceBase {
@@ -8,7 +13,6 @@ export abstract class DeviceBase {
   public readonly log: Logging;
   public readonly config!: RainbirdPlatformConfig;
   protected readonly hap: HAP;
-  // Service
 
   // Config
   protected deviceLogging!: string;
@@ -25,8 +29,10 @@ export abstract class DeviceBase {
     this.config = this.platform.config;
     this.hap = this.api.hap;
 
-    this.logs(device);
-    this.refreshRate(device);
+    this.deviceLogs(device);
+    this.getDeviceRefreshRate(device);
+    this.deviceConfigOptions(device);
+    this.deviceContext(accessory, device);
 
     // Set accessory information
     accessory
@@ -39,29 +45,56 @@ export abstract class DeviceBase {
       .updateValue(accessory.context.FirmwareRevision);
   }
 
-  logs(device: DevicesConfig) {
+  async deviceLogs(device: DevicesConfig): Promise<void> {
     if (this.platform.debugMode) {
       this.deviceLogging = this.accessory.context.logging = 'debugMode';
-      this.debugLog(`${this.constructor.name}: ${this.accessory.displayName} Using Debug Mode Logging: ${this.deviceLogging}`);
+      this.debugWarnLog(`Lock: ${this.accessory.displayName} Using Debug Mode Logging: ${this.deviceLogging}`);
     } else if (device.logging) {
       this.deviceLogging = this.accessory.context.logging = device.logging;
-      this.debugLog(`${this.constructor.name}: ${this.accessory.displayName} Using Device Config Logging: ${this.deviceLogging}`);
-    } else if (this.platform.config.options?.logging) {
-      this.deviceLogging = this.accessory.context.logging = this.platform.config.options?.logging;
-      this.debugLog(`${this.constructor.name}: ${this.accessory.displayName} Using Platform Config Logging: ${this.deviceLogging}`);
+      this.debugWarnLog(`Lock: ${this.accessory.displayName} Using Device Config Logging: ${this.deviceLogging}`);
+    } else if (this.config.logging) {
+      this.deviceLogging = this.accessory.context.logging = this.config.logging;
+      this.debugWarnLog(`Lock: ${this.accessory.displayName} Using Platform Config Logging: ${this.deviceLogging}`);
     } else {
       this.deviceLogging = this.accessory.context.logging = 'standard';
-      this.debugLog(`${this.constructor.name}: ${this.accessory.displayName} Logging Not Set, Using: ${this.deviceLogging}`);
+      this.debugWarnLog(`Lock: ${this.accessory.displayName} Logging Not Set, Using: ${this.deviceLogging}`);
     }
   }
 
-  refreshRate(device: DevicesConfig) {
+  async getDeviceRefreshRate(device: DevicesConfig): Promise<void> {
     if (device.refreshRate) {
+      if (device.refreshRate < 1800) {
+        device.refreshRate = 1800;
+        this.warnLog('Refresh Rate cannot be set to lower the 5 mins, as Lock detail (battery level, etc) are unlikely to change within that period');
+      }
       this.deviceRefreshRate = this.accessory.context.refreshRate = device.refreshRate;
-      this.debugLog(`${this.constructor.name}: ${this.accessory.displayName} Using Device Config refreshRate: ${this.deviceRefreshRate}`);
-    } else if (this.platform.config.options!.refreshRate) {
-      this.deviceRefreshRate = this.accessory.context.refreshRate = this.platform.config.options!.refreshRate;
-      this.debugLog(`${this.constructor.name}: ${this.accessory.displayName} Using Platform Config refreshRate: ${this.deviceRefreshRate}`);
+      this.debugLog(`Lock: ${this.accessory.displayName} Using Device Config refreshRate: ${this.deviceRefreshRate}`);
+    } else if (this.config.refreshRate) {
+      this.deviceRefreshRate = this.accessory.context.refreshRate = this.config.refreshRate;
+      this.debugLog(`Lock: ${this.accessory.displayName} Using Platform Config refreshRate: ${this.deviceRefreshRate}`);
+    }
+  }
+
+  async deviceConfigOptions(device: DevicesConfig): Promise<void> {
+    const deviceConfig = {};
+    if (device.logging !== undefined) {
+      deviceConfig['logging'] = device.logging;
+    }
+    if (device.refreshRate !== undefined) {
+      deviceConfig['refreshRate'] = device.refreshRate;
+    }
+    if (Object.entries(deviceConfig).length !== 0) {
+      this.infoLog(`Lock: ${this.accessory.displayName} Config: ${JSON.stringify(deviceConfig)}`);
+    }
+  }
+
+  async deviceContext(accessory: PlatformAccessory, device: DevicesConfig): Promise<void> {
+    if (device.firmware) {
+      accessory.context.FirmwareRevision = device.firmware;
+    } else if (accessory.context.FirmwareRevision === undefined) {
+      accessory.context.FirmwareRevision = await this.platform.getVersion();
+    } else {
+      accessory.context.FirmwareRevision = '3';
     }
   }
 
@@ -70,34 +103,34 @@ export abstract class DeviceBase {
    */
   infoLog(...log: any[]): void {
     if (this.enablingDeviceLogging()) {
-      this.platform.log.info(String(...log));
+      this.log.info(String(...log));
     }
   }
 
   warnLog(...log: any[]): void {
     if (this.enablingDeviceLogging()) {
-      this.platform.log.warn(String(...log));
+      this.log.warn(String(...log));
     }
   }
 
-  debugWarnLog({ log = [] }: { log?: any[]; } = {}): void {
+  debugWarnLog(...log: any[]): void {
     if (this.enablingDeviceLogging()) {
       if (this.deviceLogging?.includes('debug')) {
-        this.platform.log.warn('[DEBUG]', String(...log));
+        this.log.warn('[DEBUG]', String(...log));
       }
     }
   }
 
   errorLog(...log: any[]): void {
     if (this.enablingDeviceLogging()) {
-      this.platform.log.error(String(...log));
+      this.log.error(String(...log));
     }
   }
 
   debugErrorLog(...log: any[]): void {
     if (this.enablingDeviceLogging()) {
       if (this.deviceLogging?.includes('debug')) {
-        this.platform.log.error('[DEBUG]', String(...log));
+        this.log.error('[DEBUG]', String(...log));
       }
     }
   }
@@ -105,9 +138,9 @@ export abstract class DeviceBase {
   debugLog(...log: any[]): void {
     if (this.enablingDeviceLogging()) {
       if (this.deviceLogging === 'debug') {
-        this.platform.log.info('[DEBUG]', String(...log));
+        this.log.info('[DEBUG]', String(...log));
       } else {
-        this.platform.log.debug(String(...log));
+        this.log.debug(String(...log));
       }
     }
   }
