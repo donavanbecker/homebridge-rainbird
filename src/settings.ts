@@ -43,6 +43,6 @@ export type DevicesConfig = {
 export type options = {
   refreshRate?: number;
   pushRate?: number;
-  hide_device: string[];
+  hide_device?: string[];
   logging?: string;
 };
