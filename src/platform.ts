@@ -1,14 +1,19 @@
+/* Copyright(C) 2021-2024, donavanbecker (https://github.com/donavanbecker) & mantorok1 (https://github.com/mantorok1). All rights reserved.
+ *
+ * platform.ts: homebridge-rainbird.
+ */
 import { API, DynamicPlatformPlugin, PlatformAccessory, Logging, HAP } from 'homebridge';
 import { RainBirdService } from 'rainbird';
-import { PLATFORM_NAME, PLUGIN_NAME, RainbirdPlatformConfig, DevicesConfig } from './settings.js';
-import { IrrigationSystem } from './devices/IrrigationSystem.js';
-import { ContactSensor } from './devices/ContactSensor.js';
+import { readFileSync } from 'fs';
+
+import { ZoneValve } from './devices/ZoneValve.js';
 import { LeakSensor } from './devices/LeakSensor.js';
 import { ProgramSwitch } from './devices/ProgramSwitch.js';
+import { ContactSensor } from './devices/ContactSensor.js';
+import { IrrigationSystem } from './devices/IrrigationSystem.js';
 import { StopIrrigationSwitch } from './devices/StopIrrigationSwitch.js';
 import { DelayIrrigationSwitch } from './devices/DelayIrrigationSwitch.js';
-import { ZoneValve } from './devices/ZoneValve.js';
-import { readFileSync } from 'fs';
+import { PLATFORM_NAME, PLUGIN_NAME, RainbirdPlatformConfig, DevicesConfig } from './settings.js';
 
 /**
  * HomebridgePlatform
@@ -50,7 +55,6 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
       devices: config.devices,
       options: config.options,
     };
-    this.platformLogging = this.config.options?.logging ?? 'standard';
     this.platformConfigOptions();
     this.platformLogs();
     this.getVersion();
@@ -667,6 +671,7 @@ export class RainbirdPlatform implements DynamicPlatformPlugin {
 
   async platformLogs() {
     this.debugMode = process.argv.includes('-D') || process.argv.includes('--debug');
+    this.platformLogging = this.config.options?.logging ?? 'standard';
     if (this.config.options?.logging === 'debug' || this.config.options?.logging === 'standard' || this.config.options?.logging === 'none') {
       this.platformLogging = this.config.options.logging;
       if (this.platformLogging?.includes('debug')) {

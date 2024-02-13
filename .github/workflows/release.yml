@@ -31,4 +31,3 @@ jobs:
       footer_title: "RainBird"
     secrets:
       DISCORD_WEBHOOK_URL_LATEST: ${{ secrets.DISCORD_WEBHOOK_URL_LATEST }}
-      DISCORD_WEBHOOK_URL_BETA: ${{ secrets.DISCORD_WEBHOOK_URL_BETA }}

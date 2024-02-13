@@ -1,4 +1,7 @@
-/* eslint-disable no-console */
+/* Copyright(C) 2021-2024, donavanbecker (https://github.com/donavanbecker) & mantorok1 (https://github.com/mantorok1). All rights reserved.
+ *
+ * server.ts: homebridge-rainbird.
+ */
 import { HomebridgePluginUiServer } from '@homebridge/plugin-ui-utils';
 import fs from 'fs';
 
